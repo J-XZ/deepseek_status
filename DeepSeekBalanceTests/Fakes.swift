@@ -56,7 +56,7 @@ final class AtomicFlag: @unchecked Sendable {
 
 /// 可控 API 客户端：测试可精确决定每个请求何时完成或失败。
 actor ControlledAPIClient: BalanceFetching {
-  private final class Box: Sendable {
+  private final class Box: @unchecked Sendable {
     var continuation: CheckedContinuation<BalanceResponse, Error>?
   }
 

@@ -18,7 +18,9 @@ actor FailingReadHistoryStore: BalanceHistoryStoring {
 
 @MainActor
 final class StoreStateCoordinationTests: XCTestCase {
-  private var clock = FixedClock(date: Date(timeIntervalSince1970: 1_752_000_000))
+  private var clock: any DateProviding = FixedClock(
+    date: Date(timeIntervalSince1970: 1_752_000_000)
+  )
   private var history = InMemoryBalanceHistoryStore()
 
   override func setUp() {
@@ -35,7 +37,8 @@ final class StoreStateCoordinationTests: XCTestCase {
 
   private func makeStore(
     keychain: FakeKeychainStore = FakeKeychainStore(),
-    historyService: BalanceHistoryService? = nil
+    historyService: BalanceHistoryService? = nil,
+    autoRefreshInterval: TimeInterval? = nil
   ) -> BalanceStore {
     let keychain = keychain
     if keychain.storedValue == nil {
@@ -47,7 +50,7 @@ final class StoreStateCoordinationTests: XCTestCase {
       environment: [:],
       clock: clock,
       historyService: historyService ?? BalanceHistoryService(store: history, clock: clock),
-      autoRefreshInterval: nil
+      autoRefreshInterval: autoRefreshInterval
     )
   }
 
@@ -180,6 +183,37 @@ final class StoreStateCoordinationTests: XCTestCase {
     await waitForRecordedRequests(1)
     // 给第二个事件留出处理时间，确认不会产生第二个请求。
     try? await Task.sleep(nanoseconds: 300_000_000)
+    XCTAssertEqual(MockURLProtocol.recordedRequestCount, 1)
+    XCTAssertEqual(store.status, .loaded)
+  }
+
+  func testAutoRefreshLoopTriggersPeriodicRefresh() async throws {
+    stub(statusCode: 200, body: Data(TestFixtures.cnyJSON.utf8))
+    let mutableClock = MutableClock(date: Date(timeIntervalSince1970: 1_752_000_000))
+    clock = mutableClock
+    let store = makeStore(autoRefreshInterval: 0.1)
+
+    // 启动立即刷新一次。
+    await waitForRecordedRequests(1)
+    try? await Task.sleep(nanoseconds: 200_000_000)
+    XCTAssertEqual(MockURLProtocol.recordedRequestCount, 1)
+
+    // 超过 60 秒新鲜度窗口后，自动循环触发第二次刷新。
+    mutableClock.advance(by: 120)
+    await waitForRecordedRequests(2)
+    XCTAssertEqual(store.status, .loaded)
+  }
+
+  func testAutoRefreshSkipsWhenFresh() async throws {
+    stub(statusCode: 200, body: Data(TestFixtures.cnyJSON.utf8))
+    let mutableClock = MutableClock(date: Date(timeIntervalSince1970: 1_752_000_000))
+    clock = mutableClock
+    let store = makeStore(autoRefreshInterval: 0.05)
+
+    await waitForRecordedRequests(1)
+    // 时间只前进 30 秒：自动循环多次触发但都应跳过。
+    mutableClock.advance(by: 30)
+    try? await Task.sleep(nanoseconds: 400_000_000)
     XCTAssertEqual(MockURLProtocol.recordedRequestCount, 1)
     XCTAssertEqual(store.status, .loaded)
   }

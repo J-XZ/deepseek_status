@@ -50,6 +50,17 @@ struct BalanceTrendChartView: View {
     }
   }
 
+  private func metricLineStyle(_ metric: TrendPoint.Metric) -> StrokeStyle {
+    switch metric {
+    case .total:
+      return StrokeStyle(lineWidth: 2)
+    case .toppedUp:
+      return StrokeStyle(lineWidth: 1.5, dash: [5, 4])
+    case .granted:
+      return StrokeStyle(lineWidth: 1.5, dash: [2, 3])
+    }
+  }
+
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
       Text(summary.displayText)
@@ -71,6 +82,7 @@ struct BalanceTrendChartView: View {
           series: .value("分段", seriesName(for: item))
         )
         .foregroundStyle(metricColor(item.point.metric))
+        .lineStyle(metricLineStyle(item.point.metric))
       }
 
       ForEach(segmentPoints) { item in
@@ -96,7 +108,7 @@ struct BalanceTrendChartView: View {
     .chartYAxis {
       AxisMarks(position: .leading) { _ in
         AxisGridLine().foregroundStyle(.quaternary)
-        AxisValueLabel()
+        AxisValueLabel(format: BalanceAxisFormat(symbol: symbol))
       }
     }
     .chartLegend(.hidden)

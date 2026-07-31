@@ -83,7 +83,7 @@ final class BalanceStore: ObservableObject {
     }
 
     // 启动时执行一次 72 小时清理（失败只影响历史，不影响余额）。
-    let history = historyService ?? Self.makeDefaultHistoryService(clock: clock)
+    let history = self.historyService
     Task.detached(priority: .utility) {
       try? await history.pruneAll(before: Date().addingTimeInterval(-72 * 3600))
     }
@@ -354,11 +354,12 @@ final class BalanceStore: ObservableObject {
       historySamples = recent
       updateAvailableCurrencies(response: response, history: recent)
       historyError = nil
-      try await historyService.pruneThrottled()
     } catch {
       guard currentCredentialID == credentialID else { return }
       historyError = error.localizedDescription
     }
+    // 清理失败只影响过期数据回收，不影响当前余额与趋势显示。
+    try? await historyService.pruneThrottled()
   }
 
   private func updateAvailableCurrencies(response: BalanceResponse, history: [BalanceSample]) {

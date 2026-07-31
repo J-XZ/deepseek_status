@@ -24,9 +24,12 @@ actor LevelDBBalanceHistoryStore: BalanceHistoryStoring {
     leveldb_options_set_paranoid_checks(options, 0)
     self.options = options
     guard let readOptions = leveldb_readoptions_create() else {
+      leveldb_options_destroy(options)
       throw LevelDBError.openFailed("无法创建 LevelDB read options")
     }
     guard let writeOptions = leveldb_writeoptions_create() else {
+      leveldb_options_destroy(options)
+      leveldb_readoptions_destroy(readOptions)
       throw LevelDBError.openFailed("无法创建 LevelDB write options")
     }
     self.readOptions = readOptions
