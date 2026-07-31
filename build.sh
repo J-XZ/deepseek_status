@@ -2,8 +2,8 @@
 # DeepSeekBalance 命令行构建脚本
 #
 # 用法：
-#   ./build.sh                     # Debug 构建（免签名）
-#   CONFIGURATION=Release ./build.sh
+#   ./build.sh                     # Debug 构建（免签名，默认）
+#   ./build.sh --release           # Release 构建
 #   DERIVED_DATA=/tmp/dd ./build.sh
 set -euo pipefail
 
@@ -11,7 +11,11 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR"
 
 SCHEME="DeepSeekBalance"
-CONFIGURATION="${CONFIGURATION:-Debug}"
+if [[ "${1:-}" == "--release" ]]; then
+  CONFIGURATION="Release"
+else
+  CONFIGURATION="${CONFIGURATION:-Debug}"
+fi
 DESTINATION="platform=macOS"
 DERIVED_DATA="${DERIVED_DATA:-$PROJECT_DIR/build/DerivedData}"
 CODE_SIGNING_ALLOWED="${CODE_SIGNING_ALLOWED:-NO}"

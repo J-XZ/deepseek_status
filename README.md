@@ -86,9 +86,9 @@ xcodebuild \
 DeepSeekBalance/Assets.xcassets/DeepSeekIcon.imageset/deepseek_icon.pdf
 ```
 
-当前是脚本生成的单色鲸鱼占位图标（脚本见 `scripts/generate_deepseek_icon.swift`，可运行 `swift scripts/generate_deepseek_icon.swift` 重新生成）。如需使用官方品牌资源：
+当前图标是 DeepSeek 官网（`https://www.deepseek.com`）首页导航栏内嵌 SVG 中的官方鲸鱼图形，已转换为矢量 PDF，支持 template 渲染。矢量源文件见 `scripts/deepseek_icon_source.svg`（含来源与重新生成方法）。如需替换为其他官方品牌资源：
 
-1. 将官方图标（PDF/SVG 转换的 PDF，单色轮廓、透明背景）替换 `deepseek_icon.pdf`
+1. 将官方图标（PDF/SVG 转换的 PDF，单色轮廓、透明背景）替换 `DeepSeekBalance/Assets.xcassets/DeepSeekIcon.imageset/deepseek_icon.pdf`
 2. 保持 Asset 名称为 `DeepSeekIcon`
 3. 保持 `template-rendering-intent` 为 `template`（浅色/深色菜单栏自适应）
 4. 重新构建
