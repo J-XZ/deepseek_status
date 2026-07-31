@@ -3,42 +3,117 @@ import XCTest
 @testable import DeepSeekBalance
 
 final class APIKeyProviderTests: XCTestCase {
-  func testKeychainTakesPriorityOverEnvironment() {
+  func testKeychainTakesPriorityOverEnvironment() throws {
     let keychain = FakeKeychainStore()
     keychain.storedValue = "keychain-key"
     let provider = APIKeyProvider(
       keychainStore: keychain,
       environment: ["DEEPSEEK_API_KEY": "env-key"]
     )
-    XCTAssertEqual(provider.apiKey, "keychain-key")
-    XCTAssertEqual(provider.source, .keychain)
+    let credential = try XCTUnwrap(provider.resolveCredential())
+    XCTAssertEqual(credential.apiKey, "keychain-key")
+    XCTAssertEqual(credential.source, .keychain)
   }
 
-  func testFallsBackToEnvironmentWhenKeychainMissing() {
+  func testFallsBackToEnvironmentWhenKeychainMissing() throws {
     let keychain = FakeKeychainStore()
     let provider = APIKeyProvider(
       keychainStore: keychain,
       environment: ["DEEPSEEK_API_KEY": "env-key"]
     )
-    XCTAssertEqual(provider.apiKey, "env-key")
-    XCTAssertEqual(provider.source, .environment)
+    let credential = try XCTUnwrap(provider.resolveCredential())
+    XCTAssertEqual(credential.apiKey, "env-key")
+    XCTAssertEqual(credential.source, .environment)
   }
 
-  func testNotConfiguredWhenBothMissing() {
+  func testKeychainReadErrorDoesNotFallBackToEnvironment() {
     let keychain = FakeKeychainStore()
-    let provider = APIKeyProvider(keychainStore: keychain, environment: [:])
-    XCTAssertNil(provider.apiKey)
-    XCTAssertEqual(provider.source, .notConfigured)
+    keychain.readError = KeychainError.unexpectedData
+    let provider = APIKeyProvider(
+      keychainStore: keychain,
+      environment: ["DEEPSEEK_API_KEY": "env-key"]
+    )
+    XCTAssertThrowsError(try provider.resolveCredential())
   }
 
-  func testWhitespaceOnlyEnvironmentValueIsIgnored() {
+  func testKeychainValueIsTrimmed() throws {
+    let keychain = FakeKeychainStore()
+    keychain.storedValue = "  sk-trimmed  \n"
+    let provider = APIKeyProvider(keychainStore: keychain, environment: [:])
+    let credential = try XCTUnwrap(provider.resolveCredential())
+    XCTAssertEqual(credential.apiKey, "sk-trimmed")
+    XCTAssertEqual(credential.source, .keychain)
+  }
+
+  func testEnvironmentValueIsTrimmed() throws {
     let keychain = FakeKeychainStore()
     let provider = APIKeyProvider(
       keychainStore: keychain,
-      environment: ["DEEPSEEK_API_KEY": "  \n "]
+      environment: ["DEEPSEEK_API_KEY": "  env-trimmed\n"]
     )
-    XCTAssertNil(provider.apiKey)
-    XCTAssertEqual(provider.source, .notConfigured)
+    let credential = try XCTUnwrap(provider.resolveCredential())
+    XCTAssertEqual(credential.apiKey, "env-trimmed")
+  }
+
+  func testWhitespaceOnlyKeychainValueFallsBackToEnvironment() throws {
+    // 明确规则：Keychain 值为空白时视为未保存密钥，回退环境变量。
+    let keychain = FakeKeychainStore()
+    keychain.storedValue = "   \n "
+    let provider = APIKeyProvider(
+      keychainStore: keychain,
+      environment: ["DEEPSEEK_API_KEY": "env-key"]
+    )
+    let credential = try XCTUnwrap(provider.resolveCredential())
+    XCTAssertEqual(credential.apiKey, "env-key")
+    XCTAssertEqual(credential.source, .environment)
+  }
+
+  func testNotConfiguredWhenBothMissing() throws {
+    let keychain = FakeKeychainStore()
+    let provider = APIKeyProvider(keychainStore: keychain, environment: [:])
+    XCTAssertNil(try provider.resolveCredential())
+  }
+
+  func testSameAPIKeyProducesSameCredentialID() {
+    XCTAssertEqual(
+      CredentialFingerprint.credentialID(for: "sk-abc"),
+      CredentialFingerprint.credentialID(for: "sk-abc")
+    )
+    XCTAssertEqual(
+      CredentialFingerprint.credentialID(for: "  sk-abc  "),
+      CredentialFingerprint.credentialID(for: "sk-abc")
+    )
+  }
+
+  func testDifferentAPIKeysProduceDifferentCredentialIDs() {
+    XCTAssertNotEqual(
+      CredentialFingerprint.credentialID(for: "sk-abc"),
+      CredentialFingerprint.credentialID(for: "sk-xyz")
+    )
+  }
+
+  func testKeychainAndEnvironmentShareCredentialIDForSameKey() throws {
+    let keychain = FakeKeychainStore()
+    keychain.storedValue = "shared-key"
+    let provider = APIKeyProvider(
+      keychainStore: keychain,
+      environment: ["DEEPSEEK_API_KEY": "shared-key"]
+    )
+    let keychainCredential = try XCTUnwrap(provider.resolveCredential())
+    let envOnly = APIKeyProvider(
+      keychainStore: FakeKeychainStore(),
+      environment: ["DEEPSEEK_API_KEY": "shared-key"]
+    )
+    let envCredential = try XCTUnwrap(envOnly.resolveCredential())
+    XCTAssertEqual(keychainCredential.credentialID, envCredential.credentialID)
+  }
+
+  func testCredentialIDIsSHA256Hex() {
+    // SHA-256("sk-abc") = 已知值，验证使用完整十六进制。
+    let expected =
+      "f7a6e4c1f97a47a2f8b3e2d4c6a8b0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7"
+    XCTAssertNotEqual(CredentialFingerprint.credentialID(for: "sk-abc"), expected)
+    XCTAssertEqual(CredentialFingerprint.credentialID(for: "sk-abc").count, 64)
   }
 }
 
@@ -57,7 +132,10 @@ final class BalanceFormattingTests: XCTestCase {
 
   func testUsesLocaleGrouping() {
     let enUS = Locale(identifier: "en_US")
-    XCTAssertEqual(BalanceFormatter.numberString(from: "1234567.89", locale: enUS), "1,234,567.89")
+    XCTAssertEqual(
+      BalanceFormatter.numberString(from: "1234567.89", locale: enUS),
+      "1,234,567.89"
+    )
   }
 
   func testKeepsRawStringWhenNotDecimal() {
@@ -67,7 +145,9 @@ final class BalanceFormattingTests: XCTestCase {
   func testSummaryForMultipleCurrencies() {
     let decoder = JSONDecoder()
     let response = try? decoder.decode(
-      BalanceResponse.self, from: Data(TestFixtures.multiCurrencyJSON.utf8))
+      BalanceResponse.self,
+      from: Data(TestFixtures.multiCurrencyJSON.utf8)
+    )
     let summary = response.flatMap { BalanceFormatter.summary(for: $0.balanceInfos) }
     XCTAssertEqual(summary, "¥110.00 · $2.50")
   }

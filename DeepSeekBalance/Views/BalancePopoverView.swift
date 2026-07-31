@@ -6,20 +6,25 @@ struct BalancePopoverView: View {
   @ObservedObject var store: BalanceStore
   @State private var apiKeyInput = ""
   @State private var validationMessage: String?
+  @State private var showClearHistoryConfirmation = false
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 14) {
-      header
-      Divider()
-      balanceSection
-      errorMessageView
-      Divider()
-      keyConfigurationSection
-      Divider()
-      footer
+    ScrollView {
+      VStack(alignment: .leading, spacing: 14) {
+        header
+        Divider()
+        balanceSection
+        Divider()
+        trendSection
+        errorMessageView
+        Divider()
+        keyConfigurationSection
+        Divider()
+        footer
+      }
+      .padding(16)
     }
-    .padding(16)
-    .frame(width: 320)
+    .frame(width: 500)
     .onAppear {
       Task { await store.refreshIfNeeded() }
     }
@@ -61,8 +66,8 @@ struct BalancePopoverView: View {
       return .secondary
     case .idle, .loading:
       return .blue
-    case .authenticationFailed, .rateLimited, .networkError,
-      .serverError, .decodingError:
+    case .keychainError, .authenticationFailed, .rateLimited, .httpError,
+      .networkError, .serverError, .decodingError, .historyStorageError:
       return .red
     }
   }
@@ -80,13 +85,16 @@ struct BalancePopoverView: View {
               .foregroundStyle(.secondary)
             row(
               title: "总余额",
-              value: BalanceFormatter.format(total: info.totalBalance, currency: info.currency))
+              value: BalanceFormatter.format(total: info.totalBalance, currency: info.currency)
+            )
             row(
               title: "充值余额",
-              value: BalanceFormatter.format(total: info.toppedUpBalance, currency: info.currency))
+              value: BalanceFormatter.format(total: info.toppedUpBalance, currency: info.currency)
+            )
             row(
               title: "赠送余额",
-              value: BalanceFormatter.format(total: info.grantedBalance, currency: info.currency))
+              value: BalanceFormatter.format(total: info.grantedBalance, currency: info.currency)
+            )
           }
         }
       } else if store.isRefreshing {
@@ -121,6 +129,84 @@ struct BalancePopoverView: View {
         .font(.body.monospacedDigit())
     }
   }
+
+  // MARK: - 趋势区
+
+  private var trendSection: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      HStack {
+        Text("最近 3 天余额趋势")
+          .font(.headline)
+        Spacer()
+        Button("清除本地历史") {
+          showClearHistoryConfirmation = true
+        }
+        .controlSize(.small)
+      }
+
+      if !store.availableCurrencies.isEmpty {
+        Picker("币种", selection: currencyBinding) {
+          ForEach(store.availableCurrencies, id: \.self) { currency in
+            Text(currency).tag(currency)
+          }
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .accessibilityLabel("选择趋势币种")
+      }
+
+      if store.historySamples.isEmpty, store.historyError != nil {
+        BalanceTrendEmptyView(historyUnavailable: true)
+      } else if let currency = store.selectedCurrency {
+        let currencySamples = store.historySamples.filter { $0.currency == currency }
+        if currencySamples.isEmpty {
+          BalanceTrendEmptyView(historyUnavailable: false)
+        } else {
+          BalanceTrendChartView(
+            samples: store.historySamples,
+            currency: currency,
+            summary: BalanceTrendProcessor.summary(
+              samples: store.historySamples, currency: currency)
+          )
+        }
+      } else {
+        BalanceTrendEmptyView(historyUnavailable: false)
+      }
+
+      Text("历史仅保存在本机，最多保留 3 天。")
+        .font(.caption2)
+        .foregroundStyle(.secondary)
+
+      if let historyError = store.historyError {
+        Text(historyError)
+          .font(.caption)
+          .foregroundStyle(.red)
+          .textSelection(.enabled)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+    }
+    .confirmationDialog(
+      "清除本地历史？",
+      isPresented: $showClearHistoryConfirmation,
+      titleVisibility: .visible
+    ) {
+      Button("清除", role: .destructive) {
+        Task { await store.clearLocalHistory() }
+      }
+      Button("取消", role: .cancel) {}
+    } message: {
+      Text("将删除本机保存的最近 3 天历史样本。不影响 API Key 与当前余额。")
+    }
+  }
+
+  private var currencyBinding: Binding<String> {
+    Binding(
+      get: { store.selectedCurrency ?? "" },
+      set: { store.selectCurrency($0) }
+    )
+  }
+
+  // MARK: - 错误提示
 
   @ViewBuilder
   private var errorMessageView: some View {

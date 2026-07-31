@@ -104,6 +104,20 @@ final class BalanceClientTests: XCTestCase {
     }
   }
 
+  func testGenericHTTPErrorStatus() async {
+    MockURLProtocol.requestHandler = { _ in
+      (TestFixtures.httpResponse(statusCode: 404), Data())
+    }
+    do {
+      _ = try await makeClient().fetchBalance(apiKey: "sk-test")
+      XCTFail("应抛出 httpError")
+    } catch let error as DeepSeekAPIClient.APIError {
+      XCTAssertEqual(error, .httpError(statusCode: 404))
+    } catch {
+      XCTFail("意外的错误类型：\(error)")
+    }
+  }
+
   func testInvalidJSONProducesDecodingError() async {
     MockURLProtocol.requestHandler = { _ in
       (TestFixtures.httpResponse(statusCode: 200), Data("not json".utf8))
@@ -133,9 +147,12 @@ final class BalanceClientTests: XCTestCase {
   }
 
   func testTimeoutIsMapped() async {
-    // 不安装 handler：请求将一直等待直到超时。
+    // 直接返回 URLError(.timedOut)，避免依赖真实等待。
+    MockURLProtocol.requestHandler = { _ in
+      throw URLError(.timedOut)
+    }
     do {
-      _ = try await makeClient(timeout: 0.5).fetchBalance(apiKey: "sk-test")
+      _ = try await makeClient().fetchBalance(apiKey: "sk-test")
       XCTFail("应抛出 timedOut")
     } catch let error as DeepSeekAPIClient.APIError {
       XCTAssertEqual(error, .timedOut)

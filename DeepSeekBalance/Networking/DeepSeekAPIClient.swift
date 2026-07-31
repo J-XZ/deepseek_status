@@ -1,13 +1,18 @@
 import Foundation
 
+/// 余额获取抽象，便于测试注入可控实现。
+protocol BalanceFetching: Sendable {
+  func fetchBalance(apiKey: String) async throws -> BalanceResponse
+}
+
 /// DeepSeek 余额接口客户端。使用 `async/await` + `URLSession`。
 struct DeepSeekAPIClient {
   enum APIError: Error, LocalizedError, Equatable {
     case unauthorized
     case insufficientBalance
     case rateLimited
+    case httpError(statusCode: Int)
     case server(statusCode: Int)
-    case otherHTTP(statusCode: Int)
     case noNetwork
     case timedOut
     case decodingFailed
@@ -21,10 +26,10 @@ struct DeepSeekAPIClient {
         return "余额不足（402）"
       case .rateLimited:
         return "请求过于频繁，请稍后再试（429）"
+      case .httpError(let code):
+        return "服务返回错误（\(code)）"
       case .server(let code):
         return "DeepSeek 服务暂时不可用（\(code)）"
-      case .otherHTTP(let code):
-        return "服务返回错误（\(code)）"
       case .noNetwork:
         return "无法连接网络，请检查网络连接"
       case .timedOut:
@@ -95,7 +100,9 @@ struct DeepSeekAPIClient {
     case 500...599:
       throw APIError.server(statusCode: http.statusCode)
     default:
-      throw APIError.otherHTTP(statusCode: http.statusCode)
+      throw APIError.httpError(statusCode: http.statusCode)
     }
   }
 }
+
+extension DeepSeekAPIClient: BalanceFetching {}

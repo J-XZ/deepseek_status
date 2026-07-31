@@ -22,6 +22,64 @@
 		AA0000000000000000000203 /* Fakes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000003 /* Fakes.swift */; };
 		AA0000000000000000000204 /* BalanceClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000004 /* BalanceClientTests.swift */; };
 		AA0000000000000000000205 /* BalanceStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000005 /* BalanceStoreTests.swift */; };
+		DD00000000000000001001 /* builder.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000101 /* builder.cc */; };
+		DD00000000000000001002 /* c.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000102 /* c.cc */; };
+		DD00000000000000001003 /* db_impl.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000103 /* db_impl.cc */; };
+		DD00000000000000001004 /* db_iter.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000104 /* db_iter.cc */; };
+		DD00000000000000001005 /* dbformat.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000105 /* dbformat.cc */; };
+		DD00000000000000001006 /* dumpfile.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000106 /* dumpfile.cc */; };
+		DD00000000000000001007 /* filename.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000107 /* filename.cc */; };
+		DD00000000000000001008 /* log_reader.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000108 /* log_reader.cc */; };
+		DD00000000000000001009 /* log_writer.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000109 /* log_writer.cc */; };
+		DD0000000000000000100A /* memtable.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD000000000000000000010A /* memtable.cc */; };
+		DD0000000000000000100B /* repair.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD000000000000000000010B /* repair.cc */; };
+		DD0000000000000000100C /* table_cache.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD000000000000000000010C /* table_cache.cc */; };
+		DD0000000000000000100D /* version_edit.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD000000000000000000010D /* version_edit.cc */; };
+		DD0000000000000000100E /* version_set.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD000000000000000000010E /* version_set.cc */; };
+		DD0000000000000000100F /* write_batch.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD000000000000000000010F /* write_batch.cc */; };
+		DD00000000000000001010 /* memenv.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000110 /* memenv.cc */; };
+		DD00000000000000001011 /* block.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000111 /* block.cc */; };
+		DD00000000000000001012 /* block_builder.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000112 /* block_builder.cc */; };
+		DD00000000000000001013 /* filter_block.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000113 /* filter_block.cc */; };
+		DD00000000000000001014 /* format.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000114 /* format.cc */; };
+		DD00000000000000001015 /* iterator.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000115 /* iterator.cc */; };
+		DD00000000000000001016 /* merger.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000116 /* merger.cc */; };
+		DD00000000000000001017 /* table.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000117 /* table.cc */; };
+		DD00000000000000001018 /* table_builder.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000118 /* table_builder.cc */; };
+		DD00000000000000001019 /* two_level_iterator.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000119 /* two_level_iterator.cc */; };
+		DD0000000000000000101A /* arena.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD000000000000000000011A /* arena.cc */; };
+		DD0000000000000000101B /* bloom.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD000000000000000000011B /* bloom.cc */; };
+		DD0000000000000000101C /* cache.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD000000000000000000011C /* cache.cc */; };
+		DD0000000000000000101D /* coding.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD000000000000000000011D /* coding.cc */; };
+		DD0000000000000000101E /* comparator.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD000000000000000000011E /* comparator.cc */; };
+		DD0000000000000000101F /* crc32c.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD000000000000000000011F /* crc32c.cc */; };
+		DD00000000000000001020 /* env.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000120 /* env.cc */; };
+		DD00000000000000001021 /* env_posix.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000121 /* env_posix.cc */; };
+		DD00000000000000001022 /* filter_policy.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000122 /* filter_policy.cc */; };
+		DD00000000000000001023 /* hash.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000123 /* hash.cc */; };
+		DD00000000000000001024 /* logging.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000124 /* logging.cc */; };
+		DD00000000000000001025 /* options.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000125 /* options.cc */; };
+		DD00000000000000001026 /* status.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000126 /* status.cc */; };
+		EE0000000000000000000101 /* BalanceSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE0000000000000000000001 /* BalanceSample.swift */; };
+		EE0000000000000000000102 /* BalanceTrendModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE0000000000000000000002 /* BalanceTrendModels.swift */; };
+		EE0000000000000000000103 /* BalanceHistoryStoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE0000000000000000000003 /* BalanceHistoryStoring.swift */; };
+		EE0000000000000000000104 /* LevelDBError.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE0000000000000000000004 /* LevelDBError.swift */; };
+		EE0000000000000000000105 /* HistoryKeyCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE0000000000000000000005 /* HistoryKeyCodec.swift */; };
+		EE0000000000000000000106 /* HistoryValueCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE0000000000000000000006 /* HistoryValueCodec.swift */; };
+		EE0000000000000000000107 /* InMemoryBalanceHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE0000000000000000000007 /* InMemoryBalanceHistoryStore.swift */; };
+		EE0000000000000000000108 /* LevelDBBalanceHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE0000000000000000000008 /* LevelDBBalanceHistoryStore.swift */; };
+		EE0000000000000000000109 /* BalanceHistoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE0000000000000000000009 /* BalanceHistoryService.swift */; };
+		EE000000000000000000010A /* CredentialFingerprint.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE000000000000000000000A /* CredentialFingerprint.swift */; };
+		EE000000000000000000010B /* RefreshCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE000000000000000000000B /* RefreshCoordinator.swift */; };
+		EE000000000000000000010C /* BalanceTrendChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE000000000000000000000C /* BalanceTrendChartView.swift */; };
+		EE000000000000000000010D /* BalanceTrendEmptyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE000000000000000000000D /* BalanceTrendEmptyView.swift */; };
+		EE000000000000000000010E /* libleveldb.a in Frameworks */ = {isa = PBXBuildFile; fileRef = EE0000000000000000000040 /* libleveldb.a */; };
+		FF0000000000000000000101 /* TimeBucketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000001 /* TimeBucketTests.swift */; };
+		FF0000000000000000000102 /* InMemoryHistoryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000002 /* InMemoryHistoryStoreTests.swift */; };
+		FF0000000000000000000103 /* LevelDBBalanceHistoryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000003 /* LevelDBBalanceHistoryStoreTests.swift */; };
+		FF0000000000000000000104 /* BalanceHistoryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000004 /* BalanceHistoryServiceTests.swift */; };
+		FF0000000000000000000105 /* BalanceTrendTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000005 /* BalanceTrendTests.swift */; };
+		FF0000000000000000000106 /* StoreStateCoordinationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000006 /* StoreStateCoordinationTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -31,6 +89,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = AA0000000000000000003001;
 			remoteInfo = DeepSeekBalance;
+		};
+		EE0000000000000000000050 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA0000000000000000004000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DD0000000000000000000020;
+			remoteInfo = LevelDB;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -54,6 +119,65 @@
 		CC0000000000000000000003 /* Fakes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Fakes.swift; sourceTree = "<group>"; };
 		CC0000000000000000000004 /* BalanceClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BalanceClientTests.swift; sourceTree = "<group>"; };
 		CC0000000000000000000005 /* BalanceStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BalanceStoreTests.swift; sourceTree = "<group>"; };
+		DD0000000000000000000101 /* builder.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/builder.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000102 /* c.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/c.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000103 /* db_impl.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/db_impl.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000104 /* db_iter.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/db_iter.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000105 /* dbformat.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/dbformat.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000106 /* dumpfile.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/dumpfile.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000107 /* filename.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/filename.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000108 /* log_reader.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/log_reader.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000109 /* log_writer.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/log_writer.cc"; sourceTree = "<group>"; };
+		DD000000000000000000010A /* memtable.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/memtable.cc"; sourceTree = "<group>"; };
+		DD000000000000000000010B /* repair.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/repair.cc"; sourceTree = "<group>"; };
+		DD000000000000000000010C /* table_cache.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/table_cache.cc"; sourceTree = "<group>"; };
+		DD000000000000000000010D /* version_edit.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/version_edit.cc"; sourceTree = "<group>"; };
+		DD000000000000000000010E /* version_set.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/version_set.cc"; sourceTree = "<group>"; };
+		DD000000000000000000010F /* write_batch.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/write_batch.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000110 /* memenv.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "helpers/memenv/memenv.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000111 /* block.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "table/block.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000112 /* block_builder.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "table/block_builder.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000113 /* filter_block.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "table/filter_block.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000114 /* format.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "table/format.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000115 /* iterator.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "table/iterator.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000116 /* merger.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "table/merger.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000117 /* table.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "table/table.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000118 /* table_builder.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "table/table_builder.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000119 /* two_level_iterator.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "table/two_level_iterator.cc"; sourceTree = "<group>"; };
+		DD000000000000000000011A /* arena.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "util/arena.cc"; sourceTree = "<group>"; };
+		DD000000000000000000011B /* bloom.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "util/bloom.cc"; sourceTree = "<group>"; };
+		DD000000000000000000011C /* cache.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "util/cache.cc"; sourceTree = "<group>"; };
+		DD000000000000000000011D /* coding.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "util/coding.cc"; sourceTree = "<group>"; };
+		DD000000000000000000011E /* comparator.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "util/comparator.cc"; sourceTree = "<group>"; };
+		DD000000000000000000011F /* crc32c.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "util/crc32c.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000120 /* env.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "util/env.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000121 /* env_posix.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "util/env_posix.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000122 /* filter_policy.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "util/filter_policy.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000123 /* hash.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "util/hash.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000124 /* logging.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "util/logging.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000125 /* options.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "util/options.cc"; sourceTree = "<group>"; };
+		DD0000000000000000000126 /* status.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "util/status.cc"; sourceTree = "<group>"; };
+		EE0000000000000000000001 /* BalanceSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BalanceSample.swift; sourceTree = "<group>"; };
+		EE0000000000000000000002 /* BalanceTrendModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BalanceTrendModels.swift; sourceTree = "<group>"; };
+		EE0000000000000000000003 /* BalanceHistoryStoring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BalanceHistoryStoring.swift; sourceTree = "<group>"; };
+		EE0000000000000000000004 /* LevelDBError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelDBError.swift; sourceTree = "<group>"; };
+		EE0000000000000000000005 /* HistoryKeyCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryKeyCodec.swift; sourceTree = "<group>"; };
+		EE0000000000000000000006 /* HistoryValueCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryValueCodec.swift; sourceTree = "<group>"; };
+		EE0000000000000000000007 /* InMemoryBalanceHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InMemoryBalanceHistoryStore.swift; sourceTree = "<group>"; };
+		EE0000000000000000000008 /* LevelDBBalanceHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelDBBalanceHistoryStore.swift; sourceTree = "<group>"; };
+		EE0000000000000000000009 /* BalanceHistoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BalanceHistoryService.swift; sourceTree = "<group>"; };
+		EE000000000000000000000A /* CredentialFingerprint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CredentialFingerprint.swift; sourceTree = "<group>"; };
+		EE000000000000000000000B /* RefreshCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshCoordinator.swift; sourceTree = "<group>"; };
+		EE000000000000000000000C /* BalanceTrendChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BalanceTrendChartView.swift; sourceTree = "<group>"; };
+		EE000000000000000000000D /* BalanceTrendEmptyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BalanceTrendEmptyView.swift; sourceTree = "<group>"; };
+		EE000000000000000000000E /* LevelDBBridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LevelDBBridge.h; sourceTree = "<group>"; };
+		EE0000000000000000000040 /* libleveldb.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libleveldb.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		FF0000000000000000000001 /* TimeBucketTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeBucketTests.swift; sourceTree = "<group>"; };
+		FF0000000000000000000002 /* InMemoryHistoryStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InMemoryHistoryStoreTests.swift; sourceTree = "<group>"; };
+		FF0000000000000000000003 /* LevelDBBalanceHistoryStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelDBBalanceHistoryStoreTests.swift; sourceTree = "<group>"; };
+		FF0000000000000000000004 /* BalanceHistoryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BalanceHistoryServiceTests.swift; sourceTree = "<group>"; };
+		FF0000000000000000000005 /* BalanceTrendTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BalanceTrendTests.swift; sourceTree = "<group>"; };
+		FF0000000000000000000006 /* StoreStateCoordinationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreStateCoordinationTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -62,10 +186,18 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA000000000000000000010A /* Security.framework in Frameworks */,
+				EE000000000000000000010E /* libleveldb.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AA0000000000000000002005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DD0000000000000000000022 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -81,6 +213,7 @@
 				AA0000000000000000001001 /* DeepSeekBalance */,
 				AA0000000000000000001007 /* DeepSeekBalanceTests */,
 				AA0000000000000000001008 /* Products */,
+				EE0000000000000000000012 /* Vendor */,
 			);
 			sourceTree = "<group>";
 		};
@@ -88,11 +221,13 @@
 			isa = PBXGroup;
 			children = (
 				BB0000000000000000000001 /* DeepSeekBalanceApp.swift */,
+				EE0000000000000000000010 /* Persistence */,
 				AA0000000000000000001002 /* AppState */,
 				AA0000000000000000001003 /* Models */,
 				AA0000000000000000001004 /* Networking */,
 				AA0000000000000000001005 /* Security */,
 				AA0000000000000000001006 /* Views */,
+				EE000000000000000000000E /* LevelDBBridge.h */,
 				BB0000000000000000000009 /* Assets.xcassets */,
 				BB000000000000000000000A /* Info.plist */,
 				BB000000000000000000000B /* DeepSeekBalance.entitlements */,
@@ -104,6 +239,7 @@
 			isa = PBXGroup;
 			children = (
 				BB0000000000000000000002 /* BalanceStore.swift */,
+				EE000000000000000000000B /* RefreshCoordinator.swift */,
 			);
 			path = AppState;
 			sourceTree = "<group>";
@@ -112,6 +248,8 @@
 			isa = PBXGroup;
 			children = (
 				BB0000000000000000000003 /* BalanceModels.swift */,
+				EE0000000000000000000001 /* BalanceSample.swift */,
+				EE0000000000000000000002 /* BalanceTrendModels.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -129,6 +267,7 @@
 			isa = PBXGroup;
 			children = (
 				BB0000000000000000000006 /* KeychainStore.swift */,
+				EE000000000000000000000A /* CredentialFingerprint.swift */,
 			);
 			path = Security;
 			sourceTree = "<group>";
@@ -138,6 +277,8 @@
 			children = (
 				BB0000000000000000000007 /* MenuBarLabel.swift */,
 				BB0000000000000000000008 /* BalancePopoverView.swift */,
+				EE000000000000000000000C /* BalanceTrendChartView.swift */,
+				EE000000000000000000000D /* BalanceTrendEmptyView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -150,6 +291,12 @@
 				CC0000000000000000000003 /* Fakes.swift */,
 				CC0000000000000000000004 /* BalanceClientTests.swift */,
 				CC0000000000000000000005 /* BalanceStoreTests.swift */,
+				FF0000000000000000000001 /* TimeBucketTests.swift */,
+				FF0000000000000000000002 /* InMemoryHistoryStoreTests.swift */,
+				FF0000000000000000000003 /* LevelDBBalanceHistoryStoreTests.swift */,
+				FF0000000000000000000004 /* BalanceHistoryServiceTests.swift */,
+				FF0000000000000000000005 /* BalanceTrendTests.swift */,
+				FF0000000000000000000006 /* StoreStateCoordinationTests.swift */,
 			);
 			path = DeepSeekBalanceTests;
 			sourceTree = "<group>";
@@ -159,8 +306,76 @@
 			children = (
 				AA0000000000000000000001 /* DeepSeekBalance.app */,
 				AA0000000000000000000002 /* DeepSeekBalanceTests.xctest */,
+				EE0000000000000000000040 /* libleveldb.a */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		EE0000000000000000000010 /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				EE0000000000000000000003 /* BalanceHistoryStoring.swift */,
+				EE0000000000000000000004 /* LevelDBError.swift */,
+				EE0000000000000000000005 /* HistoryKeyCodec.swift */,
+				EE0000000000000000000006 /* HistoryValueCodec.swift */,
+				EE0000000000000000000007 /* InMemoryBalanceHistoryStore.swift */,
+				EE0000000000000000000008 /* LevelDBBalanceHistoryStore.swift */,
+				EE0000000000000000000009 /* BalanceHistoryService.swift */,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		EE0000000000000000000011 /* LevelDB */ = {
+			isa = PBXGroup;
+			children = (
+				DD0000000000000000000101 /* builder.cc */,
+				DD0000000000000000000102 /* c.cc */,
+				DD0000000000000000000103 /* db_impl.cc */,
+				DD0000000000000000000104 /* db_iter.cc */,
+				DD0000000000000000000105 /* dbformat.cc */,
+				DD0000000000000000000106 /* dumpfile.cc */,
+				DD0000000000000000000107 /* filename.cc */,
+				DD0000000000000000000108 /* log_reader.cc */,
+				DD0000000000000000000109 /* log_writer.cc */,
+				DD000000000000000000010A /* memtable.cc */,
+				DD000000000000000000010B /* repair.cc */,
+				DD000000000000000000010C /* table_cache.cc */,
+				DD000000000000000000010D /* version_edit.cc */,
+				DD000000000000000000010E /* version_set.cc */,
+				DD000000000000000000010F /* write_batch.cc */,
+				DD0000000000000000000110 /* memenv.cc */,
+				DD0000000000000000000111 /* block.cc */,
+				DD0000000000000000000112 /* block_builder.cc */,
+				DD0000000000000000000113 /* filter_block.cc */,
+				DD0000000000000000000114 /* format.cc */,
+				DD0000000000000000000115 /* iterator.cc */,
+				DD0000000000000000000116 /* merger.cc */,
+				DD0000000000000000000117 /* table.cc */,
+				DD0000000000000000000118 /* table_builder.cc */,
+				DD0000000000000000000119 /* two_level_iterator.cc */,
+				DD000000000000000000011A /* arena.cc */,
+				DD000000000000000000011B /* bloom.cc */,
+				DD000000000000000000011C /* cache.cc */,
+				DD000000000000000000011D /* coding.cc */,
+				DD000000000000000000011E /* comparator.cc */,
+				DD000000000000000000011F /* crc32c.cc */,
+				DD0000000000000000000120 /* env.cc */,
+				DD0000000000000000000121 /* env_posix.cc */,
+				DD0000000000000000000122 /* filter_policy.cc */,
+				DD0000000000000000000123 /* hash.cc */,
+				DD0000000000000000000124 /* logging.cc */,
+				DD0000000000000000000125 /* options.cc */,
+				DD0000000000000000000126 /* status.cc */,
+			);
+			path = LevelDB;
+			sourceTree = "<group>";
+		};
+		EE0000000000000000000012 /* Vendor */ = {
+			isa = PBXGroup;
+			children = (
+				EE0000000000000000000011 /* LevelDB */,
+			);
+			path = Vendor;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -177,6 +392,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				EE0000000000000000000051 /* PBXTargetDependency */,
 			);
 			name = DeepSeekBalance;
 			productName = DeepSeekBalance;
@@ -201,6 +417,23 @@
 			productReference = AA0000000000000000000002 /* DeepSeekBalanceTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		DD0000000000000000000020 /* LevelDB */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DD0000000000000000000033 /* Build configuration list for PBXNativeTarget "LevelDB" */;
+			buildPhases = (
+				DD0000000000000000000021 /* Sources */,
+				DD0000000000000000000022 /* Frameworks */,
+				DD0000000000000000000023 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LevelDB;
+			productName = leveldb;
+			productReference = EE0000000000000000000040 /* libleveldb.a */;
+			productType = "com.apple.product-type.library.static";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -217,6 +450,9 @@
 					AA0000000000000000003002 = {
 						CreatedOnToolsVersion = 15.0;
 						TestTargetID = AA0000000000000000003001;
+					};
+					DD0000000000000000000020 = {
+						CreatedOnToolsVersion = 15.0;
 					};
 				};
 			};
@@ -236,6 +472,7 @@
 			targets = (
 				AA0000000000000000003001 /* DeepSeekBalance */,
 				AA0000000000000000003002 /* DeepSeekBalanceTests */,
+				DD0000000000000000000020 /* LevelDB */,
 			);
 		};
 /* End PBXProject section */
@@ -250,6 +487,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AA0000000000000000002006 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DD0000000000000000000023 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -271,6 +515,19 @@
 				AA0000000000000000000106 /* KeychainStore.swift in Sources */,
 				AA0000000000000000000107 /* MenuBarLabel.swift in Sources */,
 				AA0000000000000000000108 /* BalancePopoverView.swift in Sources */,
+				EE0000000000000000000101 /* BalanceSample.swift in Sources */,
+				EE0000000000000000000102 /* BalanceTrendModels.swift in Sources */,
+				EE0000000000000000000103 /* BalanceHistoryStoring.swift in Sources */,
+				EE0000000000000000000104 /* LevelDBError.swift in Sources */,
+				EE0000000000000000000105 /* HistoryKeyCodec.swift in Sources */,
+				EE0000000000000000000106 /* HistoryValueCodec.swift in Sources */,
+				EE0000000000000000000107 /* InMemoryBalanceHistoryStore.swift in Sources */,
+				EE0000000000000000000108 /* LevelDBBalanceHistoryStore.swift in Sources */,
+				EE0000000000000000000109 /* BalanceHistoryService.swift in Sources */,
+				EE000000000000000000010A /* CredentialFingerprint.swift in Sources */,
+				EE000000000000000000010B /* RefreshCoordinator.swift in Sources */,
+				EE000000000000000000010C /* BalanceTrendChartView.swift in Sources */,
+				EE000000000000000000010D /* BalanceTrendEmptyView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -283,6 +540,57 @@
 				AA0000000000000000000203 /* Fakes.swift in Sources */,
 				AA0000000000000000000204 /* BalanceClientTests.swift in Sources */,
 				AA0000000000000000000205 /* BalanceStoreTests.swift in Sources */,
+				FF0000000000000000000101 /* TimeBucketTests.swift in Sources */,
+				FF0000000000000000000102 /* InMemoryHistoryStoreTests.swift in Sources */,
+				FF0000000000000000000103 /* LevelDBBalanceHistoryStoreTests.swift in Sources */,
+				FF0000000000000000000104 /* BalanceHistoryServiceTests.swift in Sources */,
+				FF0000000000000000000105 /* BalanceTrendTests.swift in Sources */,
+				FF0000000000000000000106 /* StoreStateCoordinationTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DD0000000000000000000021 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DD00000000000000001001 /* builder.cc in Sources */,
+				DD00000000000000001002 /* c.cc in Sources */,
+				DD00000000000000001003 /* db_impl.cc in Sources */,
+				DD00000000000000001004 /* db_iter.cc in Sources */,
+				DD00000000000000001005 /* dbformat.cc in Sources */,
+				DD00000000000000001006 /* dumpfile.cc in Sources */,
+				DD00000000000000001007 /* filename.cc in Sources */,
+				DD00000000000000001008 /* log_reader.cc in Sources */,
+				DD00000000000000001009 /* log_writer.cc in Sources */,
+				DD0000000000000000100A /* memtable.cc in Sources */,
+				DD0000000000000000100B /* repair.cc in Sources */,
+				DD0000000000000000100C /* table_cache.cc in Sources */,
+				DD0000000000000000100D /* version_edit.cc in Sources */,
+				DD0000000000000000100E /* version_set.cc in Sources */,
+				DD0000000000000000100F /* write_batch.cc in Sources */,
+				DD00000000000000001010 /* memenv.cc in Sources */,
+				DD00000000000000001011 /* block.cc in Sources */,
+				DD00000000000000001012 /* block_builder.cc in Sources */,
+				DD00000000000000001013 /* filter_block.cc in Sources */,
+				DD00000000000000001014 /* format.cc in Sources */,
+				DD00000000000000001015 /* iterator.cc in Sources */,
+				DD00000000000000001016 /* merger.cc in Sources */,
+				DD00000000000000001017 /* table.cc in Sources */,
+				DD00000000000000001018 /* table_builder.cc in Sources */,
+				DD00000000000000001019 /* two_level_iterator.cc in Sources */,
+				DD0000000000000000101A /* arena.cc in Sources */,
+				DD0000000000000000101B /* bloom.cc in Sources */,
+				DD0000000000000000101C /* cache.cc in Sources */,
+				DD0000000000000000101D /* coding.cc in Sources */,
+				DD0000000000000000101E /* comparator.cc in Sources */,
+				DD0000000000000000101F /* crc32c.cc in Sources */,
+				DD00000000000000001020 /* env.cc in Sources */,
+				DD00000000000000001021 /* env_posix.cc in Sources */,
+				DD00000000000000001022 /* filter_policy.cc in Sources */,
+				DD00000000000000001023 /* hash.cc in Sources */,
+				DD00000000000000001024 /* logging.cc in Sources */,
+				DD00000000000000001025 /* options.cc in Sources */,
+				DD00000000000000001026 /* status.cc in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -293,6 +601,11 @@
 			isa = PBXTargetDependency;
 			target = AA0000000000000000003001 /* DeepSeekBalance */;
 			targetProxy = AA0000000000000000007001 /* PBXContainerItemProxy */;
+		};
+		EE0000000000000000000051 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DD0000000000000000000020 /* LevelDB */;
+			targetProxy = EE0000000000000000000050 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -423,14 +736,23 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Vendor/LevelDB/include",
+				);
 				INFOPLIST_FILE = DeepSeekBalance/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lc++",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.DeepSeekBalance;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = DeepSeekBalance/LevelDBBridge.h;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -445,14 +767,23 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Vendor/LevelDB/include",
+				);
 				INFOPLIST_FILE = DeepSeekBalance/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lc++",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.DeepSeekBalance;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = DeepSeekBalance/LevelDBBridge.h;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -465,6 +796,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Vendor/LevelDB/include",
+				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -486,6 +821,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Vendor/LevelDB/include",
+				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -497,6 +836,74 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DeepSeekBalance.app/Contents/MacOS/DeepSeekBalance";
+			};
+			name = Release;
+		};
+		DD0000000000000000000031 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
+				GCC_WARN_UNINITIALIZED_AUTOS = NO;
+				GCC_ENABLE_CPP_EXCEPTIONS = NO;
+				GCC_ENABLE_CPP_RTTI = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"LEVELDB_PLATFORM_POSIX=1",
+					"$(inherited)",
+				);
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/Vendor/LevelDBConfig/include",
+					"$(SRCROOT)/Vendor/LevelDB/include",
+					"$(SRCROOT)/Vendor/LevelDB",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MACH_O_TYPE = staticlib;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CPLUSPLUSFLAGS = (
+					"-Wno-comma",
+					"$(inherited)",
+				);
+				PRODUCT_NAME = leveldb;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		DD0000000000000000000032 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
+				GCC_WARN_UNINITIALIZED_AUTOS = NO;
+				GCC_ENABLE_CPP_EXCEPTIONS = NO;
+				GCC_ENABLE_CPP_RTTI = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"LEVELDB_PLATFORM_POSIX=1",
+					"NDEBUG=1",
+					"$(inherited)",
+				);
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/Vendor/LevelDBConfig/include",
+					"$(SRCROOT)/Vendor/LevelDB/include",
+					"$(SRCROOT)/Vendor/LevelDB",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MACH_O_TYPE = staticlib;
+				OTHER_CPLUSPLUSFLAGS = (
+					"-Wno-comma",
+					"$(inherited)",
+				);
+				PRODUCT_NAME = leveldb;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
 			};
 			name = Release;
 		};
@@ -526,6 +933,15 @@
 			buildConfigurations = (
 				AA0000000000000000005005 /* Debug */,
 				AA0000000000000000005006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DD0000000000000000000033 /* Build configuration list for PBXNativeTarget "LevelDB" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DD0000000000000000000031 /* Debug */,
+				DD0000000000000000000032 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
