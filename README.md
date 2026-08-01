@@ -7,6 +7,7 @@
 ## 功能简介
 
 - 菜单栏同时显示单色 DeepSeek 图标和余额文字（如 `¥110.00`，多币种为 `¥110.00 · $2.50`）
+- 左键点击菜单栏图标打开弹出窗口；右键点击显示包含「退出应用」的菜单
 - 点击菜单栏项目弹出窗口，展示总余额、充值余额、赠送余额和最后更新时间
 - 状态指示：可用 / 余额不足 / 未配置 / 请求失败 / Keychain 错误
 - 支持在界面中把 API Key 保存到 macOS Keychain，或清除后回退到环境变量
@@ -17,7 +18,7 @@
 - DeepSeek 官方服务状态卡片：整体状态、API Service、Web Chat Service、事故与计划维护
 - 登录时启动（Launch at Login，基于 `SMAppService.mainApp`）
 - 简体中文 / English 一键切换，立即生效，无需重启
-- 使用 Swift Concurrency（`async/await` + `URLSession`）、SwiftUI `MenuBarExtra`、Security.framework、CryptoKit、Charts、ServiceManagement
+- 使用 Swift Concurrency（`async/await` + `URLSession`）、AppKit `NSStatusItem` + SwiftUI `NSPopover`、Security.framework、CryptoKit、Charts、ServiceManagement
 
 ## 菜单栏余额
 

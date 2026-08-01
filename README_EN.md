@@ -7,6 +7,7 @@ A pure-Swift native macOS menu bar app that shows your DeepSeek API balance in r
 ## Features
 
 - Menu bar shows a monochrome DeepSeek icon plus balance text (e.g. `¥110.00`, or `¥110.00 · $2.50` for multiple currencies)
+- Left-clicking the menu bar icon opens the popover; right-clicking shows a menu with a Quit item
 - Clicking the menu bar item opens a popover with total balance, topped-up balance, granted balance, and last update time
 - Status badges: Available / Insufficient balance / Not configured / Request failed / Keychain error
 - Save your API key to the macOS Keychain from the UI, or clear it and fall back to the environment variable
@@ -17,7 +18,7 @@ A pure-Swift native macOS menu bar app that shows your DeepSeek API balance in r
 - DeepSeek official service status card: overall status, API Service, Web Chat Service, incidents, and scheduled maintenance
 - Launch at Login using Apple's native `SMAppService.mainApp`
 - One-click Simplified Chinese / English switching, applied instantly without restart
-- Built with Swift Concurrency (`async/await` + `URLSession`), SwiftUI `MenuBarExtra`, Security.framework, CryptoKit, Charts, and ServiceManagement
+- Built with Swift Concurrency (`async/await` + `URLSession`), AppKit `NSStatusItem` + SwiftUI `NSPopover`, Security.framework, CryptoKit, Charts, and ServiceManagement
 
 ## Menu Bar Balance
 
