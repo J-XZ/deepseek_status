@@ -14,6 +14,7 @@ enum L10nKey: String, CaseIterable, Sendable {
   case statusInsufficientBalance = "status.insufficientBalance"
 
   // 余额区
+  case balanceTitle = "balance.title"
   case balanceTotal = "balance.total"
   case balanceToppedUp = "balance.toppedUp"
   case balanceGranted = "balance.granted"
@@ -124,6 +125,7 @@ enum L10nKey: String, CaseIterable, Sendable {
   // 底部与辅助功能
   case footerRefresh = "footer.refresh"
   case footerQuit = "footer.quit"
+  case menuOpenDashboard = "menu.openDashboard"
   case a11yStatus = "a11y.status"
   case a11yDeepSeekIcon = "a11y.deepseekIcon"
   case a11yMenuBar = "a11y.menuBar"

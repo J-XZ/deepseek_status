@@ -6,6 +6,7 @@
 #   ./build.sh --release           Release 构建
 #   ./build.sh --test              运行本地单元测试（Debug）
 #   ./build.sh --clean             清理并构建 Debug
+#   ./build.sh --package            构建 Release 并生成 ZIP/PKG/DMG 安装包
 #   ./build.sh --all               清理、构建 Debug + Release、运行测试与静态分析
 #
 # 可覆盖环境变量：
@@ -25,6 +26,7 @@ RUN_TESTS=false
 RUN_ANALYZE=false
 DO_CLEAN=false
 ALL_MODE=false
+PACKAGE_MODE=false
 
 print_usage() {
   cat <<'EOF'
@@ -33,6 +35,7 @@ print_usage() {
   ./build.sh --release           Release 构建
   ./build.sh --test              运行本地单元测试（Debug）
   ./build.sh --clean             清理并构建 Debug
+  ./build.sh --package            构建 Release 并生成 ZIP/PKG/DMG 安装包
   ./build.sh --all               清理、构建 Debug + Release、运行测试与静态分析
 EOF
 }
@@ -100,6 +103,10 @@ for arg in "$@"; do
     --release) CONFIGURATION="Release" ;;
     --test) RUN_TESTS=true ;;
     --clean) DO_CLEAN=true ;;
+    --package)
+      PACKAGE_MODE=true
+      CONFIGURATION="Release"
+      ;;
     --all)
       ALL_MODE=true
       RUN_TESTS=true
@@ -137,6 +144,12 @@ if [ "$ALL_MODE" = true ]; then
   echo "==> [5/5] 静态分析 ..."
   run_analyze
   echo "==> build.sh --all 全部完成：Debug、Release、测试、分析均已执行。"
+  exit 0
+fi
+
+if [ "$PACKAGE_MODE" = true ]; then
+  run_build Release
+  DERIVED_DATA="$DERIVED_DATA" "$PROJECT_DIR/scripts/package_app.sh" --skip-build
   exit 0
 fi
 

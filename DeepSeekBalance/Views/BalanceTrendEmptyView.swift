@@ -8,13 +8,13 @@ struct BalanceTrendEmptyView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
       Text(L10n.string(.trendEmptyTitle, language: language))
-        .font(.subheadline.weight(.medium))
+        .font(AppTypography.body.weight(.medium))
       Text(
         historyUnavailable
           ? L10n.string(.trendEmptyUnavailable, language: language)
           : L10n.string(.trendEmptyWaiting, language: language)
       )
-      .font(.caption)
+      .font(AppTypography.caption)
       .foregroundStyle(.secondary)
     }
     .frame(maxWidth: .infinity, alignment: .leading)

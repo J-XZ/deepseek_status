@@ -27,16 +27,19 @@ enum KeychainError: LocalizedError {
 struct KeychainStore: APIKeyStoring {
   let service: String
   let account: String
+  private let legacyService: String?
 
   init(
-    service: String = Bundle.main.bundleIdentifier ?? "com.example.DeepSeekBalance",
-    account: String = "deepseek-api-key"
+    service: String = Bundle.main.bundleIdentifier ?? "com.jxz.deepseekbalance",
+    account: String = "deepseek-api-key",
+    legacyService: String? = "com.example.DeepSeekBalance"
   ) {
     self.service = service
     self.account = account
+    self.legacyService = legacyService == service ? nil : legacyService
   }
 
-  private var baseQuery: [String: Any] {
+  private func baseQuery(service: String) -> [String: Any] {
     [
       kSecClass as String: kSecClassGenericPassword,
       kSecAttrService as String: service,
@@ -47,7 +50,10 @@ struct KeychainStore: APIKeyStoring {
   func save(apiKey: String) throws {
     let data = Data(apiKey.utf8)
     let updateAttributes: [String: Any] = [kSecValueData as String: data]
-    let updateStatus = SecItemUpdate(baseQuery as CFDictionary, updateAttributes as CFDictionary)
+    let updateStatus = SecItemUpdate(
+      baseQuery(service: service) as CFDictionary,
+      updateAttributes as CFDictionary
+    )
     if updateStatus == errSecSuccess {
       return
     }
@@ -55,7 +61,7 @@ struct KeychainStore: APIKeyStoring {
       throw KeychainError.unexpectedStatus(updateStatus)
     }
 
-    var query = baseQuery
+    var query = baseQuery(service: service)
     query[kSecValueData as String] = data
     query[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
     let addStatus = SecItemAdd(query as CFDictionary, nil)
@@ -65,7 +71,17 @@ struct KeychainStore: APIKeyStoring {
   }
 
   func readAPIKey() throws -> String? {
-    var query = baseQuery
+    if let value = try readAPIKey(service: service) {
+      return value
+    }
+    if let legacyService {
+      return try readAPIKey(service: legacyService)
+    }
+    return nil
+  }
+
+  private func readAPIKey(service: String) throws -> String? {
+    var query = baseQuery(service: service)
     query[kSecReturnData as String] = true
     query[kSecMatchLimit as String] = kSecMatchLimitOne
     var result: AnyObject?
@@ -83,10 +99,12 @@ struct KeychainStore: APIKeyStoring {
   }
 
   func deleteAPIKey() throws {
-    let status = SecItemDelete(baseQuery as CFDictionary)
-    if status == errSecSuccess || status == errSecItemNotFound {
-      return
+    let services = [service] + (legacyService.map { [$0] } ?? [])
+    for service in services {
+      let status = SecItemDelete(baseQuery(service: service) as CFDictionary)
+      guard status == errSecSuccess || status == errSecItemNotFound else {
+        throw KeychainError.unexpectedStatus(status)
+      }
     }
-    throw KeychainError.unexpectedStatus(status)
   }
 }

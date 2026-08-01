@@ -495,14 +495,19 @@ final class BalanceStore: ObservableObject {
     guard let base else {
       return BalanceHistoryService(store: UnavailableBalanceHistoryStore(), clock: clock)
     }
-    let directory =
-      base
-      .appendingPathComponent(
-        Bundle.main.bundleIdentifier ?? "com.example.DeepSeekBalance",
-        isDirectory: true
-      )
+    let bundleIdentifier = Bundle.main.bundleIdentifier ?? "com.jxz.deepseekbalance"
+    let directory = base
+      .appendingPathComponent(bundleIdentifier, isDirectory: true)
       .appendingPathComponent("BalanceHistory.leveldb", isDirectory: true)
-    if let store = try? LevelDBBalanceHistoryStore.open(directory: directory) {
+    let legacyDirectory = base
+      .appendingPathComponent("com.example.DeepSeekBalance", isDirectory: true)
+      .appendingPathComponent("BalanceHistory.leveldb", isDirectory: true)
+    let directoryToOpen =
+      FileManager.default.fileExists(atPath: directory.path) ||
+      !FileManager.default.fileExists(atPath: legacyDirectory.path)
+      ? directory
+      : legacyDirectory
+    if let store = try? LevelDBBalanceHistoryStore.open(directory: directoryToOpen) {
       return BalanceHistoryService(store: store, clock: clock)
     }
     return BalanceHistoryService(store: UnavailableBalanceHistoryStore(), clock: clock)

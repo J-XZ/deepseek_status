@@ -1,5 +1,5 @@
 #!/usr/bin/env swift
-// 生成应用图标：DeepSeek 官方鲸鱼 logo + 🔍 放大镜表情符号。
+// 生成应用图标：DeepSeek 官方鲸鱼 logo + 紧凑的矢量放大镜徽章。
 // 用法：swift scripts/make_app_icon.swift <输入.pdf> <输出.png>
 import AppKit
 
@@ -20,7 +20,8 @@ let deepSeekBlue = NSColor(
   alpha: 1
 )
 
-let whaleRect = NSRect(x: 212, y: 212, width: 600, height: 600)
+// 给图形保留更均衡的安全边距，避免 Finder、Dock 缩放到小尺寸时视觉拥挤。
+let whaleRect = NSRect(x: 232, y: 232, width: 560, height: 560)
 
 let image = NSImage(size: canvasSize, flipped: false) { rect in
   deepSeekBlue.setFill()
@@ -40,22 +41,22 @@ let image = NSImage(size: canvasSize, flipped: false) { rect in
   }
   tinted.draw(in: whaleRect)
 
-  // 🔍 放大镜表情符号（右下角徽章）
-  guard let emojiFont = NSFont(name: "Apple Color Emoji", size: 340) else {
-    return true
-  }
-  let emoji = NSAttributedString(
-    string: "🔍",
-    attributes: [.font: emojiFont]
-  )
-  let emojiSize = emoji.size()
-  let emojiRect = NSRect(
-    x: 1024 - 64 - emojiSize.width,
-    y: 84,
-    width: emojiSize.width,
-    height: emojiSize.height
-  )
-  emoji.draw(in: emojiRect)
+  // 矢量放大镜徽章：尺寸更克制，避免在 16–128px 图标中压住鲸鱼主体。
+  let lensRect = NSRect(x: 704, y: 132, width: 204, height: 204)
+  let lens = NSBezierPath(ovalIn: lensRect.insetBy(dx: 10, dy: 10))
+  let handle = NSBezierPath()
+  handle.move(to: CGPoint(x: 856, y: 184))
+  handle.line(to: CGPoint(x: 956, y: 84))
+
+  NSColor.white.withAlphaComponent(0.3).setFill()
+  lens.fill()
+  NSColor.white.setStroke()
+  lens.lineWidth = 18
+  lens.stroke()
+  NSColor.white.setStroke()
+  handle.lineWidth = 28
+  handle.lineCapStyle = .round
+  handle.stroke()
   return true
 }
 

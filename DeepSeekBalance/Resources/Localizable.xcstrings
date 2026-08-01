@@ -133,6 +133,12 @@
         "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "最后更新：%@" } }
       }
     },
+    "balance.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Balance" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "余额" } }
+      }
+    },
     "balance.loading" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Fetching balance…" } },
@@ -449,6 +455,12 @@
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Not configured" } },
         "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未配置" } }
+      }
+    },
+    "menu.openDashboard" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Open Dashboard" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "打开面板" } }
       }
     },
     "serviceStatus.api" : {

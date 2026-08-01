@@ -9,7 +9,7 @@ struct DeepSeekServiceStatusView: View {
     VStack(alignment: .leading, spacing: 8) {
       HStack {
         Text(L10n.string(.serviceTitle, language: language))
-          .font(.headline)
+          .font(AppTypography.section)
         Spacer()
         overallBadge
       }
@@ -24,21 +24,21 @@ struct DeepSeekServiceStatusView: View {
         }
       case .unavailable:
         Text(L10n.string(.serviceUnavailable, language: language))
-          .font(.caption)
+          .font(AppTypography.caption)
           .foregroundStyle(.secondary)
       case .loaded:
         if let status = store.status {
           statusContent(status)
         } else {
           Text(L10n.string(.serviceUnavailable, language: language))
-            .font(.caption)
+            .font(AppTypography.caption)
             .foregroundStyle(.secondary)
         }
       }
 
       if let error = store.error {
         Text(error.text(language: language))
-          .font(.caption)
+          .font(AppTypography.caption)
           .foregroundStyle(.red)
           .textSelection(.enabled)
       }
@@ -60,7 +60,7 @@ struct DeepSeekServiceStatusView: View {
     let indicator = store.status?.overall ?? .unknown
     let text = overallText(indicator)
     return Text(text)
-      .font(.caption.weight(.medium))
+      .font(AppTypography.caption.weight(.medium))
       .padding(.horizontal, 8)
       .padding(.vertical, 3)
       .background(overallColor(indicator).opacity(0.14), in: Capsule())
@@ -81,11 +81,11 @@ struct DeepSeekServiceStatusView: View {
               )
             )
           )
-          .font(.caption2)
+          .font(AppTypography.caption)
           .foregroundStyle(.secondary)
           if store.isStale {
             Text(L10n.string(.serviceStale, language: language))
-              .font(.caption2.weight(.semibold))
+              .font(AppTypography.caption.weight(.semibold))
               .foregroundStyle(.orange)
           }
         }
@@ -93,7 +93,7 @@ struct DeepSeekServiceStatusView: View {
 
       if !status.overallDescription.isEmpty {
         Text(status.overallDescription)
-          .font(.caption)
+          .font(AppTypography.caption)
           .foregroundStyle(.secondary)
           .textSelection(.enabled)
       }
@@ -115,7 +115,7 @@ struct DeepSeekServiceStatusView: View {
 
       if !status.incidents.isEmpty {
         Text(L10n.string(.serviceIncidents, language: language))
-          .font(.caption.weight(.semibold))
+          .font(AppTypography.caption.weight(.semibold))
         ForEach(status.incidents) { incident in
           incidentRow(incident)
         }
@@ -123,7 +123,7 @@ struct DeepSeekServiceStatusView: View {
 
       if !status.scheduledMaintenances.isEmpty {
         Text(L10n.string(.serviceMaintenance, language: language))
-          .font(.caption.weight(.semibold))
+          .font(AppTypography.caption.weight(.semibold))
         ForEach(status.scheduledMaintenances) { maintenance in
           maintenanceRow(maintenance)
         }
@@ -143,12 +143,12 @@ struct DeepSeekServiceStatusView: View {
               .fill(componentColor(component.status))
               .frame(width: 8, height: 8)
             Text(component.name)
-              .font(.caption)
+              .font(AppTypography.caption)
               .foregroundStyle(.primary)
               .lineLimit(1)
             Spacer()
             Text(componentStatusText(component.status))
-              .font(.caption)
+              .font(AppTypography.caption)
               .foregroundStyle(.secondary)
           }
         }
@@ -159,13 +159,13 @@ struct DeepSeekServiceStatusView: View {
   private func incidentRow(_ incident: DeepSeekServiceStatus.Incident) -> some View {
     VStack(alignment: .leading, spacing: 3) {
       Text(incident.title)
-        .font(.caption.weight(.medium))
+        .font(AppTypography.caption.weight(.medium))
         .textSelection(.enabled)
       HStack(spacing: 8) {
         Text(L10n.string(.serviceIncidentPhase, language: language, incidentStatusText(incident.status)))
         Text(L10n.string(.serviceIncidentImpact, language: language, impactText(incident.impact)))
       }
-      .font(.caption2)
+      .font(AppTypography.caption)
       .foregroundStyle(.secondary)
       if let updatedAt = incident.updatedAt {
         Text(
@@ -177,12 +177,12 @@ struct DeepSeekServiceStatusView: View {
             )
           )
         )
-        .font(.caption2)
+        .font(AppTypography.caption)
         .foregroundStyle(.secondary)
       }
       if let body = incident.latestUpdateBody {
         Text(truncated(body))
-          .font(.caption)
+          .font(AppTypography.caption)
           .foregroundStyle(.secondary)
           .textSelection(.enabled)
           .fixedSize(horizontal: false, vertical: true)
@@ -196,7 +196,7 @@ struct DeepSeekServiceStatusView: View {
   private func maintenanceRow(_ maintenance: DeepSeekServiceStatus.Maintenance) -> some View {
     VStack(alignment: .leading, spacing: 3) {
       Text(maintenance.title)
-        .font(.caption.weight(.medium))
+        .font(AppTypography.caption.weight(.medium))
         .textSelection(.enabled)
       if let updatedAt = maintenance.updatedAt {
         Text(
@@ -208,7 +208,7 @@ struct DeepSeekServiceStatusView: View {
             )
           )
         )
-        .font(.caption2)
+        .font(AppTypography.caption)
         .foregroundStyle(.secondary)
       }
     }

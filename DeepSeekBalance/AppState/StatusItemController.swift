@@ -71,7 +71,7 @@ final class StatusItemController: NSObject {
 
   private func updateTitle() {
     guard let button = statusItem.button else { return }
-    let font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .medium)
+    let font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .semibold)
     button.attributedTitle = NSAttributedString(
       string: store.menuBarText,
       attributes: [
@@ -122,18 +122,76 @@ final class StatusItemController: NSObject {
     }
 
     let menu = NSMenu()
+    menu.autoenablesItems = false
+
+    let header = NSMenuItem(
+      title: L10n.string(.appTitle, language: store.language),
+      action: nil,
+      keyEquivalent: ""
+    )
+    header.isEnabled = false
+    if let icon = NSImage(named: "DeepSeekIcon") {
+      icon.isTemplate = true
+      icon.size = NSSize(width: 16, height: 16)
+      header.image = icon
+    }
+    menu.addItem(header)
+    menu.addItem(.separator())
+
+    let refreshItem = NSMenuItem(
+      title: L10n.string(.footerRefresh, language: store.language),
+      action: #selector(refreshApp),
+      keyEquivalent: "r"
+    )
+    refreshItem.keyEquivalentModifierMask = [.command]
+    refreshItem.target = self
+    refreshItem.image = NSImage(
+      systemSymbolName: "arrow.clockwise",
+      accessibilityDescription: nil
+    )
+    menu.addItem(refreshItem)
+
+    let openItem = NSMenuItem(
+      title: L10n.string(.menuOpenDashboard, language: store.language),
+      action: #selector(openDashboard),
+      keyEquivalent: "o"
+    )
+    openItem.keyEquivalentModifierMask = [.command]
+    openItem.target = self
+    openItem.image = NSImage(
+      systemSymbolName: "rectangle.on.rectangle",
+      accessibilityDescription: nil
+    )
+    menu.addItem(openItem)
+
+    menu.addItem(.separator())
+
     let quitItem = NSMenuItem(
       title: L10n.string(.footerQuit, language: store.language),
       action: #selector(quitApp),
-      keyEquivalent: ""
+      keyEquivalent: "q"
     )
+    quitItem.keyEquivalentModifierMask = [.command]
     quitItem.target = self
+    quitItem.image = NSImage(
+      systemSymbolName: "power",
+      accessibilityDescription: nil
+    )
     menu.addItem(quitItem)
 
     // 临时挂上 menu 并模拟点击以显示菜单，之后还原，避免影响左键弹窗。
     statusItem.menu = menu
     statusItem.button?.performClick(nil)
     statusItem.menu = nil
+  }
+
+  @objc private func refreshApp() {
+    Task { await store.refreshAll() }
+  }
+
+  @objc private func openDashboard() {
+    guard let button = statusItem.button else { return }
+    togglePopover(button)
   }
 
   @objc private func quitApp() {

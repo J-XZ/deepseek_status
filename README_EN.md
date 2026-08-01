@@ -35,7 +35,7 @@ A pure-Swift native macOS menu bar app that shows your DeepSeek API balance in r
 - Continuous multi-sample data uses `LineMark`; isolated single samples use `PointMark`; the selected sample is highlighted. Points are not drawn unconditionally for every bucket, so the full 72-hour window (up to ~432 ten-minute buckets) stays smooth.
 - The X axis domain is explicitly `now - 72 hours ... now`, with an injectable time source.
 - History is stored locally only and kept for up to 72 hours; a startup prune runs on launch (using the injected clock), followed by throttled pruning (the throttle time is recorded only after a successful prune, so a failure can be retried).
-- Database location: `<Application Support>/com.example.DeepSeekBalance/BalanceHistory.leveldb`.
+- Database location: `<Application Support>/com.jxz.deepseekbalance/BalanceHistory.leveldb`; upgrades also read the legacy `com.example.DeepSeekBalance` directory.
 - The popover offers a "Clear Local History" button (with confirmation) that removes only the current account's history; it does not affect the API key or current balance. Currencies that really exist in the current balance remain in the picker after clearing.
 - The currency picker only shows currencies that truly exist in the current balance response or in the current account's history (CNY and USD are prioritized only when they actually exist); no fake options are shown.
 - The chart shows total, topped-up, and granted balance per currency and supports light/dark mode.
@@ -153,6 +153,14 @@ Release build:
 ./build.sh --release
 ```
 
+Build all distributable installers in one command (ZIP, double-click PKG, drag-to-install DMG, and SHA256SUMS):
+
+```bash
+./build.sh --package
+```
+
+Artifacts are written to `build/artifacts/`. Because the default release build is unsigned, macOS may require approval in System Settings → Privacy & Security on first launch.
+
 Local unit tests:
 
 ```bash
@@ -172,6 +180,17 @@ Full pipeline (clean + Debug + Release + tests + analyze):
 ```
 
 `--help` returns 0; invalid arguments return non-zero; `--all` really runs clean, Debug build, Release build, all unit tests, and static analysis in order.
+
+## GitHub Releases
+
+Push a version tag to publish automatically:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+`.github/workflows/release.yml` initializes the LevelDB submodule on a macOS runner, runs the unit tests, builds the installers, and publishes every artifact to the matching GitHub Release. The workflow uses unsigned builds by default; Apple Developer signing and notarization credentials can be added later to remove Gatekeeper warnings.
 
 You can also build and test directly with xcodebuild:
 

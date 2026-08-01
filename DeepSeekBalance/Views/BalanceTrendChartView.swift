@@ -45,7 +45,7 @@ struct BalanceTrendChartView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
       Text(summary.text(language: language))
-        .font(.subheadline.weight(.medium))
+        .font(AppTypography.body.weight(.medium))
       chartView
       legend
       if let selectedSample {
@@ -156,7 +156,7 @@ struct BalanceTrendChartView: View {
       legendItem(label: L10n.string(.legendGranted, language: language), color: .orange, dash: [2, 3])
       Spacer()
     }
-    .font(.caption)
+    .font(AppTypography.caption)
   }
 
   private func legendItem(label: String, color: Color, dash: [CGFloat]) -> some View {
@@ -203,7 +203,7 @@ struct BalanceTrendChartView: View {
           Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
         )
       )
-        .font(.caption.weight(.medium))
+        .font(AppTypography.caption.weight(.medium))
       HStack {
         Text(
           "\(L10n.string(.balanceTotal, language: language)) "
@@ -240,7 +240,7 @@ struct BalanceTrendChartView: View {
           )
         }
       }
-      .font(.caption)
+      .font(AppTypography.caption)
       .foregroundStyle(.secondary)
     }
     .textSelection(.enabled)

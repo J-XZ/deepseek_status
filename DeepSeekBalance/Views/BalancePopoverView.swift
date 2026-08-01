@@ -1,6 +1,16 @@
 import AppKit
 import SwiftUI
 
+/// 弹出面板统一字体层级：正文使用圆体提升可读性，金额使用等宽数字避免刷新时跳动。
+enum AppTypography {
+  static let title = Font.system(size: 17, weight: .semibold, design: .rounded)
+  static let section = Font.system(size: 13, weight: .semibold, design: .rounded)
+  static let body = Font.system(size: 13, weight: .regular, design: .rounded)
+  static let value = Font.system(size: 16, weight: .semibold, design: .rounded).monospacedDigit()
+  static let caption = Font.system(size: 11, weight: .regular, design: .rounded)
+  static let badge = Font.system(size: 11, weight: .semibold, design: .rounded)
+}
+
 /// 点击菜单栏项目后展示的弹出窗口内容。
 struct BalancePopoverView: View {
   @ObservedObject var store: BalanceStore
@@ -17,23 +27,23 @@ struct BalancePopoverView: View {
 
   var body: some View {
     ScrollView {
-      VStack(alignment: .leading, spacing: 14) {
-        header
-        Divider()
-        DeepSeekServiceStatusView(store: statusStore, language: language)
-        Divider()
-        balanceSection
-        Divider()
-        trendSection
+      VStack(alignment: .leading, spacing: 10) {
+        card { header }
+        card {
+          DeepSeekServiceStatusView(store: statusStore, language: language)
+        }
+        card {
+          sectionTitle(.balanceTitle, systemImage: "wallet.pass")
+          balanceSection
+        }
+        card { trendSection }
         errorMessageView
-        Divider()
-        settingsSection
-        Divider()
-        keyConfigurationSection
-        Divider()
-        footer
+        card { settingsSection }
+        card { keyConfigurationSection }
+        card { footer }
       }
-      .padding(16)
+      .font(AppTypography.body)
+      .padding(14)
     }
     // MenuBarExtra 窗口按视图的固有尺寸定高，ScrollView 没有固有高度，
     // 必须给出明确的高度，否则窗口会塌成一条窄条。
@@ -51,6 +61,24 @@ struct BalancePopoverView: View {
     }
   }
 
+  @ViewBuilder
+  private func card<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+    content()
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .padding(12)
+      .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+      .overlay {
+        RoundedRectangle(cornerRadius: 14, style: .continuous)
+          .stroke(Color.primary.opacity(0.07), lineWidth: 1)
+      }
+  }
+
+  private func sectionTitle(_ key: L10nKey, systemImage: String) -> some View {
+    Label(L10n.string(key, language: language), systemImage: systemImage)
+      .font(AppTypography.section)
+      .foregroundStyle(.primary)
+  }
+
   // MARK: - 标题区
 
   private var header: some View {
@@ -59,10 +87,17 @@ struct BalancePopoverView: View {
         .renderingMode(.template)
         .resizable()
         .aspectRatio(contentMode: .fit)
-        .frame(width: 28, height: 28)
+        .frame(width: 22, height: 22)
+        .padding(8)
+        .background(Color.accentColor.opacity(0.12), in: Circle())
         .accessibilityLabel(L10n.string(.a11yDeepSeekIcon, language: language))
-      Text(L10n.string(.appTitle, language: language))
-        .font(.headline)
+      VStack(alignment: .leading, spacing: 2) {
+        Text(L10n.string(.appTitle, language: language))
+          .font(AppTypography.title)
+        Text(store.menuBarText)
+          .font(AppTypography.caption.monospacedDigit())
+          .foregroundStyle(.secondary)
+      }
       Spacer()
       Button(language == .simplifiedChinese ? "English" : "中文") {
         store.setLanguage(language == .simplifiedChinese ? .english : .simplifiedChinese)
@@ -75,7 +110,7 @@ struct BalancePopoverView: View {
 
   private var statusBadge: some View {
     Text(store.statusTitle)
-      .font(.caption.weight(.medium))
+      .font(AppTypography.badge)
       .padding(.horizontal, 8)
       .padding(.vertical, 3)
       .background(statusColor.opacity(0.14), in: Capsule())
@@ -108,7 +143,7 @@ struct BalancePopoverView: View {
         ForEach(balance.balanceInfos) { info in
           VStack(alignment: .leading, spacing: 4) {
             Text(info.currency)
-              .font(.caption.weight(.semibold))
+              .font(AppTypography.caption.weight(.semibold))
               .foregroundStyle(.secondary)
             row(
               title: L10n.string(.balanceTotal, language: language),
@@ -159,7 +194,7 @@ struct BalancePopoverView: View {
           ),
           systemImage: "clock"
         )
-        .font(.caption)
+        .font(AppTypography.caption)
         .foregroundStyle(.secondary)
       }
     }
@@ -171,7 +206,7 @@ struct BalancePopoverView: View {
         .foregroundStyle(.secondary)
       Spacer()
       Text(value)
-        .font(.body.monospacedDigit())
+        .font(AppTypography.value)
     }
   }
 
@@ -181,7 +216,7 @@ struct BalancePopoverView: View {
     VStack(alignment: .leading, spacing: 8) {
       HStack {
         Text(L10n.string(.trendTitle, language: language))
-          .font(.headline)
+          .font(AppTypography.section)
         Spacer()
         Button(L10n.string(.trendClearHistory, language: language)) {
           showClearHistoryConfirmation = true
@@ -225,12 +260,12 @@ struct BalancePopoverView: View {
       }
 
       Text(L10n.string(.trendLocalNote, language: language))
-        .font(.caption2)
+        .font(AppTypography.caption)
         .foregroundStyle(.secondary)
 
       if let historyError = store.historyDisplayError {
         Text(historyError.text(language: language))
-          .font(.caption)
+          .font(AppTypography.caption)
           .foregroundStyle(.red)
           .textSelection(.enabled)
           .fixedSize(horizontal: false, vertical: true)
@@ -263,7 +298,7 @@ struct BalancePopoverView: View {
   private var errorMessageView: some View {
     if let message = store.lastDisplayError {
       Text(message.text(language: language))
-        .font(.caption)
+        .font(AppTypography.caption)
         .foregroundStyle(.red)
         .textSelection(.enabled)
         .fixedSize(horizontal: false, vertical: true)
@@ -275,7 +310,7 @@ struct BalancePopoverView: View {
   private var settingsSection: some View {
     VStack(alignment: .leading, spacing: 10) {
       Text(L10n.string(.settingsTitle, language: language))
-        .font(.headline)
+        .font(AppTypography.section)
 
       HStack {
         Text(L10n.string(.settingsLanguage, language: language))
@@ -301,11 +336,11 @@ struct BalancePopoverView: View {
             .disabled(loginItemStore.isUpdating)
         }
         Text(loginStatusText)
-          .font(.caption)
+          .font(AppTypography.caption)
           .foregroundStyle(.secondary)
         if let error = loginItemStore.lastError {
           Text(error)
-            .font(.caption)
+            .font(AppTypography.caption)
             .foregroundStyle(.red)
             .textSelection(.enabled)
         }
@@ -359,7 +394,7 @@ struct BalancePopoverView: View {
   private var keyConfigurationSection: some View {
     VStack(alignment: .leading, spacing: 8) {
       Text(L10n.string(.apiKeyTitle, language: language))
-        .font(.headline)
+        .font(AppTypography.section)
 
       SecureField(L10n.string(.apiKeyPlaceholder, language: language), text: $apiKeyInput)
         .textFieldStyle(.roundedBorder)
@@ -367,7 +402,7 @@ struct BalancePopoverView: View {
 
       if let message = validationMessage {
         Text(message)
-          .font(.caption)
+          .font(AppTypography.caption)
           .foregroundStyle(.red)
           .fixedSize(horizontal: false, vertical: true)
       }
@@ -386,7 +421,7 @@ struct BalancePopoverView: View {
         Text(keySourceText)
           .fontWeight(.medium)
       }
-      .font(.caption)
+      .font(AppTypography.caption)
       .foregroundStyle(.secondary)
     }
   }
