@@ -40,6 +40,7 @@ final class BalanceStore: ObservableObject {
   @Published private(set) var selectedCurrency: String?
   @Published private(set) var historyDisplayError: AppDisplayError?
   @Published private(set) var language: AppLanguage
+  @Published private(set) var appearance: AppAppearance
 
   /// 兼容旧测试/旧调用的文本视图：按当前语言即时渲染。
   var lastErrorMessage: String? {
@@ -75,6 +76,7 @@ final class BalanceStore: ObservableObject {
     startupRefresh: Bool = true,
     startupPrune: Bool = true,
     language: AppLanguage = AppLanguage.initial(),
+    appearance: AppAppearance = AppAppearance.initial(),
     statusStore: DeepSeekStatusStore? = nil,
     loginItemStore: LoginItemStore? = nil
   ) {
@@ -84,6 +86,7 @@ final class BalanceStore: ObservableObject {
     self.clock = clock
     self.historyService = historyService ?? Self.makeDefaultHistoryService(clock: clock)
     self.language = language
+    self.appearance = appearance
     self.statusStore = statusStore
     self.loginItemStore = loginItemStore
 
@@ -134,6 +137,14 @@ final class BalanceStore: ObservableObject {
     guard language != newLanguage else { return }
     language = newLanguage
     newLanguage.save()
+  }
+
+  // MARK: - 外观切换
+
+  func setAppearance(_ newAppearance: AppAppearance) {
+    guard appearance != newAppearance else { return }
+    appearance = newAppearance
+    newAppearance.save()
   }
 
   // MARK: - 菜单栏文字

@@ -43,6 +43,18 @@
         "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "清除" } }
       }
     },
+    "appearance.dark" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Dark" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "深色" } }
+      }
+    },
+    "appearance.light" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Light" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "浅色" } }
+      }
+    },
     "apiKey.clear" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Clear Saved Key" } },
@@ -557,6 +569,12 @@
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Web Chat Service" } },
         "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "网页对话服务" } }
+      }
+    },
+    "settings.appearance" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Appearance" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "外观" } }
       }
     },
     "settings.language" : {

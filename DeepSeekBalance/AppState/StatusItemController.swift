@@ -98,7 +98,7 @@ final class StatusItemController: NSObject {
     )
     .environment(\.locale, store.language.locale)
     popover.contentViewController = NSHostingController(rootView: rootView)
-    popover.contentSize = NSSize(width: 500, height: 620)
+    popover.contentSize = NSSize(width: 500, height: 720)
     popover.behavior = .transient
   }
 

@@ -53,13 +53,31 @@ struct BalancePopoverView: View {
       idealWidth: 500,
       maxWidth: 500,
       minHeight: 400,
-      idealHeight: 620,
-      maxHeight: 820
+      idealHeight: 720,
+      maxHeight: 940
     )
+    // 纯色背景：浅色为白色、深色为黑色，不做毛玻璃/半透明。
+    .background(windowBackground)
+    .preferredColorScheme(store.appearance.colorScheme)
     .onAppear {
       Task { await store.refreshIfNeeded() }
       Task { await statusStore.refreshIfNeeded() }
     }
+  }
+
+  /// 弹出窗口底色：浅色白色、深色黑色，均为不透明纯色。
+  private var windowBackground: Color {
+    store.appearance == .dark ? .black : .white
+  }
+
+  /// 卡片底色：浅色为极浅灰（与白色窗口对比），深色为深灰。
+  private var cardBackground: Color {
+    store.appearance == .dark ? Color(white: 0.14) : Color(white: 0.96)
+  }
+
+  /// 卡片描边：加深以提升对比度，替代毛玻璃分隔。
+  private var cardBorder: Color {
+    store.appearance == .dark ? Color.primary.opacity(0.28) : Color.primary.opacity(0.16)
   }
 
   @ViewBuilder
@@ -67,10 +85,10 @@ struct BalancePopoverView: View {
     content()
       .frame(maxWidth: .infinity, alignment: .leading)
       .padding(12)
-      .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+      .background(cardBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
       .overlay {
         RoundedRectangle(cornerRadius: 14, style: .continuous)
-          .stroke(Color.primary.opacity(0.07), lineWidth: 1)
+          .stroke(cardBorder, lineWidth: 1)
       }
   }
 
@@ -332,6 +350,20 @@ struct BalancePopoverView: View {
         .controlSize(.small)
       }
 
+      HStack {
+        Text(L10n.string(.settingsAppearance, language: language))
+        Spacer()
+        Picker("", selection: appearanceBinding) {
+          Text(L10n.string(.appearanceLight, language: language))
+            .tag(AppAppearance.light)
+          Text(L10n.string(.appearanceDark, language: language))
+            .tag(AppAppearance.dark)
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .frame(width: 150)
+      }
+
       Divider()
 
       VStack(alignment: .leading, spacing: 6) {
@@ -380,6 +412,13 @@ struct BalancePopoverView: View {
       set: { newValue in
         Task { await loginItemStore.setEnabled(newValue) }
       }
+    )
+  }
+
+  private var appearanceBinding: Binding<AppAppearance> {
+    Binding(
+      get: { store.appearance },
+      set: { store.setAppearance($0) }
     )
   }
 
