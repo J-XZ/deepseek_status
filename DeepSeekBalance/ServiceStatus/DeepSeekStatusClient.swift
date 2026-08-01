@@ -2,10 +2,10 @@ import Foundation
 
 /// 状态获取抽象：与余额网络层完全分离，不依赖 API Key。
 protocol DeepSeekStatusFetching: Sendable {
-  func fetchSummary() async throws -> StatusPageSummary
+  func fetchSummary() async throws -> FlashcatStatusResponse
 }
 
-/// DeepSeek 官方状态页 Statuspage 客户端。
+/// DeepSeek 官方状态页客户端（官方域名，Flashcat 托管）。
 /// 请求不携带 Authorization，也不记录完整响应正文。
 struct DeepSeekStatusClient: DeepSeekStatusFetching {
   enum StatusError: Error, Equatable {
@@ -16,7 +16,9 @@ struct DeepSeekStatusClient: DeepSeekStatusFetching {
     case cancelled
   }
 
-  static let defaultURL = URL(string: "https://status.deepseek.com/api/v2/summary.json")!
+  /// 官方状态页真实公开 JSON 接口（页面 HTML 中的 page_id=6410630422455）。
+  static let defaultURL =
+    URL(string: "https://status.deepseek.com/api/status-page/6410630422455/summary/active")!
 
   let url: URL
   let session: URLSession
@@ -32,7 +34,7 @@ struct DeepSeekStatusClient: DeepSeekStatusFetching {
     self.timeoutInterval = timeoutInterval
   }
 
-  func fetchSummary() async throws -> StatusPageSummary {
+  func fetchSummary() async throws -> FlashcatStatusResponse {
     var request = URLRequest(url: url)
     request.httpMethod = "GET"
     request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -64,7 +66,7 @@ struct DeepSeekStatusClient: DeepSeekStatusFetching {
     }
 
     do {
-      return try JSONDecoder().decode(StatusPageSummary.self, from: data)
+      return try JSONDecoder().decode(FlashcatStatusResponse.self, from: data)
     } catch {
       throw StatusError.decoding
     }

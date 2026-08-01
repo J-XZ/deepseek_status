@@ -42,7 +42,7 @@ A pure-Swift native macOS menu bar app that shows your DeepSeek API balance in r
 
 ## DeepSeek Official Service Status
 
-- Data source: DeepSeek's official Statuspage JSON only: `https://status.deepseek.com/api/v2/summary.json`
+- Data source: DeepSeek's official status page public JSON only: `https://status.deepseek.com/api/status-page/6410630422455/summary/active` (the official status page is hosted by Flashcat; its public `page_id` from the page HTML is `6410630422455`; the standard Statuspage path `/api/v2/summary.json` returns 404 on this domain and is not used)
 - Official status page: `https://status.deepseek.com/`
 - Status requests need no API key and send no `Authorization` header; the status networking layer is fully independent from the balance layer, so one failing does not affect the other.
 - Status is fetched immediately on launch, refreshed every 5 minutes, refreshed when the popover opens after a cache age over 60 seconds, refreshed after wake/didBecomeActive by cache age, refreshable via a dedicated "Refresh Service Status" button, and the bottom "Refresh" button refreshes balance and status concurrently without overwriting each other's errors.

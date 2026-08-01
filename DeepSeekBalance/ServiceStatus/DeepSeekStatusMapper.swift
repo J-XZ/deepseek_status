@@ -1,97 +1,123 @@
 import Foundation
 
-/// 把宽松的 Statuspage JSON 映射为展示模型。
+/// 把 Flashcat 官方状态 JSON 映射为展示模型。
 enum DeepSeekStatusMapper {
-  /// 解析 Statuspage 的 ISO8601 时间（含小数秒变体）。
-  static let defaultDateParser: (String?) -> Date? = { raw in
-    guard let raw, !raw.isEmpty else { return nil }
-    let formatters = [
-      ISO8601DateFormatter(),
-      ISO8601DateFormatter(),
-      ISO8601DateFormatter(),
-    ]
-    formatters[1].formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    formatters[2].formatOptions = [.withInternetDateTime, .withFractionalSeconds, .withColonSeparatorInTimeZone]
-    for formatter in formatters {
-      if let date = formatter.date(from: raw) {
-        return date
+  static func map(_ response: FlashcatStatusResponse) -> DeepSeekServiceStatus {
+    let page = response.data?.page
+    let components = page?.components ?? []
+    let sections = page?.sections ?? []
+    let sectionNames = Dictionary(
+      uniqueKeysWithValues: sections.compactMap { section -> (String, String)? in
+        guard let id = section.sectionID, let name = section.name else { return nil }
+        return (id, name)
       }
-    }
-    return nil
-  }
+    )
 
-  static func map(
-    _ summary: StatusPageSummary,
-    dateParser: (String?) -> Date? = defaultDateParser
-  ) -> DeepSeekServiceStatus {
-    let overall = OverallIndicator.from(raw: summary.status?.indicator)
-    let allComponents =
-      summary.components?
-      .filter { $0.group != true }
-      .compactMap { component -> DeepSeekServiceStatus.Component? in
-        guard let name = component.name?.trimmingCharacters(in: .whitespacesAndNewlines),
-          !name.isEmpty
-        else {
-          return nil
-        }
-        return DeepSeekServiceStatus.Component(
-          id: component.id ?? name,
-          name: name,
-          status: ComponentStatus.from(raw: component.status)
-        )
-      } ?? []
-
-    let apiComponents = allComponents.filter { isAPIComponent($0.name) }
-    let webChatComponents = allComponents.filter { isWebChatComponent($0.name) }
-    let otherComponents = allComponents.filter {
-      !isAPIComponent($0.name) && !isWebChatComponent($0.name)
+    let changes = response.data?.activeChanges ?? []
+    let unresolvedChanges = changes.filter {
+      let status = IncidentStatus.from(raw: $0.status)
+      return status != .resolved && status != .postmortem
     }
 
-    let incidents: [DeepSeekServiceStatus.Incident] =
-      summary.incidents?
-      .filter {
-        let status = IncidentStatus.from(raw: $0.status)
-        return status != .resolved && status != .postmortem
+    // 每个组件当前状态：由未解决变更的 affected_components 推导；无变更则 operational。
+    var componentStatusByID: [String: ComponentStatus] = [:]
+    var worstSeverity = 0
+    var sawUnknownStatus = false
+    for change in unresolvedChanges {
+      for affected in change.affectedComponents ?? [] {
+        guard let id = affected.componentID else { continue }
+        let raw = affected.status?.lowercased()
+        if raw == "critical" {
+          worstSeverity = max(worstSeverity, 4)
+          continue
+        }
+        let status = ComponentStatus.from(raw: affected.status)
+        if status == .unknown, raw != nil {
+          sawUnknownStatus = true
+        }
+        componentStatusByID[id] = Self.worse(status, componentStatusByID[id])
+        worstSeverity = max(worstSeverity, Self.severity(status))
       }
-      .compactMap { incident -> DeepSeekServiceStatus.Incident? in
-        guard let id = incident.id, let title = incident.name, !title.isEmpty else {
-          return nil
-        }
-        let updates = incident.incidentUpdates ?? []
-        let latestBody = updates.last?.body?
-          .trimmingCharacters(in: .whitespacesAndNewlines)
-        let latestBodyCleaned = latestBody.flatMap { body -> String? in
-          body.isEmpty ? nil : body
-        }
-        return DeepSeekServiceStatus.Incident(
-          id: id,
-          title: title,
-          status: IncidentStatus.from(raw: incident.status),
-          impact: IncidentImpact.from(raw: incident.impact),
-          updatedAt: dateParser(incident.updatedAt ?? updates.last?.updatedAt),
-          latestUpdateBody: latestBodyCleaned
-        )
-      } ?? []
+    }
 
-    let maintenances: [DeepSeekServiceStatus.Maintenance] =
-      summary.scheduledMaintenances?
-      .compactMap { maintenance -> DeepSeekServiceStatus.Maintenance? in
-        guard let id = maintenance.id, let title = maintenance.name, !title.isEmpty else {
-          return nil
-        }
-        let updates = maintenance.incidentUpdates ?? []
-        return DeepSeekServiceStatus.Maintenance(
-          id: id,
-          title: title,
-          status: IncidentStatus.from(raw: maintenance.status),
-          updatedAt: dateParser(maintenance.updatedAt ?? updates.last?.updatedAt)
+    let mappedComponents: [DeepSeekServiceStatus.Component] = components.compactMap {
+      component -> DeepSeekServiceStatus.Component? in
+      guard let name = component.name?.trimmingCharacters(in: .whitespacesAndNewlines),
+        !name.isEmpty
+      else {
+        return nil
+      }
+      let id = component.componentID ?? name
+      return DeepSeekServiceStatus.Component(
+        id: id,
+        name: name,
+        status: componentStatusByID[id] ?? .operational
+      )
+    }
+
+    let apiComponents = mappedComponents.filter { isAPIComponent($0.name) }
+    let webChatComponents = mappedComponents.filter {
+      !isAPIComponent($0.name)
+        && isWebChatComponent($0.name, sections: sectionNames, components: components)
+    }
+    let otherComponents = mappedComponents.filter {
+      !isAPIComponent($0.name)
+        && !isWebChatComponent($0.name, sections: sectionNames, components: components)
+    }
+
+    var incidents: [DeepSeekServiceStatus.Incident] = []
+    var maintenances: [DeepSeekServiceStatus.Maintenance] = []
+    var hasMaintenance = false
+
+    for change in unresolvedChanges {
+      let isMaintenance = change.type?.lowercased() == "maintenance"
+      hasMaintenance = hasMaintenance || isMaintenance
+      let title = change.title ?? "Unknown"
+      let updatedAt = latestTimestamp(change)
+      let latestBody = change.updates?.last?.description
+
+      if isMaintenance {
+        maintenances.append(
+          DeepSeekServiceStatus.Maintenance(
+            id: String(change.changeID ?? 0),
+            title: title,
+            status: IncidentStatus.from(raw: change.status),
+            updatedAt: updatedAt
+          )
         )
-      } ?? []
+      } else {
+        incidents.append(
+          DeepSeekServiceStatus.Incident(
+            id: String(change.changeID ?? 0),
+            title: title,
+            status: IncidentStatus.from(raw: change.status),
+            impact: impact(forSeverity: worstSeverity),
+            updatedAt: updatedAt,
+            latestUpdateBody: latestBody
+          )
+        )
+      }
+    }
+
+    let overall: OverallIndicator
+    if hasMaintenance {
+      overall = .maintenance
+    } else if worstSeverity >= 4 {
+      overall = .critical
+    } else if worstSeverity == 3 {
+      overall = .major
+    } else if worstSeverity > 0 {
+      overall = .minor
+    } else if !incidents.isEmpty || sawUnknownStatus {
+      overall = .unknown
+    } else {
+      overall = .none
+    }
 
     return DeepSeekServiceStatus(
       overall: overall,
-      overallDescription: summary.status?.description ?? "",
-      updatedAt: summary.page?.updatedAt.flatMap { dateParser($0) },
+      overallDescription: "",
+      updatedAt: nil,
       apiComponents: apiComponents,
       webChatComponents: webChatComponents,
       otherComponents: otherComponents,
@@ -100,20 +126,82 @@ enum DeepSeekStatusMapper {
     )
   }
 
+  private static func severity(_ status: ComponentStatus) -> Int {
+    switch status {
+    case .operational, .unknown:
+      return 0
+    case .degradedPerformance, .underMaintenance:
+      return 1
+    case .partialOutage:
+      return 2
+    case .majorOutage:
+      return 3
+    }
+  }
+
+  private static func worse(_ lhs: ComponentStatus, _ rhs: ComponentStatus?) -> ComponentStatus {
+    guard let rhs else { return lhs }
+    return severity(lhs) >= severity(rhs) ? lhs : rhs
+  }
+
+  private static func impact(forSeverity severity: Int) -> IncidentImpact {
+    switch severity {
+    case 4:
+      return .critical
+    case 3:
+      return .major
+    case 1...2:
+      return .minor
+    default:
+      return .unknown
+    }
+  }
+
+  private static func latestTimestamp(_ change: FlashcatStatusChange) -> Date? {
+    if let at = change.updates?.compactMap({ $0.atSeconds }).max() {
+      return Date(timeIntervalSince1970: TimeInterval(at))
+    }
+    if let start = change.startAtSeconds {
+      return Date(timeIntervalSince1970: TimeInterval(start))
+    }
+    return nil
+  }
+
+  // MARK: - 组件分类
+
   /// 识别 API 组件：名称标准化后包含独立 `api` token。
   static func isAPIComponent(_ name: String) -> Bool {
     let parts = tokens(name)
     return parts.contains("api") || normalize(name).contains("api服务")
   }
 
-  /// 识别 Web Chat 组件。
-  static func isWebChatComponent(_ name: String) -> Bool {
+  /// 识别 Web Chat 组件：名称或所属 section 名称匹配对话/chat 特征。
+  static func isWebChatComponent(
+    _ name: String,
+    sections: [String: String] = [:],
+    components: [FlashcatComponent] = []
+  ) -> Bool {
+    if matchesWebChatName(name) {
+      return true
+    }
+    guard let component = components.first(where: { $0.name == name }),
+      let sectionID = component.sectionID,
+      let sectionName = sections[sectionID]
+    else {
+      return false
+    }
+    return matchesWebChatName(sectionName)
+  }
+
+  private static func matchesWebChatName(_ name: String) -> Bool {
     let parts = tokens(name)
     let normalized = normalize(name)
     return (parts.contains("web") && parts.contains("chat"))
       || normalized.contains("webchat")
       || normalized.contains("网页对话")
       || normalized == "对话服务"
+      || normalized.contains("对话服务")
+      || normalized.contains("chatservice")
   }
 
   static func tokens(_ name: String) -> [String] {

@@ -109,7 +109,7 @@ final class ServiceStatusClientTests: XCTestCase {
     let summary = try await makeClient().fetchSummary()
     let mapped = DeepSeekStatusMapper.map(summary)
     XCTAssertEqual(mapped.overall, .none)
-    XCTAssertEqual(mapped.apiComponents.count, 1)
+    XCTAssertEqual(mapped.apiComponents.count, 2)
     XCTAssertEqual(mapped.webChatComponents.count, 1)
   }
 
@@ -185,170 +185,151 @@ final class ServiceStatusClientTests: XCTestCase {
 }
 
 enum ServiceStatusFixtures {
-  static let allOperational = """
-    {
-      "page": {"id": "p1", "name": "DeepSeek", "url": "https://status.deepseek.com", "updated_at": "2026-07-31T01:00:00.000Z"},
-      "status": {"indicator": "none", "description": "All Systems Operational"},
+  static let pageJSON = """
+    "page": {
+      "page_id": 6410630422455,
+      "name": "DeepSeek",
+      "url_name": "deepseek",
+      "custom_domain": "status.deepseek.com",
       "components": [
-        {"id": "c1", "name": "API Service", "status": "operational", "group": false},
-        {"id": "c2", "name": "Web Chat Service", "status": "operational", "group": false}
+        {"component_id": "c1", "name": "DeepSeek V4 Pro API服务(API Service)", "available_since_seconds": 1706745600, "order_id": 3},
+        {"component_id": "c2", "name": "DeepSeek V4 Flash API服务(API Service)", "available_since_seconds": 1706745600, "order_id": 4},
+        {"component_id": "c3", "name": "快速模式(Instant Mode)", "section_id": "s1", "available_since_seconds": 1706745600, "order_id": 1},
+        {"component_id": "c4", "name": "New Unknown Component", "available_since_seconds": 1706745600, "order_id": 9}
       ],
-      "incidents": [],
-      "scheduled_maintenances": []
-    }
-    """
-
-  static let degraded = allOperational.replacingOccurrences(
-    of: #""status": "operational""#,
-    with: #""status": "degraded_performance""#
-  )
-
-  static let partialOutage = allOperational.replacingOccurrences(
-    of: #""status": "operational""#,
-    with: #""status": "partial_outage""#
-  )
-
-  static let majorOutage = allOperational.replacingOccurrences(
-    of: #""status": "operational""#,
-    with: #""status": "major_outage""#
-  )
-
-  static let critical = allOperational.replacingOccurrences(
-    of: #""indicator": "none""#,
-    with: #""indicator": "critical""#
-  ).replacingOccurrences(
-    of: #""status": "operational""#,
-    with: #""status": "major_outage""#
-  )
-
-  static let underMaintenance = allOperational.replacingOccurrences(
-    of: #""status": "operational""#,
-    with: #""status": "under_maintenance""#
-  )
-
-  static let incident = """
-    {
-      "page": {"id": "p1", "name": "DeepSeek", "url": "https://status.deepseek.com", "updated_at": "2026-07-31T01:00:00.000Z"},
-      "status": {"indicator": "major", "description": "Partial Service Disruption"},
-      "components": [
-        {"id": "c1", "name": "API Service", "status": "major_outage", "group": false},
-        {"id": "c2", "name": "Web Chat Service", "status": "operational", "group": false},
-        {"id": "c3", "name": "New Unknown Component", "status": "weird_status", "group": false},
-        {"id": "g1", "name": "Component Group", "status": "operational", "group": true}
-      ],
-      "incidents": [
-        {
-          "id": "i1",
-          "name": "API errors",
-          "status": "investigating",
-          "impact": "major",
-          "created_at": "2026-07-31T00:00:00.000Z",
-          "updated_at": "2026-07-31T00:30:00.000Z",
-          "incident_updates": [
-            {"status": "investigating", "body": "We are investigating elevated API error rates.", "created_at": "2026-07-31T00:00:00.000Z", "updated_at": "2026-07-31T00:00:00.000Z"}
-          ]
-        },
-        {
-          "id": "i2",
-          "name": "Old resolved issue",
-          "status": "resolved",
-          "impact": "minor",
-          "created_at": "2026-07-30T00:00:00.000Z",
-          "updated_at": "2026-07-30T01:00:00.000Z",
-          "incident_updates": []
-        }
-      ],
-      "scheduled_maintenances": [
-        {
-          "id": "m1",
-          "name": "Scheduled database maintenance",
-          "status": "scheduled",
-          "impact": "maintenance",
-          "created_at": "2026-07-30T00:00:00.000Z",
-          "updated_at": "2026-07-30T00:00:00.000Z",
-          "incident_updates": []
-        }
+      "sections": [
+        {"section_id": "s1", "name": "对话服务(Chat Service)", "order_id": 5}
       ]
     }
     """
+
+  static let allOperational = """
+    {
+      "request_id": "r1",
+      "data": { \(pageJSON), "active_changes": [] }
+    }
+    """
+
+  static func activeChange(
+    type: String = "incident",
+    status: String = "monitoring",
+    affectedStatus: String = "degraded",
+    title: String = "API errors",
+    changeID: Int = 1
+  ) -> String {
+    """
+    {
+      "change_id": \(changeID),
+      "type": "\(type)",
+      "title": "\(title)",
+      "status": "\(status)",
+      "start_at_seconds": 1785490000,
+      "affected_components": [
+        {"component_id": "c1", "name": "DeepSeek V4 Pro API服务(API Service)", "status": "\(affectedStatus)"}
+      ],
+      "updates": [
+        {"at_seconds": 1785490060, "status": "\(status)", "description": "We are investigating."}
+      ]
+    }
+    """
+  }
+
+  static func withActiveChange(
+    type: String = "incident",
+    status: String = "monitoring",
+    affectedStatus: String = "degraded",
+    changeID: Int = 1
+  ) -> String {
+    """
+    {
+      "request_id": "r1",
+      "data": { \(pageJSON), "active_changes": [\(activeChange(type: type, status: status, affectedStatus: affectedStatus, changeID: changeID))] }
+    }
+    """
+  }
 }
 
 final class ServiceStatusMapperTests: XCTestCase {
-  private let fixedDate = Date(timeIntervalSince1970: 1_752_000_000)
-
   private func map(_ json: String) throws -> DeepSeekServiceStatus {
-    let summary = try JSONDecoder().decode(StatusPageSummary.self, from: Data(json.utf8))
-    return DeepSeekStatusMapper.map(summary) { _ in self.fixedDate }
+    let response = try JSONDecoder().decode(FlashcatStatusResponse.self, from: Data(json.utf8))
+    return DeepSeekStatusMapper.map(response)
   }
 
   func testAllOperational() throws {
     let status = try map(ServiceStatusFixtures.allOperational)
     XCTAssertEqual(status.overall, .none)
-    XCTAssertEqual(status.apiComponents.map(\.name), ["API Service"])
-    XCTAssertEqual(status.webChatComponents.map(\.name), ["Web Chat Service"])
-    XCTAssertTrue(status.otherComponents.isEmpty)
+    XCTAssertEqual(status.apiComponents.map(\.name), [
+      "DeepSeek V4 Pro API服务(API Service)",
+      "DeepSeek V4 Flash API服务(API Service)",
+    ])
+    XCTAssertEqual(status.webChatComponents.map(\.name), ["快速模式(Instant Mode)"])
+    XCTAssertEqual(status.otherComponents.map(\.name), ["New Unknown Component"])
     XCTAssertTrue(status.incidents.isEmpty)
-    XCTAssertEqual(status.updatedAt, fixedDate)
+    XCTAssertTrue(status.scheduledMaintenances.isEmpty)
   }
 
   func testDegradedPerformance() throws {
-    let status = try map(ServiceStatusFixtures.degraded)
+    let status = try map(ServiceStatusFixtures.withActiveChange(affectedStatus: "degraded"))
+    XCTAssertEqual(status.overall, .minor)
     XCTAssertEqual(status.apiComponents.first?.status, .degradedPerformance)
-    XCTAssertEqual(status.webChatComponents.first?.status, .degradedPerformance)
+    XCTAssertEqual(status.incidents.count, 1)
+    XCTAssertEqual(status.incidents[0].status, .monitoring)
+    XCTAssertEqual(status.incidents[0].latestUpdateBody, "We are investigating.")
   }
 
   func testPartialOutage() throws {
-    let status = try map(ServiceStatusFixtures.partialOutage)
+    let status = try map(ServiceStatusFixtures.withActiveChange(affectedStatus: "partial_outage"))
+    XCTAssertEqual(status.overall, .minor)
     XCTAssertEqual(status.apiComponents.first?.status, .partialOutage)
   }
 
   func testMajorOutage() throws {
-    let status = try map(ServiceStatusFixtures.majorOutage)
+    let status = try map(ServiceStatusFixtures.withActiveChange(affectedStatus: "major_outage"))
+    XCTAssertEqual(status.overall, .major)
     XCTAssertEqual(status.apiComponents.first?.status, .majorOutage)
   }
 
   func testCritical() throws {
-    let status = try map(ServiceStatusFixtures.critical)
+    let status = try map(ServiceStatusFixtures.withActiveChange(affectedStatus: "critical"))
     XCTAssertEqual(status.overall, .critical)
   }
 
   func testUnderMaintenance() throws {
-    let status = try map(ServiceStatusFixtures.underMaintenance)
+    let status = try map(
+      ServiceStatusFixtures.withActiveChange(
+        type: "maintenance",
+        status: "scheduled",
+        affectedStatus: "under_maintenance"
+      )
+    )
+    XCTAssertEqual(status.overall, .maintenance)
     XCTAssertEqual(status.apiComponents.first?.status, .underMaintenance)
+    XCTAssertEqual(status.scheduledMaintenances.count, 1)
+    XCTAssertTrue(status.incidents.isEmpty)
   }
 
-  func testUnknownComponentAndGroupHandling() throws {
-    let status = try map(ServiceStatusFixtures.incident)
-    XCTAssertEqual(status.otherComponents.map(\.name), ["New Unknown Component"])
-    XCTAssertEqual(status.otherComponents.first?.status, .unknown)
-    XCTAssertFalse(status.otherComponents.contains { $0.name == "Component Group" })
-  }
-
-  func testUnknownIndicatorFallsBack() throws {
-    let json = ServiceStatusFixtures.allOperational.replacingOccurrences(
-      of: #""indicator": "none""#,
-      with: #""indicator": "something_new""#
+  func testResolvedChangeIsFilteredOut() throws {
+    let json = ServiceStatusFixtures.withActiveChange(
+      status: "resolved",
+      affectedStatus: "operational",
+      changeID: 9
     )
     let status = try map(json)
-    XCTAssertEqual(status.overall, .unknown)
+    XCTAssertEqual(status.overall, .none)
+    XCTAssertTrue(status.incidents.isEmpty)
+    XCTAssertEqual(status.apiComponents.first?.status, .operational)
   }
 
-  func testIncidentParsing() throws {
-    let status = try map(ServiceStatusFixtures.incident)
-    XCTAssertEqual(status.incidents.count, 1)
-    let incident = status.incidents[0]
-    XCTAssertEqual(incident.title, "API errors")
-    XCTAssertEqual(incident.status, .investigating)
-    XCTAssertEqual(incident.impact, .major)
-    XCTAssertEqual(incident.updatedAt, fixedDate)
-    XCTAssertEqual(incident.latestUpdateBody, "We are investigating elevated API error rates.")
-    XCTAssertEqual(status.scheduledMaintenances.count, 1)
-    XCTAssertEqual(status.scheduledMaintenances[0].title, "Scheduled database maintenance")
+  func testUnknownComponentStatusAndOverall() throws {
+    let json = ServiceStatusFixtures.withActiveChange(affectedStatus: "weird_status")
+    let status = try map(json)
+    XCTAssertEqual(status.apiComponents.first?.status, .unknown)
+    XCTAssertEqual(status.overall, .unknown)
   }
 
   func testMissingOptionalFields() throws {
     let status = try map("{}")
-    XCTAssertEqual(status.overall, .unknown)
+    XCTAssertEqual(status.overall, .none)
     XCTAssertTrue(status.apiComponents.isEmpty)
     XCTAssertTrue(status.webChatComponents.isEmpty)
     XCTAssertTrue(status.otherComponents.isEmpty)
@@ -360,28 +341,56 @@ final class ServiceStatusMapperTests: XCTestCase {
   func testAPIComponentRecognition() {
     XCTAssertTrue(DeepSeekStatusMapper.isAPIComponent("API Service"))
     XCTAssertTrue(DeepSeekStatusMapper.isAPIComponent("API 服务"))
-    XCTAssertTrue(DeepSeekStatusMapper.isAPIComponent("DeepSeek API"))
+    XCTAssertTrue(DeepSeekStatusMapper.isAPIComponent("DeepSeek V4 Pro API服务(API Service)"))
     XCTAssertFalse(DeepSeekStatusMapper.isAPIComponent("Capabilities"))
     XCTAssertTrue(DeepSeekStatusMapper.isWebChatComponent("Web Chat Service"))
     XCTAssertTrue(DeepSeekStatusMapper.isWebChatComponent("网页对话服务"))
     XCTAssertFalse(DeepSeekStatusMapper.isWebChatComponent("API Service"))
   }
+
+  func testSectionBasedWebChatClassification() {
+    let components = [
+      FlashcatComponent(
+        componentID: "c3",
+        name: "快速模式(Instant Mode)",
+        description: nil,
+        sectionID: "s1",
+        availableSinceSeconds: 1_706_745_600,
+        orderID: 1
+      )
+    ]
+    let sections = [
+      FlashcatSection(
+        sectionID: "s1",
+        name: "对话服务(Chat Service)",
+        description: nil,
+        orderID: 5
+      )
+    ]
+    XCTAssertTrue(
+      DeepSeekStatusMapper.isWebChatComponent(
+        "快速模式(Instant Mode)",
+        sections: Dictionary(uniqueKeysWithValues: sections.compactMap { ($0.sectionID!, $0.name!) }),
+        components: components
+      )
+    )
+  }
 }
 
 /// 脚本化状态客户端，用于 Store 语义测试。
 actor ScriptedStatusClient: DeepSeekStatusFetching {
-  private var results: [Result<StatusPageSummary, Error>]
+  private var results: [Result<FlashcatStatusResponse, Error>]
   private(set) var fetchCount = 0
 
-  init(results: [Result<StatusPageSummary, Error>]) {
+  init(results: [Result<FlashcatStatusResponse, Error>]) {
     self.results = results
   }
 
-  func fetchSummary() async throws -> StatusPageSummary {
+  func fetchSummary() async throws -> FlashcatStatusResponse {
     fetchCount += 1
     guard !results.isEmpty else {
       return try JSONDecoder().decode(
-        StatusPageSummary.self,
+        FlashcatStatusResponse.self,
         from: Data(ServiceStatusFixtures.allOperational.utf8)
       )
     }
@@ -398,9 +407,9 @@ final class DeepSeekStatusStoreTests: XCTestCase {
     clock = MutableClock(date: Date(timeIntervalSince1970: 1_752_000_000))
   }
 
-  private func summary() throws -> StatusPageSummary {
+  private func summary() throws -> FlashcatStatusResponse {
     try JSONDecoder().decode(
-      StatusPageSummary.self,
+      FlashcatStatusResponse.self,
       from: Data(ServiceStatusFixtures.allOperational.utf8)
     )
   }

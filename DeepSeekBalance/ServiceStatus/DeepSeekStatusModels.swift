@@ -1,115 +1,123 @@
 import Foundation
 
-/// Statuspage `summary.json` 宽松模型：所有字段 optional，
-/// 未知枚举值在映射层回退为 `.unknown`，新增字段自动忽略。
-struct StatusPageSummary: Codable, Sendable {
-  let page: StatusPagePage?
-  let status: StatusPageStatus?
-  let components: [StatusPageComponent]?
-  let incidents: [StatusPageIncident]?
-  let scheduledMaintenances: [StatusPageScheduledMaintenance]?
+/// DeepSeek 官方状态页（Flashcat 托管）`summary/active` 宽松模型：
+/// 所有字段 optional，未知枚举值在映射层回退为 `.unknown`，新增字段自动忽略。
+struct FlashcatStatusResponse: Codable, Sendable {
+  let requestID: String?
+  let data: FlashcatStatusData?
+
+  enum CodingKeys: String, CodingKey {
+    case requestID = "request_id"
+    case data
+  }
+}
+
+struct FlashcatStatusData: Codable, Sendable {
+  let page: FlashcatStatusPage?
+  let activeChanges: [FlashcatStatusChange]?
 
   enum CodingKeys: String, CodingKey {
     case page
-    case status
+    case activeChanges = "active_changes"
+  }
+}
+
+struct FlashcatStatusPage: Codable, Sendable {
+  let pageID: Int64?
+  let name: String?
+  let urlName: String?
+  let customDomain: String?
+  let components: [FlashcatComponent]?
+  let sections: [FlashcatSection]?
+
+  enum CodingKeys: String, CodingKey {
+    case pageID = "page_id"
+    case name
+    case urlName = "url_name"
+    case customDomain = "custom_domain"
     case components
-    case incidents
-    case scheduledMaintenances = "scheduled_maintenances"
+    case sections
   }
 }
 
-struct StatusPagePage: Codable, Sendable {
-  let id: String?
+struct FlashcatComponent: Codable, Sendable {
+  let componentID: String?
   let name: String?
-  let url: String?
-  let timeZone: String?
-  let updatedAt: String?
-
-  enum CodingKeys: String, CodingKey {
-    case id
-    case name
-    case url
-    case timeZone = "time_zone"
-    case updatedAt = "updated_at"
-  }
-}
-
-struct StatusPageStatus: Codable, Sendable {
-  let indicator: String?
   let description: String?
-}
-
-struct StatusPageComponent: Codable, Sendable {
-  let id: String?
-  let name: String?
-  let status: String?
-  let group: Bool?
-  let groupID: String?
-  let createdAt: String?
-  let updatedAt: String?
+  let sectionID: String?
+  let availableSinceSeconds: Int64?
+  let orderID: Int?
 
   enum CodingKeys: String, CodingKey {
-    case id
+    case componentID = "component_id"
     case name
-    case status
-    case group
-    case groupID = "group_id"
-    case createdAt = "created_at"
-    case updatedAt = "updated_at"
+    case description
+    case sectionID = "section_id"
+    case availableSinceSeconds = "available_since_seconds"
+    case orderID = "order_id"
   }
 }
 
-struct StatusPageIncident: Codable, Sendable {
-  let id: String?
+struct FlashcatSection: Codable, Sendable {
+  let sectionID: String?
   let name: String?
-  let status: String?
-  let impact: String?
-  let createdAt: String?
-  let updatedAt: String?
-  let incidentUpdates: [StatusPageIncidentUpdate]?
+  let description: String?
+  let orderID: Int?
 
   enum CodingKeys: String, CodingKey {
-    case id
+    case sectionID = "section_id"
     case name
-    case status
-    case impact
-    case createdAt = "created_at"
-    case updatedAt = "updated_at"
-    case incidentUpdates = "incident_updates"
+    case description
+    case orderID = "order_id"
   }
 }
 
-struct StatusPageIncidentUpdate: Codable, Sendable {
+/// 进行中的事故或计划维护。
+struct FlashcatStatusChange: Codable, Sendable {
+  let changeID: Int64?
+  let type: String?
+  let title: String?
+  let description: String?
   let status: String?
-  let body: String?
-  let createdAt: String?
-  let updatedAt: String?
+  let startAtSeconds: Int64?
+  let closeAtSeconds: Int64?
+  let affectedComponents: [FlashcatAffectedComponent]?
+  let updates: [FlashcatChangeUpdate]?
 
   enum CodingKeys: String, CodingKey {
+    case changeID = "change_id"
+    case type
+    case title
+    case description
     case status
-    case body
-    case createdAt = "created_at"
-    case updatedAt = "updated_at"
+    case startAtSeconds = "start_at_seconds"
+    case closeAtSeconds = "close_at_seconds"
+    case affectedComponents = "affected_components"
+    case updates
   }
 }
 
-struct StatusPageScheduledMaintenance: Codable, Sendable {
-  let id: String?
+struct FlashcatAffectedComponent: Codable, Sendable {
+  let componentID: String?
   let name: String?
   let status: String?
-  let impact: String?
-  let createdAt: String?
-  let updatedAt: String?
-  let incidentUpdates: [StatusPageIncidentUpdate]?
 
   enum CodingKeys: String, CodingKey {
-    case id
+    case componentID = "component_id"
     case name
     case status
-    case impact
-    case createdAt = "created_at"
-    case updatedAt = "updated_at"
-    case incidentUpdates = "incident_updates"
+  }
+}
+
+struct FlashcatChangeUpdate: Codable, Sendable {
+  let atSeconds: Int64?
+  let status: String?
+  let description: String?
+
+  enum CodingKeys: String, CodingKey {
+    case atSeconds = "at_seconds"
+    case status
+    case description
   }
 }
 
@@ -138,8 +146,20 @@ enum ComponentStatus: String, Equatable, Sendable {
   case unknown
 
   static func from(raw: String?) -> ComponentStatus {
-    guard let raw else { return .unknown }
-    return ComponentStatus(rawValue: raw.lowercased()) ?? .unknown
+    switch raw?.lowercased() {
+    case "operational":
+      return .operational
+    case "degraded", "degraded_performance":
+      return .degradedPerformance
+    case "partial_outage":
+      return .partialOutage
+    case "major_outage", "outage":
+      return .majorOutage
+    case "under_maintenance", "maintenance":
+      return .underMaintenance
+    default:
+      return .unknown
+    }
   }
 }
 

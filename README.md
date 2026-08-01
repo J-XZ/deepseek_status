@@ -42,7 +42,7 @@
 
 ## DeepSeek 官方服务状态
 
-- 数据来源仅使用 DeepSeek 官方状态页的公开 Statuspage JSON：`https://status.deepseek.com/api/v2/summary.json`
+- 数据来源仅使用 DeepSeek 官方状态页的公开 JSON：`https://status.deepseek.com/api/status-page/6410630422455/summary/active`（官方状态页由 Flashcat 托管，页面 HTML 中公开的 `page_id` 为 `6410630422455`；标准 Statuspage 路径 `/api/v2/summary.json` 在该域名下返回 404，不使用）
 - 官方状态页面：`https://status.deepseek.com/`
 - 状态请求不需要 API Key，也不发送 `Authorization` 头；状态网络层与余额网络层相互独立，一个失败不影响另一个。
 - 应用启动后立即获取官方状态；默认每 5 分钟刷新；弹出菜单打开时缓存超过 60 秒则刷新；app wake / didBecomeActive 后按缓存年龄刷新；提供独立「刷新服务状态」按钮；底部「刷新」并发刷新余额与官方状态，两者错误互不覆盖。
