@@ -35,7 +35,16 @@ struct BalancePopoverView: View {
       }
       .padding(16)
     }
-    .frame(width: 500)
+    // MenuBarExtra 窗口按视图的固有尺寸定高，ScrollView 没有固有高度，
+    // 必须给出明确的高度，否则窗口会塌成一条窄条。
+    .frame(
+      minWidth: 500,
+      idealWidth: 500,
+      maxWidth: 500,
+      minHeight: 400,
+      idealHeight: 620,
+      maxHeight: 820
+    )
     .onAppear {
       Task { await store.refreshIfNeeded() }
       Task { await statusStore.refreshIfNeeded() }
