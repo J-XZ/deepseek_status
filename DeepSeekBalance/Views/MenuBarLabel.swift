@@ -9,7 +9,7 @@ struct MenuBarLabel: View {
       Image("DeepSeekIcon")
         .renderingMode(.template)
         .resizable()
-        .frame(width: 16, height: 16)
+        .frame(width: 14, height: 14)
         .accessibilityLabel(L10n.string(.a11yDeepSeekIcon, language: store.language))
       Text(store.menuBarText)
         .font(.system(size: 13, weight: .medium))
