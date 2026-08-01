@@ -133,6 +133,7 @@ if [ "$SKIP_BUILD" = false ]; then
     -configuration "$CONFIGURATION" \
     -destination "platform=macOS" \
     -derivedDataPath "$DERIVED_DATA" \
+    MARKETING_VERSION="$VERSION" \
     "${XCODEBUILD_SIGNING_ARGS[@]}" \
     build
 fi

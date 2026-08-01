@@ -210,8 +210,8 @@ Release 构建：
 推送版本标签即可自动发布：
 
 ```bash
-git tag v1.0.1
-git push origin v1.0.1
+git tag v1.0.2
+git push origin v1.0.2
 ```
 
 `.github/workflows/release.yml` 会在 macOS runner 上初始化 LevelDB submodule、运行单元测试并把全部产物发布到对应的 GitHub Release。签名是可选的：
