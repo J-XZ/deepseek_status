@@ -23,7 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 /// - 左键：显示 SwiftUI 弹出窗口（余额、趋势、状态、设置）
 /// - 右键：显示包含“退出应用”的上下文菜单
 @MainActor
-final class StatusItemController: NSObject {
+final class StatusItemController: NSObject, NSPopoverDelegate {
   private let store: BalanceStore
   private let statusStore: DeepSeekStatusStore
   private let loginItemStore: LoginItemStore
@@ -31,6 +31,7 @@ final class StatusItemController: NSObject {
   private let statusItem: NSStatusItem
   private let popover: NSPopover
   private var cancellables: Set<AnyCancellable> = []
+  private var popoverIsActive = false
 
   init(
     store: BalanceStore,
@@ -69,6 +70,7 @@ final class StatusItemController: NSObject {
     button.imagePosition = .imageLeading
     button.imageHugsTitle = true
     button.toolTip = L10n.string(.appTitle, language: store.language)
+    button.appearsDisabled = true
     updateTitle()
 
     button.target = self
@@ -83,7 +85,12 @@ final class StatusItemController: NSObject {
       string: store.menuBarText,
       attributes: [
         .font: font,
-        .foregroundColor: NSColor.labelColor,
+        // labelColor is always bright and bypasses the status button's
+        // inactive appearance. Use a secondary semantic color while the
+        // popover is not active so the amount dims with the icon.
+        .foregroundColor: popoverIsActive
+          ? NSColor.labelColor
+          : NSColor.secondaryLabelColor,
       ]
     )
     button.setAccessibilityLabel(
@@ -101,8 +108,25 @@ final class StatusItemController: NSObject {
     )
     .environment(\.locale, store.language.locale)
     popover.contentViewController = NSHostingController(rootView: rootView)
+    popover.delegate = self
     popover.contentSize = NSSize(width: 500, height: 620)
     popover.behavior = .transient
+  }
+
+  private func updatePopoverActivity(_ isActive: Bool) {
+    popoverIsActive = isActive
+    statusItem.button?.appearsDisabled = !isActive
+    updateTitle()
+  }
+
+  // MARK: - 弹窗状态
+
+  func popoverDidShow(_ notification: Notification) {
+    updatePopoverActivity(true)
+  }
+
+  func popoverDidClose(_ notification: Notification) {
+    updatePopoverActivity(false)
   }
 
   private func togglePopover(_ sender: NSStatusBarButton) {
