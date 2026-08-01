@@ -457,7 +457,7 @@ final class BalanceStore: ObservableObject {
           object: nil,
           queue: .main
         ) { [weak self] _ in
-          Task { @MainActor in await self?.handleLifecycleEvent() }
+          Task { @MainActor [weak self] in await self?.handleLifecycleEvent() }
         }
       )
     )
@@ -470,7 +470,7 @@ final class BalanceStore: ObservableObject {
           object: nil,
           queue: .main
         ) { [weak self] _ in
-          Task { @MainActor in await self?.handleLifecycleEvent() }
+          Task { @MainActor [weak self] in await self?.handleLifecycleEvent() }
         }
       )
     )

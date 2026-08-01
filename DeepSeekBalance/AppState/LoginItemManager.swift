@@ -98,7 +98,7 @@ final class LoginItemStore: ObservableObject {
           object: nil,
           queue: .main
         ) { [weak self] _ in
-          Task { @MainActor in await self?.syncFromSystem() }
+          Task { @MainActor [weak self] in await self?.syncFromSystem() }
         }
       )
     )

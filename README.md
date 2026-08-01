@@ -186,8 +186,8 @@ Release 构建：
 推送版本标签即可自动发布：
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.0.1
+git push origin v1.0.1
 ```
 
 `.github/workflows/release.yml` 会在 macOS runner 上初始化 LevelDB submodule、运行单元测试、生成安装包，并把全部产物发布到对应的 GitHub Release。Release 工作流默认使用免签名构建；如需消除 Gatekeeper 提示，需要后续接入 Apple Developer 签名与 notarization 凭据。
