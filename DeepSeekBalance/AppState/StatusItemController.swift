@@ -23,7 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 /// - 左键：显示 SwiftUI 弹出窗口（余额、趋势、状态、设置）
 /// - 右键：显示包含“退出应用”的上下文菜单
 @MainActor
-final class StatusItemController: NSObject, NSPopoverDelegate {
+final class StatusItemController: NSObject {
   private let store: BalanceStore
   private let statusStore: DeepSeekStatusStore
   private let loginItemStore: LoginItemStore
@@ -31,7 +31,6 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
   private let statusItem: NSStatusItem
   private let popover: NSPopover
   private var cancellables: Set<AnyCancellable> = []
-  private var popoverIsActive = false
 
   init(
     store: BalanceStore,
@@ -70,7 +69,6 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
     button.imagePosition = .imageLeading
     button.imageHugsTitle = true
     button.toolTip = L10n.string(.appTitle, language: store.language)
-    button.appearsDisabled = true
     updateTitle()
 
     button.target = self
@@ -80,19 +78,11 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
 
   private func updateTitle() {
     guard let button = statusItem.button else { return }
-    let font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .semibold)
-    button.attributedTitle = NSAttributedString(
-      string: store.menuBarText,
-      attributes: [
-        .font: font,
-        // labelColor is always bright and bypasses the status button's
-        // inactive appearance. Use a secondary semantic color while the
-        // popover is not active so the amount dims with the icon.
-        .foregroundColor: popoverIsActive
-          ? NSColor.labelColor
-          : NSColor.secondaryLabelColor,
-      ]
-    )
+    // Let NSStatusBarButton draw its plain title. Supplying a foreground color
+    // in attributedTitle bypasses the menu bar's own active/inactive and
+    // highlighted-state color handling, which can invert the expected result.
+    button.font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .semibold)
+    button.title = store.menuBarText
     button.setAccessibilityLabel(
       L10n.string(.a11yMenuBar, language: store.language, store.menuBarText)
     )
@@ -108,25 +98,8 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
     )
     .environment(\.locale, store.language.locale)
     popover.contentViewController = NSHostingController(rootView: rootView)
-    popover.delegate = self
     popover.contentSize = NSSize(width: 500, height: 620)
     popover.behavior = .transient
-  }
-
-  private func updatePopoverActivity(_ isActive: Bool) {
-    popoverIsActive = isActive
-    statusItem.button?.appearsDisabled = !isActive
-    updateTitle()
-  }
-
-  // MARK: - 弹窗状态
-
-  func popoverDidShow(_ notification: Notification) {
-    updatePopoverActivity(true)
-  }
-
-  func popoverDidClose(_ notification: Notification) {
-    updatePopoverActivity(false)
   }
 
   private func togglePopover(_ sender: NSStatusBarButton) {
