@@ -27,21 +27,26 @@ final class RefreshCoordinator {
     return true
   }
 
-  func adopt(_ task: Task<Void, Never>, credentialID: String) {
+  /// 采纳任务并返回本次代次令牌。同一凭据同时只有一个有效请求；凭据变化或
+  /// 强制刷新时替换并取消旧任务。
+  func adopt(_ task: Task<Void, Never>, credentialID: String) -> Int {
     activeTask?.cancel()
     generation += 1
-    let myGeneration = generation
+    let token = generation
     activeTask = task
     activeCredentialID = credentialID
     isRefreshing = true
+    return token
+  }
 
-    Task { [weak self] in
-      _ = await task.value
-      guard let self, self.generation == myGeneration else { return }
-      self.activeTask = nil
-      self.activeCredentialID = nil
-      self.isRefreshing = false
-    }
+  /// 任务完成后由调用方在主线程同步清理（不再依赖额外的 Task 调度时机，
+  /// 避免上一次任务的清理尚未执行时 begin 误判为“仍在刷新”）。
+  /// 令牌与当前代次不符时（已被新任务替换或取消）不做任何清理。
+  func finish(token: Int) {
+    guard token == generation else { return }
+    activeTask = nil
+    activeCredentialID = nil
+    isRefreshing = false
   }
 
   func awaitCurrent() async {

@@ -218,8 +218,9 @@ final class BalanceStore: ObservableObject {
     let task = Task<Void, Never> { [weak self] in
       _ = await self?.performRefresh(credential: credential)
     }
-    coordinator.adopt(task, credentialID: credential.credentialID)
+    let token = coordinator.adopt(task, credentialID: credential.credentialID)
     await task.value
+    coordinator.finish(token: token)
   }
 
   /// 打开菜单时调用：距上次成功超过 maximumAge 秒才刷新。
