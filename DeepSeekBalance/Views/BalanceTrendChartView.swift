@@ -34,11 +34,11 @@ struct BalanceTrendChartView: View {
   private func metricLineStyle(_ metric: TrendPoint.Metric) -> StrokeStyle {
     switch metric {
     case .total:
-      return StrokeStyle(lineWidth: 2)
+      return StrokeStyle(lineWidth: 2.25)
     case .toppedUp:
-      return StrokeStyle(lineWidth: 1.5, dash: [5, 4])
+      return StrokeStyle(lineWidth: 1.75, dash: [7, 4])
     case .granted:
-      return StrokeStyle(lineWidth: 1.5, dash: [2, 3])
+      return StrokeStyle(lineWidth: 1.75, dash: [4, 3])
     }
   }
 
@@ -68,34 +68,24 @@ struct BalanceTrendChartView: View {
         }
       }
 
-      // 只对孤立单样本画点，避免为全部样本生成大量 PointMark。
-      ForEach(model.isolatedPoints) { item in
-        PointMark(
-          x: .value("时间", item.point.date),
-          y: .value("金额", item.point.value)
-        )
-        .foregroundStyle(metricColor(item.point.metric))
-      }
-
       if let selectedSample {
         RuleMark(x: .value("选中时间", selectedSample.bucketStart))
           .foregroundStyle(.secondary)
           .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
-        ForEach(selectedPoints(selectedSample)) { point in
-          PointMark(
-            x: .value("时间", point.date),
-            y: .value("金额", point.value)
-          )
-          .symbolSize(90)
-          .foregroundStyle(metricColor(point.metric))
-        }
       }
     }
     .chartXScale(domain: model.xDomain)
     .chartXAxis {
-      AxisMarks(values: .automatic(desiredCount: 6)) { _ in
+      AxisMarks(values: .automatic(desiredCount: 4)) { value in
         AxisGridLine().foregroundStyle(.quaternary)
-        AxisValueLabel()
+        AxisValueLabel {
+          if let date = value.as(Date.self) {
+            Text(axisLabel(for: date))
+              .font(AppTypography.caption)
+              .lineLimit(1)
+              .minimumScaleFactor(0.8)
+          }
+        }
       }
     }
     .chartYAxis {
@@ -144,16 +134,11 @@ struct BalanceTrendChartView: View {
 
   @State private var tapStartedSample: BalanceSample?
 
-  private func selectedPoints(_ sample: BalanceSample) -> [TrendPoint] {
-    let points = BalanceTrendProcessor.points(for: [sample], currency: currency)
-    return points
-  }
-
   private var legend: some View {
     HStack(spacing: 14) {
       legendItem(label: L10n.string(.legendTotal, language: language), color: .blue, dash: [])
-      legendItem(label: L10n.string(.legendToppedUp, language: language), color: .green, dash: [5, 4])
-      legendItem(label: L10n.string(.legendGranted, language: language), color: .orange, dash: [2, 3])
+      legendItem(label: L10n.string(.legendToppedUp, language: language), color: .green, dash: [7, 4])
+      legendItem(label: L10n.string(.legendGranted, language: language), color: .orange, dash: [4, 3])
       Spacer()
     }
     .font(AppTypography.caption)
@@ -163,13 +148,21 @@ struct BalanceTrendChartView: View {
     HStack(spacing: 4) {
       Path { path in
         path.move(to: CGPoint(x: 0, y: 3))
-        path.addLine(to: CGPoint(x: 16, y: 3))
+        path.addLine(to: CGPoint(x: 20, y: 3))
       }
       .stroke(color, style: StrokeStyle(lineWidth: 2, dash: dash))
-      .frame(width: 16, height: 6)
+      .frame(width: 20, height: 6)
       Text(label)
         .foregroundStyle(.secondary)
     }
+  }
+
+  private func axisLabel(for date: Date) -> String {
+    let formatter = DateFormatter()
+    formatter.locale = language.locale
+    formatter.calendar = Calendar(identifier: .gregorian)
+    formatter.dateFormat = language == .simplifiedChinese ? "M/d HH:mm" : "MMM d HH:mm"
+    return formatter.string(from: date)
   }
 
   private func select(at location: CGPoint, proxy: ChartProxy, geometry: GeometryProxy) {

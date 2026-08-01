@@ -22,9 +22,103 @@ jobs:
       - name: Run unit tests
         run: ./build.sh --test
 
-      - name: Build distribution artifacts
+      - name: Detect release signing configuration
+        id: release_signing
+        env:
+          APPLE_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_KEYCHAIN_PASSWORD: ${{ secrets.APPLE_KEYCHAIN_PASSWORD }}
+          APPLE_DEVELOPER_ID_APPLICATION: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
+          APPLE_DEVELOPER_ID_INSTALLER: ${{ secrets.APPLE_DEVELOPER_ID_INSTALLER }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          configured=0
+          missing=0
+          for value in \
+            "$APPLE_CERTIFICATE_P12_BASE64" \
+            "$APPLE_CERTIFICATE_PASSWORD" \
+            "$APPLE_KEYCHAIN_PASSWORD" \
+            "$APPLE_DEVELOPER_ID_APPLICATION" \
+            "$APPLE_DEVELOPER_ID_INSTALLER" \
+            "$APPLE_TEAM_ID" \
+            "$APPLE_ID" \
+            "$APPLE_APP_SPECIFIC_PASSWORD"; do
+            if [ -n "$value" ]; then
+              configured=1
+            else
+              missing=1
+            fi
+          done
+
+          if [ "$configured" = 0 ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "No Apple signing secrets found; publishing unsigned artifacts."
+          elif [ "$missing" = 1 ]; then
+            echo "Apple signing secrets are partially configured; add all required secrets or remove them all." >&2
+            exit 1
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "All Apple signing secrets found; publishing signed and notarized artifacts."
+          fi
+
+      - name: Import Developer ID certificates
+        if: steps.release_signing.outputs.enabled == 'true'
+        env:
+          APPLE_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_KEYCHAIN_PASSWORD: ${{ secrets.APPLE_KEYCHAIN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$APPLE_CERTIFICATE_P12_BASE64" || { echo "Missing APPLE_CERTIFICATE_P12_BASE64" >&2; exit 1; }
+          test -n "$APPLE_CERTIFICATE_PASSWORD" || { echo "Missing APPLE_CERTIFICATE_PASSWORD" >&2; exit 1; }
+          test -n "$APPLE_KEYCHAIN_PASSWORD" || { echo "Missing APPLE_KEYCHAIN_PASSWORD" >&2; exit 1; }
+
+          CERTIFICATE_PATH="$RUNNER_TEMP/developer-id-certificates.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/deepseekbalance-build.keychain-db"
+          printf '%s' "$APPLE_CERTIFICATE_P12_BASE64" | base64 --decode > "$CERTIFICATE_PATH"
+
+          security create-keychain -p "$APPLE_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$APPLE_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERTIFICATE_PATH" \
+            -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain-db
+          security default-keychain -s "$KEYCHAIN_PATH"
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: \
+            -s \
+            -k "$APPLE_KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_PATH"
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+
+      - name: Build signed distribution artifacts
+        if: steps.release_signing.outputs.enabled == 'true'
+        env:
+          CODE_SIGNING_ALLOWED: YES
+          CODE_SIGN_STYLE: Manual
+          CODE_SIGN_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
+          DEVELOPMENT_TEAM: ${{ secrets.APPLE_TEAM_ID }}
+          DEVELOPER_ID_INSTALLER: ${{ secrets.APPLE_DEVELOPER_ID_INSTALLER }}
+          NOTARIZE: YES
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}" ./scripts/package_app.sh
+
+      - name: Build unsigned distribution artifacts
+        if: steps.release_signing.outputs.enabled != 'true'
         env:
           CODE_SIGNING_ALLOWED: NO
+          NOTARIZE: NO
         run: |
           VERSION="${GITHUB_REF_NAME#v}" ./scripts/package_app.sh
 

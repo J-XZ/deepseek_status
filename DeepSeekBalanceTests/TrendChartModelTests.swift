@@ -27,14 +27,13 @@ final class TrendChartModelTests: XCTestCase {
     )
   }
 
-  func testSingleSampleProducesOnlyPoints() {
+  func testSingleSampleProducesNoLine() {
     let model = BalanceTrendProcessor.chartModel(
       samples: [sample(at: t0)],
       currency: "CNY",
       now: now
     )
     XCTAssertTrue(model.segments.isEmpty)
-    XCTAssertEqual(model.isolatedPoints.count, 3)
   }
 
   func testMultipleSamplesProduceLines() {
@@ -49,7 +48,6 @@ final class TrendChartModelTests: XCTestCase {
       now: now
     )
     XCTAssertEqual(model.segments.count, 3)
-    XCTAssertTrue(model.isolatedPoints.isEmpty)
   }
 
   func testExactTwentyMinuteGapDoesNotSplit() {
@@ -63,7 +61,6 @@ final class TrendChartModelTests: XCTestCase {
       now: now
     )
     XCTAssertEqual(model.segments.count, 3)
-    XCTAssertTrue(model.isolatedPoints.isEmpty)
   }
 
   func testOverTwentyMinuteGapSplits() {
@@ -77,7 +74,6 @@ final class TrendChartModelTests: XCTestCase {
       now: now
     )
     XCTAssertEqual(model.segments.count, 0)
-    XCTAssertEqual(model.isolatedPoints.count, 6)
   }
 
   func testMetricsSegmentIndependently() {
@@ -121,7 +117,7 @@ final class TrendChartModelTests: XCTestCase {
     XCTAssertEqual(model.xDomain.upperBound, now)
   }
 
-  func testManySamplesDoNotProducePerPointPointMarks() {
+  func testManySamplesProduceOnlyLines() {
     let samples = (0..<432).map { index in
       sample(at: t0.addingTimeInterval(TimeInterval(index) * 600))
     }
@@ -131,7 +127,6 @@ final class TrendChartModelTests: XCTestCase {
       now: now
     )
     XCTAssertEqual(model.segments.count, 3)
-    XCTAssertTrue(model.isolatedPoints.isEmpty)
     XCTAssertTrue(model.segments.allSatisfy { $0.points.count == 432 })
   }
 

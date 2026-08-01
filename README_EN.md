@@ -4,6 +4,20 @@
 
 A pure-Swift native macOS menu bar app that shows your DeepSeek API balance in real time, records a 3-day balance trend, and displays DeepSeek's official service status. It lives in the system menu bar with no Dock icon. The only third-party dependency is Google LevelDB (a Git submodule, see below).
 
+## Screenshots
+
+The popover shows your balance, official service status, and 3-day trend:
+
+<p align="center">
+  <img src="docs/screenshots/deepseek-balance-popover.png" alt="DeepSeekBalance popover" width="500">
+</p>
+
+The menu bar shows the monochrome icon and current balance:
+
+<p align="center">
+  <img src="docs/screenshots/deepseek-menu-bar.png" alt="DeepSeekBalance menu bar balance" width="240">
+</p>
+
 ## Features
 
 - Menu bar shows a monochrome DeepSeek icon plus balance text (e.g. `¥110.00`, or `¥110.00 · $2.50` for multiple currencies)
@@ -20,6 +34,16 @@ A pure-Swift native macOS menu bar app that shows your DeepSeek API balance in r
 - One-click Simplified Chinese / English switching, applied instantly without restart
 - Built with Swift Concurrency (`async/await` + `URLSession`), AppKit `NSStatusItem` + SwiftUI `NSPopover`, Security.framework, CryptoKit, Charts, and ServiceManagement
 
+## Basic Usage
+
+1. Open [Releases](https://github.com/J-XZ/deepseek_status/releases) and download the latest version. The `.dmg` is recommended: open it and drag `DeepSeekBalance.app` into `Applications`. You can also use the `.pkg` installer or unzip the `.zip` and move the app to `Applications`.
+2. Launch the app from `Applications`. It has no Dock window; look for the DeepSeek icon in the menu bar at the top-right of the screen.
+3. Click the menu bar icon, enter your DeepSeek API key in the API Key section under Settings, and save it. Saving it to the macOS Keychain is recommended because it also works when the app is launched from Finder.
+4. After the key is saved, the app fetches your balance and the official service status. Click the menu bar item to see total, topped-up, and granted balances, the last update time, and the 3-day trend. Use the bottom Refresh button for an immediate update.
+5. Settings lets you switch between Chinese and English, enable Launch at Login, and clear local history.
+
+If you downloaded an unsigned release, macOS may say that it cannot verify the developer on first launch. In Finder, Control-click the app, choose Open, and confirm once. Do not disable Gatekeeper globally just to run this app.
+
 ## Menu Bar Balance
 
 - Without an API key the menu bar shows "Not configured"; errors show "Error"; loading shows "…"
@@ -32,7 +56,7 @@ A pure-Swift native macOS menu bar app that shows your DeepSeek API balance in r
 - History is stored in **10-minute UTC buckets**: one record per currency per bucket, with newer refreshes overwriting older ones; negative Unix timestamps use strict floor.
 - The balance query cadence is unchanged (immediate refresh on launch + every 5 minutes); multiple successes within 5 minutes share one 10-minute bucket.
 - History starts from the first successful sample; no data is produced while the app is not running; sleep gaps appear as broken lines (gaps over 20 minutes are not interpolated).
-- Continuous multi-sample data uses `LineMark`; isolated single samples use `PointMark`; the selected sample is highlighted. Points are not drawn unconditionally for every bucket, so the full 72-hour window (up to ~432 ten-minute buckets) stays smooth.
+- The trend chart uses `LineMark` only for continuous data and does not draw small point markers that add visual noise. Gaps over 20 minutes break the line, and the full 72-hour window (up to ~432 ten-minute buckets) stays smooth.
 - The X axis domain is explicitly `now - 72 hours ... now`, with an injectable time source.
 - History is stored locally only and kept for up to 72 hours; a startup prune runs on launch (using the injected clock), followed by throttled pruning (the throttle time is recorded only after a successful prune, so a failure can be retried).
 - Database location: `<Application Support>/com.jxz.deepseekbalance/BalanceHistory.leveldb`; upgrades also read the legacy `com.example.DeepSeekBalance` directory.
@@ -190,7 +214,26 @@ git tag v1.0.1
 git push origin v1.0.1
 ```
 
-`.github/workflows/release.yml` initializes the LevelDB submodule on a macOS runner, runs the unit tests, builds the installers, and publishes every artifact to the matching GitHub Release. The workflow uses unsigned builds by default; Apple Developer signing and notarization credentials can be added later to remove Gatekeeper warnings.
+`.github/workflows/release.yml` initializes the LevelDB submodule on a macOS runner, runs the unit tests, and publishes every artifact to the matching GitHub Release. Signing is optional:
+
+- If none of the Apple signing secrets are configured, the workflow publishes unsigned ZIP, PKG, and DMG artifacts; users must approve the first launch as described in Basic Usage.
+- If all of the following secrets are configured, the workflow signs with Developer ID and notarizes the distribution, so users can normally open the app directly.
+- If only some secrets are configured, the workflow fails with a clear message instead of publishing a partially configured release.
+
+To enable signing, configure these repository Actions secrets before pushing a release tag:
+
+- `APPLE_CERTIFICATE_P12_BASE64`: Base64-encoded `.p12` containing both the Developer ID Application and Developer ID Installer certificates.
+- `APPLE_CERTIFICATE_PASSWORD`: Password used when exporting the `.p12`.
+- `APPLE_KEYCHAIN_PASSWORD`: Password for the temporary CI keychain.
+- `APPLE_DEVELOPER_ID_APPLICATION`: Full certificate name, such as `Developer ID Application: Your Name (TEAMID)`.
+- `APPLE_DEVELOPER_ID_INSTALLER`: Full certificate name, such as `Developer ID Installer: Your Name (TEAMID)`.
+- `APPLE_TEAM_ID`: Apple Developer Team ID.
+- `APPLE_ID`: Apple account email used for notarization.
+- `APPLE_APP_SPECIFIC_PASSWORD`: App-specific password for that Apple account.
+
+The `.p12` can be exported from Keychain Access after selecting both Developer ID certificates. `APPLE_APP_SPECIFIC_PASSWORD` is not the Apple account password. Existing unsigned releases cannot be repaired in place; build and publish a new tag after configuring the secrets.
+
+Local unsigned packaging remains available. For a signed local package, set `CODE_SIGNING_ALLOWED=YES`, `CODE_SIGN_IDENTITY`, and `DEVELOPMENT_TEAM` before running the packaging script. The workflow uses Xcode's `notarytool` and staples the ticket to the app, PKG, and DMG.
 
 You can also build and test directly with xcodebuild:
 

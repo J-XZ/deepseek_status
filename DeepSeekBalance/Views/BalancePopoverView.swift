@@ -87,7 +87,7 @@ struct BalancePopoverView: View {
         .renderingMode(.template)
         .resizable()
         .aspectRatio(contentMode: .fit)
-        .frame(width: 22, height: 22)
+        .frame(width: 24, height: 24)
         .padding(8)
         .background(Color.accentColor.opacity(0.12), in: Circle())
         .accessibilityLabel(L10n.string(.a11yDeepSeekIcon, language: language))

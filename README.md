@@ -4,6 +4,20 @@
 
 纯 Swift 原生 macOS 菜单栏应用，实时显示 DeepSeek API 剩余余额，记录最近 3 天的余额变化趋势，并展示 DeepSeek 官方服务状态。常驻系统顶部菜单栏，不显示 Dock 图标。唯一第三方依赖为 Google LevelDB（Git submodule，见下文）。
 
+## 界面截图
+
+弹出窗口展示余额、官方服务状态和最近 3 天趋势：
+
+<p align="center">
+  <img src="docs/screenshots/deepseek-balance-popover.png" alt="DeepSeekBalance 弹出窗口" width="500">
+</p>
+
+菜单栏显示单色图标和当前余额：
+
+<p align="center">
+  <img src="docs/screenshots/deepseek-menu-bar.png" alt="DeepSeekBalance 菜单栏余额" width="240">
+</p>
+
 ## 功能简介
 
 - 菜单栏同时显示单色 DeepSeek 图标和余额文字（如 `¥110.00`，多币种为 `¥110.00 · $2.50`）
@@ -20,6 +34,16 @@
 - 简体中文 / English 一键切换，立即生效，无需重启
 - 使用 Swift Concurrency（`async/await` + `URLSession`）、AppKit `NSStatusItem` + SwiftUI `NSPopover`、Security.framework、CryptoKit、Charts、ServiceManagement
 
+## 基础使用
+
+1. 打开 [Releases](https://github.com/J-XZ/deepseek_status/releases) 下载最新版本。推荐使用 `.dmg`：双击打开后，将 `DeepSeekBalance.app` 拖入 `Applications`；也可以使用 `.pkg` 安装包或解压 `.zip` 后把 App 移到 `Applications`。
+2. 从 `Applications` 启动 App。它不会显示 Dock 窗口，启动后请查看屏幕右上角菜单栏中的 DeepSeek 图标。
+3. 点击菜单栏图标，在「设置 / Settings」的 API Key 区域输入 DeepSeek API Key 并保存。推荐保存到 macOS Keychain，这样从 Finder 双击启动时也能正常读取。
+4. 保存密钥后，应用会自动获取余额和官方服务状态。点击菜单栏项目可以查看总余额、充值余额、赠送余额、更新时间和最近 3 天趋势；点击底部「刷新」可立即更新。
+5. 在设置区可以切换中英文、开启登录时启动，以及清除本机保存的历史数据。
+
+如果下载的是未签名 Release，首次启动时 macOS 可能提示无法验证开发者：在 Finder 中按住 Control 点击 App，选择「打开」，再确认一次即可。不要为了运行单个 App 而关闭系统级 Gatekeeper。
+
 ## 菜单栏余额
 
 - 无 API Key 时菜单栏显示「未配置」，错误时显示「错误」，加载时显示「…」
@@ -32,7 +56,7 @@
 - 历史以 **10 分钟 UTC 时间桶**保存：同一币种同一时间桶最多一条，桶内后一次成功刷新覆盖前一次；负 Unix 时间使用严格 floor。
 - 当前余额查询频率保持原有设置（启动立即查询 + 每 5 分钟自动刷新）；5 分钟内的多次成功结果写入同一个 10 分钟桶。
 - 历史只能从应用首次成功采样后开始；应用未运行期间不会产生数据；电脑睡眠期间会出现数据缺口（超过 20 分钟的缺口会在图表中断开连线，不插值）。
-- 连续多样本使用 `LineMark`，孤立单样本使用 `PointMark`，选中样本突出显示；不会为每个时间桶无条件绘制点，72 小时 10 分钟粒度（最多约 432 桶）下依然流畅。
+- 趋势图只使用 `LineMark` 绘制连续数据，不绘制容易造成视觉噪声的小圆点；数据缺口超过 20 分钟时断开连线，72 小时 10 分钟粒度（最多约 432 桶）下依然流畅。
 - X 轴 domain 明确为 `now - 72 小时 ... now`，时间来源可注入。
 - 历史只保存在本机，最多保留最近 72 小时；应用启动时执行一次清理（使用注入时钟），之后按节流策略清理（只有清理成功后才会记录节流时间，失败后下次可重试）。
 - 数据库位置：`<Application Support>/com.jxz.deepseekbalance/BalanceHistory.leveldb`；升级时会兼容读取旧的 `com.example.DeepSeekBalance` 目录。
@@ -190,7 +214,26 @@ git tag v1.0.1
 git push origin v1.0.1
 ```
 
-`.github/workflows/release.yml` 会在 macOS runner 上初始化 LevelDB submodule、运行单元测试、生成安装包，并把全部产物发布到对应的 GitHub Release。Release 工作流默认使用免签名构建；如需消除 Gatekeeper 提示，需要后续接入 Apple Developer 签名与 notarization 凭据。
+`.github/workflows/release.yml` 会在 macOS runner 上初始化 LevelDB submodule、运行单元测试并把全部产物发布到对应的 GitHub Release。签名是可选的：
+
+- 如果一个 Apple 签名 Secret 都没有，工作流发布未签名的 ZIP、PKG 和 DMG；用户首次启动时需要按上面的「基础使用」说明手动允许。
+- 如果以下 Secrets 全部配置，工作流使用 Developer ID 签名并完成 notarization，用户通常可以直接双击启动。
+- 如果只配置了一部分，工作流会直接失败并提示补齐，不会静默发布半配置产物。
+
+要启用签名，请在仓库 Settings → Secrets and variables → Actions 中配置以下 Secrets：
+
+- `APPLE_CERTIFICATE_P12_BASE64`：包含 Developer ID Application 和 Developer ID Installer 证书的 `.p12` 文件，经 Base64 编码后的内容。
+- `APPLE_CERTIFICATE_PASSWORD`：导出 `.p12` 时设置的密码。
+- `APPLE_KEYCHAIN_PASSWORD`：CI 临时钥匙串密码，可自行生成随机值。
+- `APPLE_DEVELOPER_ID_APPLICATION`：完整证书名，例如 `Developer ID Application: Your Name (TEAMID)`。
+- `APPLE_DEVELOPER_ID_INSTALLER`：完整证书名，例如 `Developer ID Installer: Your Name (TEAMID)`。
+- `APPLE_TEAM_ID`：Apple Developer Team ID。
+- `APPLE_ID`：用于 notarization 的 Apple 账号邮箱。
+- `APPLE_APP_SPECIFIC_PASSWORD`：该 Apple 账号生成的 App 专用密码。
+
+`.p12` 可从“钥匙串访问”中同时导出这两个 Developer ID 证书。`APPLE_APP_SPECIFIC_PASSWORD` 不是 Apple 账号登录密码。配置完成后重新推送一个新标签；已有的未签名 Release 不会被自动修复，需要重新构建并发布新版本。
+
+本地仍可按原方式生成免签名包；如果已经在本机安装了证书，也可以设置 `CODE_SIGNING_ALLOWED=YES`、`CODE_SIGN_IDENTITY`、`DEVELOPMENT_TEAM` 后运行打包脚本。Apple notarization 使用 Xcode 自带的 `notarytool`，并把 ticket 固化到 App、PKG 和 DMG 中。
 
 也可以直接使用 xcodebuild 构建与测试：
 

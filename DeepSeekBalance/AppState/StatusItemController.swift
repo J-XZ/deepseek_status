@@ -51,14 +51,21 @@ final class StatusItemController: NSObject {
 
   // MARK: - 按钮
 
+  private func menuBarIcon(size: CGFloat) -> NSImage? {
+    // NSImage(named:) may return a cached shared instance. Always copy it before
+    // changing size so the context-menu icon cannot resize the status-bar icon.
+    guard let icon = NSImage(named: "DeepSeekIcon")?.copy() as? NSImage else {
+      return nil
+    }
+    icon.isTemplate = true
+    icon.size = NSSize(width: size, height: size)
+    return icon
+  }
+
   private func configureButton() {
     guard let button = statusItem.button else { return }
 
-    if let icon = NSImage(named: "DeepSeekIcon") {
-      icon.isTemplate = true
-      icon.size = NSSize(width: 13, height: 13)
-      button.image = icon
-    }
+    button.image = menuBarIcon(size: 15)
     button.imagePosition = .imageLeading
     button.imageHugsTitle = true
     button.toolTip = L10n.string(.appTitle, language: store.language)
@@ -130,11 +137,7 @@ final class StatusItemController: NSObject {
       keyEquivalent: ""
     )
     header.isEnabled = false
-    if let icon = NSImage(named: "DeepSeekIcon") {
-      icon.isTemplate = true
-      icon.size = NSSize(width: 16, height: 16)
-      header.image = icon
-    }
+    header.image = menuBarIcon(size: 18)
     menu.addItem(header)
     menu.addItem(.separator())
 

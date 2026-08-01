@@ -68,7 +68,7 @@ struct TrendSummary: Equatable, Sendable {
 
 /// 图表数据转换与趋势计算（纯函数，便于测试）。
 enum BalanceTrendProcessor {
-  /// 图表数据模型：连续多样本使用折线，孤立单样本使用点。
+  /// 图表数据模型：只保留至少包含两个样本的连续折线段。
   struct ChartModel: Equatable, Sendable {
     struct Segment: Identifiable, Equatable, Sendable {
       let id: String
@@ -76,13 +76,7 @@ enum BalanceTrendProcessor {
       let points: [TrendPoint]
     }
 
-    struct IsolatedPoint: Identifiable, Equatable, Sendable {
-      let id: String
-      let point: TrendPoint
-    }
-
     let segments: [Segment]
-    let isolatedPoints: [IsolatedPoint]
     let xDomain: ClosedRange<Date>
   }
 
@@ -167,7 +161,7 @@ enum BalanceTrendProcessor {
     now.addingTimeInterval(-chartWindowHours * 3600)...now
   }
 
-  /// 按 metric 独立分段；连续段（>=2 点）进入折线，孤立单点进入点标记。
+  /// 按 metric 独立分段；只有连续段（>=2 点）进入折线。
   static func chartModel(
     samples: [BalanceSample],
     currency: String,
@@ -175,7 +169,6 @@ enum BalanceTrendProcessor {
   ) -> ChartModel {
     let points = points(for: samples, currency: currency)
     var lineSegments: [ChartModel.Segment] = []
-    var isolated: [ChartModel.IsolatedPoint] = []
 
     for metric in TrendPoint.Metric.allCases {
       let metricPoints = points.filter { $0.metric == metric }
@@ -189,15 +182,12 @@ enum BalanceTrendProcessor {
               points: segment
             )
           )
-        } else if let only = segment.first {
-          isolated.append(ChartModel.IsolatedPoint(id: only.id, point: only))
         }
       }
     }
 
     return ChartModel(
       segments: lineSegments,
-      isolatedPoints: isolated,
       xDomain: chartDomain(now: now)
     )
   }

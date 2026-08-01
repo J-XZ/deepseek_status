@@ -21,6 +21,22 @@ SCHEME="DeepSeekBalance"
 DESTINATION="platform=macOS"
 DERIVED_DATA="${DERIVED_DATA:-$PROJECT_DIR/build/DerivedData}"
 CODE_SIGNING_ALLOWED="${CODE_SIGNING_ALLOWED:-NO}"
+CODE_SIGN_IDENTITY="${CODE_SIGN_IDENTITY:-}"
+DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM:-}"
+CODE_SIGN_STYLE="${CODE_SIGN_STYLE:-}"
+
+XCODEBUILD_SIGNING_ARGS=("CODE_SIGNING_ALLOWED=$CODE_SIGNING_ALLOWED")
+if [ "$CODE_SIGNING_ALLOWED" = "YES" ]; then
+  if [ -n "$CODE_SIGN_IDENTITY" ]; then
+    XCODEBUILD_SIGNING_ARGS+=("CODE_SIGN_IDENTITY=$CODE_SIGN_IDENTITY")
+  fi
+  if [ -n "$DEVELOPMENT_TEAM" ]; then
+    XCODEBUILD_SIGNING_ARGS+=("DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM")
+  fi
+  if [ -n "$CODE_SIGN_STYLE" ]; then
+    XCODEBUILD_SIGNING_ARGS+=("CODE_SIGN_STYLE=$CODE_SIGN_STYLE")
+  fi
+fi
 
 RUN_TESTS=false
 RUN_ANALYZE=false
@@ -60,7 +76,7 @@ run_build() {
       -configuration "$config" \
       -destination "$DESTINATION" \
       -derivedDataPath "$DERIVED_DATA" \
-      CODE_SIGNING_ALLOWED="$CODE_SIGNING_ALLOWED" \
+      "${XCODEBUILD_SIGNING_ARGS[@]}" \
       clean build
   else
     xcodebuild \
@@ -69,7 +85,7 @@ run_build() {
       -configuration "$config" \
       -destination "$DESTINATION" \
       -derivedDataPath "$DERIVED_DATA" \
-      CODE_SIGNING_ALLOWED="$CODE_SIGNING_ALLOWED" \
+      "${XCODEBUILD_SIGNING_ARGS[@]}" \
       build
   fi
   echo "==> $config 构建成功：$DERIVED_DATA/Build/Products/$config/DeepSeekBalance.app"
@@ -82,7 +98,7 @@ run_tests() {
     -scheme "$SCHEME" \
     -destination "$DESTINATION" \
     -derivedDataPath "$DERIVED_DATA" \
-    CODE_SIGNING_ALLOWED="$CODE_SIGNING_ALLOWED" \
+    "${XCODEBUILD_SIGNING_ARGS[@]}" \
     test
 }
 
@@ -94,7 +110,7 @@ run_analyze() {
     -configuration Debug \
     -destination "$DESTINATION" \
     -derivedDataPath "$DERIVED_DATA" \
-    CODE_SIGNING_ALLOWED="$CODE_SIGNING_ALLOWED" \
+    "${XCODEBUILD_SIGNING_ARGS[@]}" \
     analyze
 }
 
@@ -132,7 +148,7 @@ if [ "$ALL_MODE" = true ]; then
     -configuration Debug \
     -destination "$DESTINATION" \
     -derivedDataPath "$DERIVED_DATA" \
-    CODE_SIGNING_ALLOWED="$CODE_SIGNING_ALLOWED" \
+    "${XCODEBUILD_SIGNING_ARGS[@]}" \
     clean >/dev/null
   echo "==> [2/5] Debug 构建 ..."
   DO_CLEAN=false

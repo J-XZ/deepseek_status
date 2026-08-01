@@ -6,7 +6,7 @@
 #   VERSION=1.0.0 ./scripts/package_app.sh
 #   ./scripts/package_app.sh --skip-build
 #
-# 默认生成到 build/artifacts/。Release 未签名时，首次打开可能需要在“系统设置 → 隐私与安全性”中允许。
+# 默认生成到 build/artifacts/。公开分发时应使用 Developer ID 签名并启用 notarization。
 set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -17,7 +17,29 @@ CONFIGURATION="${CONFIGURATION:-Release}"
 DERIVED_DATA="${DERIVED_DATA:-$PROJECT_DIR/build/ReleaseDerivedData}"
 OUTPUT_DIR="${OUTPUT_DIR:-$PROJECT_DIR/build/artifacts}"
 CODE_SIGNING_ALLOWED="${CODE_SIGNING_ALLOWED:-NO}"
+CODE_SIGN_IDENTITY="${CODE_SIGN_IDENTITY:-}"
+DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM:-}"
+CODE_SIGN_STYLE="${CODE_SIGN_STYLE:-}"
+NOTARIZE="${NOTARIZE:-NO}"
+NOTARYTOOL_PROFILE="${NOTARYTOOL_PROFILE:-}"
+APPLE_ID="${APPLE_ID:-}"
+APPLE_APP_SPECIFIC_PASSWORD="${APPLE_APP_SPECIFIC_PASSWORD:-}"
+APPLE_TEAM_ID="${APPLE_TEAM_ID:-${DEVELOPMENT_TEAM:-}}"
+DEVELOPER_ID_INSTALLER="${DEVELOPER_ID_INSTALLER:-}"
 SKIP_BUILD=false
+
+XCODEBUILD_SIGNING_ARGS=("CODE_SIGNING_ALLOWED=$CODE_SIGNING_ALLOWED")
+if [ "$CODE_SIGNING_ALLOWED" = "YES" ]; then
+  if [ -n "$CODE_SIGN_IDENTITY" ]; then
+    XCODEBUILD_SIGNING_ARGS+=("CODE_SIGN_IDENTITY=$CODE_SIGN_IDENTITY")
+  fi
+  if [ -n "$DEVELOPMENT_TEAM" ]; then
+    XCODEBUILD_SIGNING_ARGS+=("DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM")
+  fi
+  if [ -n "$CODE_SIGN_STYLE" ]; then
+    XCODEBUILD_SIGNING_ARGS+=("CODE_SIGN_STYLE=$CODE_SIGN_STYLE")
+  fi
+fi
 
 print_usage() {
   cat <<'EOF'
@@ -30,6 +52,13 @@ print_usage() {
   DERIVED_DATA=/tmp/deepseek-derived-data
   OUTPUT_DIR=/tmp/deepseek-artifacts
   CODE_SIGNING_ALLOWED=NO
+  CODE_SIGN_IDENTITY="Developer ID Application: Example (TEAMID)"
+  DEVELOPMENT_TEAM=TEAMID
+  NOTARIZE=YES
+  APPLE_ID=developer@example.com
+  APPLE_APP_SPECIFIC_PASSWORD=xxxx-xxxx-xxxx-xxxx
+  APPLE_TEAM_ID=TEAMID
+  DEVELOPER_ID_INSTALLER="Developer ID Installer: Example (TEAMID)"
 EOF
 }
 
@@ -55,6 +84,45 @@ if [[ ! "$VERSION" =~ ^[0-9]+(\.[0-9]+)*$ ]]; then
   exit 1
 fi
 
+if [ "$NOTARIZE" = "YES" ] || [ "$NOTARIZE" = "true" ] || [ "$NOTARIZE" = "TRUE" ]; then
+  if [ "$CODE_SIGNING_ALLOWED" != "YES" ]; then
+    echo "错误：NOTARIZE=YES 要求 CODE_SIGNING_ALLOWED=YES。" >&2
+    exit 1
+  fi
+  if [ -z "$CODE_SIGN_IDENTITY" ]; then
+    echo "错误：NOTARIZE=YES 要求 CODE_SIGN_IDENTITY 为 Developer ID Application 证书。" >&2
+    exit 1
+  fi
+  if [ -z "$DEVELOPER_ID_INSTALLER" ]; then
+    echo "错误：NOTARIZE=YES 要求 DEVELOPER_ID_INSTALLER 为 Developer ID Installer 证书。" >&2
+    exit 1
+  fi
+  if [ -z "$NOTARYTOOL_PROFILE" ] && { [ -z "$APPLE_ID" ] || [ -z "$APPLE_APP_SPECIFIC_PASSWORD" ] || [ -z "$APPLE_TEAM_ID" ]; }; then
+    echo "错误：请设置 NOTARYTOOL_PROFILE，或同时设置 APPLE_ID、APPLE_APP_SPECIFIC_PASSWORD、APPLE_TEAM_ID。" >&2
+    exit 1
+  fi
+fi
+
+is_notarization_enabled() {
+  [ "$NOTARIZE" = "YES" ] || [ "$NOTARIZE" = "true" ] || [ "$NOTARIZE" = "TRUE" ]
+}
+
+submit_for_notarization() {
+  local artifact="$1"
+  echo "==> 提交 Apple notarization：$(basename "$artifact") ..."
+  if [ -n "$NOTARYTOOL_PROFILE" ]; then
+    xcrun notarytool submit "$artifact" \
+      --keychain-profile "$NOTARYTOOL_PROFILE" \
+      --wait
+  else
+    xcrun notarytool submit "$artifact" \
+      --apple-id "$APPLE_ID" \
+      --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+      --team-id "$APPLE_TEAM_ID" \
+      --wait
+  fi
+}
+
 "$PROJECT_DIR/scripts/check_submodule.sh"
 
 if [ "$SKIP_BUILD" = false ]; then
@@ -65,7 +133,7 @@ if [ "$SKIP_BUILD" = false ]; then
     -configuration "$CONFIGURATION" \
     -destination "platform=macOS" \
     -derivedDataPath "$DERIVED_DATA" \
-    CODE_SIGNING_ALLOWED="$CODE_SIGNING_ALLOWED" \
+    "${XCODEBUILD_SIGNING_ARGS[@]}" \
     build
 fi
 
@@ -76,12 +144,34 @@ if [ ! -d "$APP_PATH" ]; then
   exit 1
 fi
 
+if [ "$CODE_SIGNING_ALLOWED" = "YES" ]; then
+  echo "==> 验证代码签名 ..."
+  codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+fi
+
 mkdir -p "$OUTPUT_DIR"
 ARCHIVE_BASENAME="DeepSeekBalance-v$VERSION-macOS"
 ZIP_PATH="$OUTPUT_DIR/$ARCHIVE_BASENAME.zip"
 PKG_PATH="$OUTPUT_DIR/$ARCHIVE_BASENAME.pkg"
 DMG_PATH="$OUTPUT_DIR/$ARCHIVE_BASENAME.dmg"
 CHECKSUM_PATH="$OUTPUT_DIR/SHA256SUMS"
+WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/deepseekbalance-package.XXXXXX")"
+cleanup() {
+  if [ -n "${WORK_DIR:-}" ] && [[ "$WORK_DIR" == "${TMPDIR:-/tmp}/deepseekbalance-package."* ]] && [ -d "$WORK_DIR" ]; then
+    rm -rf "$WORK_DIR"
+  fi
+}
+trap cleanup EXIT
+
+if is_notarization_enabled; then
+  NOTARY_ZIP_PATH="$WORK_DIR/$ARCHIVE_BASENAME-notary.zip"
+  echo "==> 准备 App notarization 文件 ..."
+  ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$NOTARY_ZIP_PATH"
+  submit_for_notarization "$NOTARY_ZIP_PATH"
+  echo "==> 将 notarization ticket 固化到 App ..."
+  xcrun stapler staple "$APP_PATH"
+  xcrun stapler validate "$APP_PATH"
+fi
 
 echo "==> 生成 ZIP ..."
 ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$ZIP_PATH"
@@ -92,15 +182,22 @@ pkgbuild \
   --install-location /Applications \
   --identifier "com.jxz.deepseekbalance" \
   --version "$VERSION" \
-  "$PKG_PATH"
+  "$WORK_DIR/$ARCHIVE_BASENAME-unsigned.pkg"
 
-STAGING_DIR="$(mktemp -d "${TMPDIR:-/tmp}/deepseekbalance-dmg.XXXXXX")"
-cleanup() {
-  if [ -n "${STAGING_DIR:-}" ] && [[ "$STAGING_DIR" == "${TMPDIR:-/tmp}/deepseekbalance-dmg."* ]] && [ -d "$STAGING_DIR" ]; then
-    rm -rf "$STAGING_DIR"
-  fi
-}
-trap cleanup EXIT
+if is_notarization_enabled; then
+  productsign \
+    --sign "$DEVELOPER_ID_INSTALLER" \
+    "$WORK_DIR/$ARCHIVE_BASENAME-unsigned.pkg" \
+    "$PKG_PATH"
+  submit_for_notarization "$PKG_PATH"
+  xcrun stapler staple "$PKG_PATH"
+  xcrun stapler validate "$PKG_PATH"
+else
+  mv "$WORK_DIR/$ARCHIVE_BASENAME-unsigned.pkg" "$PKG_PATH"
+fi
+
+STAGING_DIR="$WORK_DIR/dmg-staging"
+mkdir -p "$STAGING_DIR"
 
 echo "==> 生成 DMG（拖入 Applications 即可安装） ..."
 ditto "$APP_PATH" "$STAGING_DIR/DeepSeekBalance.app"
@@ -111,6 +208,12 @@ hdiutil create \
   -ov \
   -format UDZO \
   "$DMG_PATH" >/dev/null
+
+if is_notarization_enabled; then
+  submit_for_notarization "$DMG_PATH"
+  xcrun stapler staple "$DMG_PATH"
+  xcrun stapler validate "$DMG_PATH"
+fi
 
 echo "==> 生成 SHA256SUMS ..."
 (
