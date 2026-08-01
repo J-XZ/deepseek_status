@@ -56,7 +56,7 @@ final class StatusItemController: NSObject {
 
     if let icon = NSImage(named: "DeepSeekIcon") {
       icon.isTemplate = true
-      icon.size = NSSize(width: 14, height: 14)
+      icon.size = NSSize(width: 12, height: 12)
       button.image = icon
     }
     button.imagePosition = .imageLeading
