@@ -20,6 +20,7 @@ struct BalancePopoverView: View {
   @State private var apiKeyInput = ""
   @State private var validationMessage: String?
   @State private var showClearHistoryConfirmation = false
+  @Environment(\.controlActiveState) private var controlActiveState
 
   private var language: AppLanguage {
     store.language
@@ -207,7 +208,15 @@ struct BalancePopoverView: View {
       Spacer()
       Text(value)
         .font(AppTypography.value)
+        // SwiftUI's default primary color is not reliably updated for content
+        // hosted inside an NSPopover. Follow the macOS control active state so
+        // amounts become secondary when the popover loses focus.
+        .foregroundStyle(amountForegroundStyle)
     }
+  }
+
+  private var amountForegroundStyle: Color {
+    controlActiveState == .inactive ? .secondary : .primary
   }
 
   // MARK: - 趋势区
