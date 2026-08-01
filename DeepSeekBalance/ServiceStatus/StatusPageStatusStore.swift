@@ -1,33 +1,33 @@
 import AppKit
 import Foundation
 
-/// 官方服务状态状态机：
-/// - 有成功数据时保留旧值，失败只标记 stale；
-/// - 首次失败显示 unavailable，绝不把“状态接口不可访问”解释为服务宕机。
+/// Atlassian Statuspage 官方服务状态状态机（Codex / Cursor 共用）。
+/// 语义与 DeepSeekStatusStore 一致：保留旧值、失败标记 stale、首次失败显示 unavailable。
 @MainActor
-final class DeepSeekStatusStore: ServiceStatusStoring {
+final class StatusPageStatusStore: ServiceStatusStoring {
   @Published private(set) var status: DeepSeekServiceStatus?
   @Published private(set) var loadState: ServiceStatusLoadState = .idle
   @Published private(set) var lastSuccessfulUpdate: Date?
   @Published private(set) var isStale = false
   @Published private(set) var error: AppDisplayError?
 
-  let client: any DeepSeekStatusFetching
+  let client: any StatusPageFetching
   let clock: any DateProviding
   let refreshInterval: TimeInterval
+  let officialStatusPageURL: URL
 
   private var refreshTask: Task<Void, Never>?
   private var isFetching = false
 
-  let officialStatusPageURL = URL(string: "https://status.deepseek.com/")!
-
   init(
-    client: any DeepSeekStatusFetching = DeepSeekStatusClient(),
+    client: any StatusPageFetching,
+    officialStatusPageURL: URL,
     clock: any DateProviding = SystemClock(),
     refreshInterval: TimeInterval = 300,
     startupRefresh: Bool = true
   ) {
     self.client = client
+    self.officialStatusPageURL = officialStatusPageURL
     self.clock = clock
     self.refreshInterval = refreshInterval
 
@@ -40,7 +40,7 @@ final class DeepSeekStatusStore: ServiceStatusStoring {
 
   // MARK: - 启用/停用
 
-  /// 菜单栏隐藏 DeepSeek 时置为 false：停止后台状态收集；重新显示时恢复并刷新一次。
+  /// 菜单栏隐藏对应供应商时置为 false：停止后台状态收集；重新显示时恢复并刷新一次。
   private(set) var isEnabled = true
 
   func setEnabled(_ enabled: Bool) {
@@ -82,18 +82,16 @@ final class DeepSeekStatusStore: ServiceStatusStoring {
 
     do {
       let summary = try await client.fetchSummary()
-      status = DeepSeekStatusMapper.map(summary)
+      status = StatusPageMapper.map(summary)
       lastSuccessfulUpdate = clock.now()
       isStale = false
       error = nil
       loadState = .loaded
-    } catch DeepSeekStatusClient.StatusError.cancelled {
-      // 取消不改变已有展示。
+    } catch StatusPageClient.StatusError.cancelled {
       loadState = previousLoadState
       return
     } catch {
       if status != nil {
-        // 保留上一次成功数据，标记为可能已过期。
         isStale = true
         loadState = .loaded
       } else {

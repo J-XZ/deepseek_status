@@ -481,3 +481,332 @@ final class DeepSeekStatusStoreTests: XCTestCase {
     XCTAssertEqual(count, 2)
   }
 }
+
+// MARK: - Atlassian Statuspage（Codex / Cursor 服务状态）
+
+final class StatusPageClientTests: XCTestCase {
+  override func setUp() {
+    super.setUp()
+    MockStatusURLProtocol.reset()
+  }
+
+  override func tearDown() {
+    MockStatusURLProtocol.reset()
+    super.tearDown()
+  }
+
+  private func makeClient() -> StatusPageClient {
+    StatusPageClient(
+      baseURL: URL(string: "https://status.cursor.com")!,
+      session: MockStatusURLProtocol.makeSession(),
+      timeoutInterval: 12
+    )
+  }
+
+  private func response(statusCode: Int) -> HTTPURLResponse {
+    HTTPURLResponse(
+      url: URL(string: "https://status.cursor.com/api/v2/status.json")!,
+      statusCode: statusCode,
+      httpVersion: nil,
+      headerFields: nil
+    )!
+  }
+
+  func testFetchesThreeEndpointsWithoutAuthorization() async throws {
+    MockStatusURLProtocol.handler = { request in
+      let url = request.url!.absoluteString
+      let data: String
+      if url.hasSuffix("api/v2/status.json") {
+        data = "{\"page\":{\"name\":\"Cursor\"},\"status\":{\"indicator\":\"none\",\"description\":\"All Systems Operational\"}}"
+      } else if url.hasSuffix("api/v2/components.json") {
+        data = "{\"components\":[{\"id\":\"c1\",\"name\":\"API\",\"status\":\"operational\"}]}"
+      } else {
+        data = "{\"incidents\":[]}"
+      }
+      return (
+        HTTPURLResponse(
+          url: request.url!,
+          statusCode: 200,
+          httpVersion: nil,
+          headerFields: nil
+        )!,
+        Data(data.utf8)
+      )
+    }
+    let summary = try await makeClient().fetchSummary()
+    XCTAssertEqual(summary.status.status?.indicator, "none")
+    XCTAssertEqual(summary.components.components?.count, 1)
+    XCTAssertEqual(summary.incidents.incidents?.count, 0)
+    XCTAssertEqual(MockStatusURLProtocol.capturedAuthorizationHeaders().count, 3)
+    XCTAssertTrue(MockStatusURLProtocol.capturedAuthorizationHeaders().allSatisfy { $0 == nil })
+  }
+
+  func testIncidentsEndpointFailureDoesNotFailWholeSummary() async throws {
+    MockStatusURLProtocol.handler = { request in
+      let url = request.url!.absoluteString
+      let data: String
+      if url.hasSuffix("api/v2/status.json") {
+        data = "{\"page\":{\"name\":\"Cursor\"},\"status\":{\"indicator\":\"none\",\"description\":\"All Systems Operational\"}}"
+      } else if url.hasSuffix("api/v2/components.json") {
+        data = "{\"components\":[{\"id\":\"c1\",\"name\":\"API\",\"status\":\"operational\"}]}"
+      } else {
+        // 事故端点在部分托管上不可用（返回 HTML/500），不影响整体状态。
+        data = "<html>error</html>"
+      }
+      let statusCode = url.hasSuffix("api/v2/incidents/unresolved.json") ? 500 : 200
+      return (
+        HTTPURLResponse(
+          url: request.url!,
+          statusCode: statusCode,
+          httpVersion: nil,
+          headerFields: nil
+        )!,
+        Data(data.utf8)
+      )
+    }
+    let summary = try await makeClient().fetchSummary()
+    XCTAssertEqual(summary.status.status?.indicator, "none")
+    XCTAssertEqual(summary.components.components?.count, 1)
+    XCTAssertEqual(summary.incidents.incidents?.count, 0)
+  }
+
+  func testHTTPErrorPropagates() async {
+    MockStatusURLProtocol.handler = { _ in
+      (self.response(statusCode: 500), Data())
+    }
+    do {
+      _ = try await makeClient().fetchSummary()
+      XCTFail("应抛出 http 错误")
+    } catch let error as StatusPageClient.StatusError {
+      XCTAssertEqual(error, .http(500))
+    } catch {
+      XCTFail("意外的错误：\(error)")
+    }
+  }
+
+  func testCancellationPropagates() async {
+    MockStatusURLProtocol.handler = { _ in
+      throw URLError(.cancelled)
+    }
+    do {
+      _ = try await makeClient().fetchSummary()
+      XCTFail("应抛出 cancelled")
+    } catch let error as StatusPageClient.StatusError {
+      XCTAssertEqual(error, .cancelled)
+    } catch {
+      XCTFail("意外的错误：\(error)")
+    }
+  }
+}
+
+final class StatusPageMapperTests: XCTestCase {
+  private func makeSummary(
+    indicator: String? = "none",
+    description: String = "All Systems Operational",
+    components: [[String: String]] = [["id": "c1", "name": "API", "status": "operational"]],
+    incidents: [[String: Any?]] = []
+  ) -> StatusPageSummaryResponse {
+    let status = StatusPageStatusResponse(
+      page: StatusPageStatusResponse.Page(name: "Cursor", url: nil),
+      status: StatusPageStatusResponse.Status(
+        indicator: indicator,
+        description: description
+      )
+    )
+    let comps = StatusPageComponentsResponse(
+      components: components.map { comp in
+        StatusPageComponent(
+          id: comp["id"],
+          name: comp["name"],
+          status: comp["status"],
+          description: nil,
+          group: nil
+        )
+      }
+    )
+    let incs = StatusPageIncidentsResponse(
+      incidents: incidents.map { dict in
+        StatusPageIncident(
+          id: dict["id"] as? String,
+          name: dict["name"] as? String,
+          status: dict["status"] as? String,
+          impact: dict["impact"] as? String,
+          updatedAt: dict["updated_at"] as? String,
+          incidentUpdates: dict["updates"] as? [StatusPageIncidentUpdate]
+        )
+      }
+    )
+    return StatusPageSummaryResponse(status: status, components: comps, incidents: incs)
+  }
+
+  func testMapsOperational() {
+    let mapped = StatusPageMapper.map(makeSummary())
+    XCTAssertEqual(mapped.overall, .none)
+    XCTAssertEqual(mapped.overallDescription, "All Systems Operational")
+    XCTAssertEqual(mapped.apiComponents.count, 1)
+    XCTAssertTrue(mapped.incidents.isEmpty)
+  }
+
+  func testMapsMajorIndicator() {
+    let mapped = StatusPageMapper.map(
+      makeSummary(
+        indicator: "major",
+        description: "Partial service disruption",
+        components: [["id": "c1", "name": "API", "status": "major_outage"]]
+      )
+    )
+    XCTAssertEqual(mapped.overall, .major)
+    XCTAssertEqual(mapped.apiComponents.first?.status, .majorOutage)
+  }
+
+  func testMapsIncidentFilteredToUnresolved() {
+    let updates = StatusPageIncidentUpdate(body: "Investigating", status: "investigating", updatedAt: "2026-08-01T10:00:00.000Z")
+    let mapped = StatusPageMapper.map(
+      makeSummary(
+        incidents: [
+          [
+            "id": "i1",
+            "name": "Elevated API errors",
+            "status": "investigating",
+            "impact": "minor",
+            "updated_at": "2026-08-01T10:00:00.000Z",
+            "updates": [updates],
+          ],
+        ]
+      )
+    )
+    XCTAssertEqual(mapped.incidents.count, 1)
+    XCTAssertEqual(mapped.incidents.first?.title, "Elevated API errors")
+    XCTAssertEqual(mapped.incidents.first?.status, .investigating)
+    XCTAssertEqual(mapped.incidents.first?.impact, .minor)
+    XCTAssertEqual(mapped.incidents.first?.updatedAt, StatusPageMapper.parseDate("2026-08-01T10:00:00.000Z"))
+    XCTAssertEqual(mapped.incidents.first?.latestUpdateBody, "Investigating")
+  }
+
+  func testMapsResolvedIncidentAsNone() {
+    let mapped = StatusPageMapper.map(
+      makeSummary(
+        incidents: [
+          [
+            "id": "i1",
+            "name": "Resolved",
+            "status": "resolved",
+            "impact": "minor",
+            "updated_at": "2026-08-01T10:00:00.000Z",
+            "updates": [StatusPageIncidentUpdate(body: "All good", status: "resolved", updatedAt: "2026-08-01T11:00:00.000Z")],
+          ],
+        ]
+      )
+    )
+    XCTAssertTrue(mapped.incidents.isEmpty)
+    XCTAssertEqual(mapped.overall, .none)
+  }
+
+  func testMapsUnknownIndicatorFallsBackToComponents() {
+    let mapped = StatusPageMapper.map(
+      makeSummary(
+        indicator: "weird",
+        components: [["id": "c1", "name": "API", "status": "partial_outage"]]
+      )
+    )
+    XCTAssertEqual(mapped.overall, .minor)
+  }
+}
+
+@MainActor
+final class StatusPageStatusStoreTests: XCTestCase {
+  private var clock = MutableClock(date: Date(timeIntervalSince1970: 1_752_000_000))
+
+  override func setUp() {
+    super.setUp()
+    clock = MutableClock(date: Date(timeIntervalSince1970: 1_752_000_000))
+  }
+
+  private func makeSummary() -> StatusPageSummaryResponse {
+    StatusPageSummaryResponse(
+      status: StatusPageStatusResponse(
+        page: StatusPageStatusResponse.Page(name: "Cursor", url: nil),
+        status: StatusPageStatusResponse.Status(
+          indicator: "none",
+          description: "All Systems Operational"
+        )
+      ),
+      components: StatusPageComponentsResponse(
+        components: [StatusPageComponent(id: "c1", name: "API", status: "operational", description: nil, group: nil)]
+      ),
+      incidents: StatusPageIncidentsResponse(incidents: [])
+    )
+  }
+
+  private func makeStore(results: [Result<StatusPageSummaryResponse, Error>]) -> StatusPageStatusStore {
+    StatusPageStatusStore(
+      client: ScriptedStatusPageClient(results: results),
+      officialStatusPageURL: URL(string: "https://status.cursor.com")!,
+      clock: clock,
+      startupRefresh: false
+    )
+  }
+
+  func testLoadsStatus() async throws {
+    let store = makeStore(results: [.success(makeSummary())])
+    await store.refresh()
+    XCTAssertEqual(store.loadState, .loaded)
+    XCTAssertEqual(store.status?.overall, OverallIndicator.none)
+    XCTAssertNil(store.error)
+  }
+
+  func testFirstFailureShowsUnavailable() async {
+    let store = makeStore(results: [.failure(StatusPageClient.StatusError.noNetwork)])
+    await store.refresh()
+    XCTAssertNil(store.status)
+    XCTAssertEqual(store.loadState, .unavailable)
+    XCTAssertEqual(store.error, .serviceStatusUnavailable)
+  }
+
+  func testFailureKeepsOldValueAndMarksStale() async throws {
+    let store = makeStore(
+      results: [
+        .success(makeSummary()),
+        .failure(StatusPageClient.StatusError.timedOut),
+      ]
+    )
+    await store.refresh()
+    XCTAssertEqual(store.loadState, .loaded)
+    clock.advance(by: 600)
+    await store.refresh()
+    XCTAssertNotNil(store.status)
+    XCTAssertTrue(store.isStale)
+    XCTAssertEqual(store.error, .serviceStatusUnavailable)
+  }
+
+  func testOfficialStatusPageURL() {
+    let store = makeStore(results: [])
+    XCTAssertEqual(
+      store.officialStatusPageURL.absoluteString,
+      "https://status.cursor.com"
+    )
+  }
+}
+
+/// 脚本化 Statuspage 客户端（与 ScriptedStatusClient 同理）。
+final class ScriptedStatusPageClient: StatusPageFetching {
+  struct ScriptedError: Error {}
+
+  private let results: [Result<StatusPageSummaryResponse, Error>]
+  private var nextIndex = 0
+  private(set) var fetchCount = 0
+
+  init(results: [Result<StatusPageSummaryResponse, Error>] = []) {
+    self.results = results
+  }
+
+  func fetchSummary() async throws -> StatusPageSummaryResponse {
+    fetchCount += 1
+    guard nextIndex < results.count else {
+      throw StatusPageClient.StatusError.noNetwork
+    }
+    let result = results[nextIndex]
+    nextIndex += 1
+    return try result.get()
+  }
+}

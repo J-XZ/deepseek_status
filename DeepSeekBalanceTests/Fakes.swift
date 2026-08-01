@@ -32,6 +32,33 @@ struct FixedClock: DateProviding {
   func now() -> Date { date }
 }
 
+/// 固定登录信息的 Codex 认证提供者。
+struct MockCodexAuthProvider: CodexAuthProviding {
+  let info: CodexAuthInfo
+  let refreshError: Error?
+
+  init(
+    info: CodexAuthInfo = CodexAuthInfo(
+      accessToken: "token-123",
+      refreshToken: "refresh-456",
+      accountID: nil
+    ),
+    refreshError: Error? = nil
+  ) {
+    self.info = info
+    self.refreshError = refreshError
+  }
+
+  func loadAuthInfo() throws -> CodexAuthInfo {
+    info
+  }
+
+  func refreshAccessToken(refreshToken: String) async throws -> String {
+    if let refreshError { throw refreshError }
+    return "refreshed-token"
+  }
+}
+
 /// 线程安全布尔标志，避免测试闭包捕获的可变变量出现数据竞争。
 final class AtomicFlag: @unchecked Sendable {
   private let lock = NSLock()

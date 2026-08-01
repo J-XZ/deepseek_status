@@ -308,6 +308,37 @@ final class BalanceStoreTests: XCTestCase {
     XCTAssertTrue(MockURLProtocol.capturedAuthorizationHeaders().isEmpty)
   }
 
+  // MARK: - 启用/停用
+
+  func testDisabledStoreSkipsRefreshAndHistoryWrite() async {
+    let keychain = FakeKeychainStore()
+    keychain.storedValue = "sk-test"
+    MockURLProtocol.requestHandler = { _ in
+      (TestFixtures.httpResponse(statusCode: 200), Data(TestFixtures.cnyJSON.utf8))
+    }
+    let store = makeStore(keychain: keychain)
+    await store.refresh()
+    XCTAssertEqual(store.status, .loaded)
+    XCTAssertEqual(MockURLProtocol.recordedRequestCount, 1)
+    let firstCount = await history.count
+    XCTAssertEqual(firstCount, 1)
+
+    // 停用后刷新被跳过：状态不变、不发请求、不写历史。
+    store.setEnabled(false)
+    XCTAssertEqual(store.isEnabled, false)
+    await store.refresh()
+    await store.refreshIfNeeded(maximumAge: 0)
+    await store.refreshAll()
+    XCTAssertEqual(MockURLProtocol.recordedRequestCount, 1)
+    let disabledCount = await history.count
+    XCTAssertEqual(disabledCount, 1)
+
+    // 重新启用后立即刷新一次。
+    store.setEnabled(true)
+    XCTAssertEqual(store.isEnabled, true)
+    await waitForRecordedRequests(2)
+  }
+
   private func waitForRecordedRequests(_ count: Int, timeout: TimeInterval = 2) async {
     let deadline = Date().addingTimeInterval(timeout)
     while Date() < deadline {

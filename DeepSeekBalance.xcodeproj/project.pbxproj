@@ -39,6 +39,11 @@
 		AA0000000000000000000308 /* DeepSeekStatusMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000108 /* DeepSeekStatusMapper.swift */; };
 		AA0000000000000000000309 /* DeepSeekStatusStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000109 /* DeepSeekStatusStore.swift */; };
 		AA000000000000000000030A /* DeepSeekServiceStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000010A /* DeepSeekServiceStatusView.swift */; };
+		AA00000000000000000003D1 /* ServiceStatusStoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000110 /* ServiceStatusStoring.swift */; };
+		AA00000000000000000003D2 /* StatusPageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000111 /* StatusPageClient.swift */; };
+		AA00000000000000000003D3 /* StatusPageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000112 /* StatusPageModels.swift */; };
+		AA00000000000000000003D4 /* StatusPageMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000113 /* StatusPageMapper.swift */; };
+		AA00000000000000000003D5 /* StatusPageStatusStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000114 /* StatusPageStatusStore.swift */; };
 		AA000000000000000000030B /* StatusItemController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000010B /* StatusItemController.swift */; };
 		AA000000000000000000030C /* AppAppearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000010D /* AppAppearance.swift */; };
 		DD00000000000000001001 /* builder.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000101 /* builder.cc */; };
@@ -93,6 +98,35 @@
 		EE000000000000000000010C /* BalanceTrendChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE000000000000000000000C /* BalanceTrendChartView.swift */; };
 		EE000000000000000000010D /* BalanceTrendEmptyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE000000000000000000000D /* BalanceTrendEmptyView.swift */; };
 		EE000000000000000000010E /* libleveldb.a in Frameworks */ = {isa = PBXBuildFile; fileRef = EE0000000000000000000040 /* libleveldb.a */; };
+		AA0000000000000000000401 /* CodexUsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000201 /* CodexUsageModels.swift */; };
+		AA0000000000000000000402 /* CodexUsageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000202 /* CodexUsageClient.swift */; };
+		AA0000000000000000000403 /* CodexAuthProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000203 /* CodexAuthProvider.swift */; };
+		AA0000000000000000000404 /* CodexUsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000204 /* CodexUsageStore.swift */; };
+		AA0000000000000000000405 /* CodexUsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000205 /* CodexUsageView.swift */; };
+		AA0000000000000000000406 /* CodexUsageSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000206 /* CodexUsageSample.swift */; };
+		AA0000000000000000000407 /* CodexHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000207 /* CodexHistory.swift */; };
+		AA0000000000000000000408 /* LevelDBCodexHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000208 /* LevelDBCodexHistoryStore.swift */; };
+		AA0000000000000000000409 /* CodexHistoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000209 /* CodexHistoryService.swift */; };
+		AA000000000000000000040A /* CodexTrendChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000020A /* CodexTrendChartView.swift */; };
+		AA000000000000000000040B /* SettingsWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000020B /* SettingsWindow.swift */; };
+		AA000000000000000000040C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000020C /* SettingsView.swift */; };
+		AA000000000000000000040D /* CursorUsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000020D /* CursorUsageModels.swift */; };
+		AA000000000000000000040E /* CursorUsageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000020E /* CursorUsageClient.swift */; };
+		AA000000000000000000040F /* CursorAuthProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000020F /* CursorAuthProvider.swift */; };
+		AA0000000000000000000410 /* CursorUsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000210 /* CursorUsageStore.swift */; };
+		AA0000000000000000000411 /* CursorUsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000211 /* CursorUsageView.swift */; };
+		AA0000000000000000000412 /* CursorUsageSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000212 /* CursorUsageSample.swift */; };
+		AA0000000000000000000413 /* CursorHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000213 /* CursorHistory.swift */; };
+		AA0000000000000000000414 /* LevelDBCursorHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000214 /* LevelDBCursorHistoryStore.swift */; };
+		AA0000000000000000000415 /* CursorHistoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000215 /* CursorHistoryService.swift */; };
+		AA0000000000000000000416 /* CursorTrendChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000216 /* CursorTrendChartView.swift */; };
+		AA000000000000000000020D /* CodexUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000108 /* CodexUsageTests.swift */; };
+		AA000000000000000000020E /* MenuBarVendorVisibilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000109 /* MenuBarVendorVisibilityTests.swift */; };
+		AA000000000000000000020F /* InMemoryCodexHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000010A /* InMemoryCodexHistoryStore.swift */; };
+		AA0000000000000000000210 /* CodexHistoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000010B /* CodexHistoryTests.swift */; };
+		AA0000000000000000000211 /* InMemoryCursorHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000010C /* InMemoryCursorHistoryStore.swift */; };
+		AA0000000000000000000212 /* CursorUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000010D /* CursorUsageTests.swift */; };
+		AA0000000000000000000213 /* CursorHistoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000010E /* CursorHistoryTests.swift */; };
 		FF0000000000000000000101 /* TimeBucketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000001 /* TimeBucketTests.swift */; };
 		FF0000000000000000000102 /* InMemoryHistoryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000002 /* InMemoryHistoryStoreTests.swift */; };
 		FF0000000000000000000103 /* LevelDBBalanceHistoryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000003 /* LevelDBBalanceHistoryStoreTests.swift */; };
@@ -142,7 +176,34 @@
 		BB0000000000000000000108 /* DeepSeekStatusMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepSeekStatusMapper.swift; sourceTree = "<group>"; };
 		BB0000000000000000000109 /* DeepSeekStatusStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepSeekStatusStore.swift; sourceTree = "<group>"; };
 		BB000000000000000000010A /* DeepSeekServiceStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepSeekServiceStatusView.swift; sourceTree = "<group>"; };
+		BB0000000000000000000110 /* ServiceStatusStoring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceStatusStoring.swift; sourceTree = "<group>"; };
+		BB0000000000000000000111 /* StatusPageClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusPageClient.swift; sourceTree = "<group>"; };
+		BB0000000000000000000112 /* StatusPageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusPageModels.swift; sourceTree = "<group>"; };
+		BB0000000000000000000113 /* StatusPageMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusPageMapper.swift; sourceTree = "<group>"; };
+		BB0000000000000000000114 /* StatusPageStatusStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusPageStatusStore.swift; sourceTree = "<group>"; };
 		BB000000000000000000010B /* StatusItemController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemController.swift; sourceTree = "<group>"; };
+		BB0000000000000000000201 /* CodexUsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexUsageModels.swift; sourceTree = "<group>"; };
+		BB0000000000000000000202 /* CodexUsageClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexUsageClient.swift; sourceTree = "<group>"; };
+		BB0000000000000000000203 /* CodexAuthProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexAuthProvider.swift; sourceTree = "<group>"; };
+		BB0000000000000000000204 /* CodexUsageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexUsageStore.swift; sourceTree = "<group>"; };
+		BB0000000000000000000205 /* CodexUsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexUsageView.swift; sourceTree = "<group>"; };
+		BB0000000000000000000206 /* CodexUsageSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexUsageSample.swift; sourceTree = "<group>"; };
+		BB0000000000000000000207 /* CodexHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexHistory.swift; sourceTree = "<group>"; };
+		BB0000000000000000000208 /* LevelDBCodexHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelDBCodexHistoryStore.swift; sourceTree = "<group>"; };
+		BB0000000000000000000209 /* CodexHistoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexHistoryService.swift; sourceTree = "<group>"; };
+		BB000000000000000000020A /* CodexTrendChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexTrendChartView.swift; sourceTree = "<group>"; };
+		BB000000000000000000020B /* SettingsWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindow.swift; sourceTree = "<group>"; };
+		BB000000000000000000020C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		BB000000000000000000020D /* CursorUsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorUsageModels.swift; sourceTree = "<group>"; };
+		BB000000000000000000020E /* CursorUsageClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorUsageClient.swift; sourceTree = "<group>"; };
+		BB000000000000000000020F /* CursorAuthProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorAuthProvider.swift; sourceTree = "<group>"; };
+		BB0000000000000000000210 /* CursorUsageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorUsageStore.swift; sourceTree = "<group>"; };
+		BB0000000000000000000211 /* CursorUsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorUsageView.swift; sourceTree = "<group>"; };
+		BB0000000000000000000212 /* CursorUsageSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorUsageSample.swift; sourceTree = "<group>"; };
+		BB0000000000000000000213 /* CursorHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorHistory.swift; sourceTree = "<group>"; };
+		BB0000000000000000000214 /* LevelDBCursorHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelDBCursorHistoryStore.swift; sourceTree = "<group>"; };
+		BB0000000000000000000215 /* CursorHistoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorHistoryService.swift; sourceTree = "<group>"; };
+		BB0000000000000000000216 /* CursorTrendChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorTrendChartView.swift; sourceTree = "<group>"; };
 		BB000000000000000000010D /* AppAppearance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAppearance.swift; sourceTree = "<group>"; };
 		BB000000000000000000010C /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		CC0000000000000000000001 /* DeepSeekBalanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepSeekBalanceTests.swift; sourceTree = "<group>"; };
@@ -157,6 +218,13 @@
 		CC0000000000000000000105 /* LevelDBFailureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelDBFailureTests.swift; sourceTree = "<group>"; };
 		CC0000000000000000000106 /* TrendChartModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrendChartModelTests.swift; sourceTree = "<group>"; };
 		CC0000000000000000000107 /* BuildScriptTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildScriptTests.swift; sourceTree = "<group>"; };
+		CC0000000000000000000108 /* CodexUsageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexUsageTests.swift; sourceTree = "<group>"; };
+		CC0000000000000000000109 /* MenuBarVendorVisibilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarVendorVisibilityTests.swift; sourceTree = "<group>"; };
+		CC000000000000000000010A /* InMemoryCodexHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InMemoryCodexHistoryStore.swift; sourceTree = "<group>"; };
+		CC000000000000000000010B /* CodexHistoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexHistoryTests.swift; sourceTree = "<group>"; };
+		CC000000000000000000010C /* InMemoryCursorHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InMemoryCursorHistoryStore.swift; sourceTree = "<group>"; };
+		CC000000000000000000010D /* CursorUsageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorUsageTests.swift; sourceTree = "<group>"; };
+		CC000000000000000000010E /* CursorHistoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorHistoryTests.swift; sourceTree = "<group>"; };
 		DD0000000000000000000101 /* builder.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/builder.cc"; sourceTree = "<group>"; };
 		DD0000000000000000000102 /* c.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/c.cc"; sourceTree = "<group>"; };
 		DD0000000000000000000103 /* db_impl.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/db_impl.cc"; sourceTree = "<group>"; };
@@ -280,10 +348,13 @@
 			isa = PBXGroup;
 			children = (
 				BB0000000000000000000002 /* BalanceStore.swift */,
+				BB0000000000000000000204 /* CodexUsageStore.swift */,
+				BB0000000000000000000210 /* CursorUsageStore.swift */,
 				EE000000000000000000000B /* RefreshCoordinator.swift */,
 				BB0000000000000000000104 /* NotificationObservation.swift */,
 				BB0000000000000000000105 /* LoginItemManager.swift */,
 				BB000000000000000000010B /* StatusItemController.swift */,
+				BB000000000000000000020B /* SettingsWindow.swift */,
 			);
 			path = AppState;
 			sourceTree = "<group>";
@@ -292,6 +363,10 @@
 			isa = PBXGroup;
 			children = (
 				BB0000000000000000000003 /* BalanceModels.swift */,
+				BB0000000000000000000201 /* CodexUsageModels.swift */,
+				BB000000000000000000020D /* CursorUsageModels.swift */,
+				BB0000000000000000000206 /* CodexUsageSample.swift */,
+				BB0000000000000000000212 /* CursorUsageSample.swift */,
 				EE0000000000000000000001 /* BalanceSample.swift */,
 				EE0000000000000000000002 /* BalanceTrendModels.swift */,
 			);
@@ -303,6 +378,10 @@
 			children = (
 				BB0000000000000000000004 /* DeepSeekAPIClient.swift */,
 				BB0000000000000000000005 /* APIKeyProvider.swift */,
+				BB0000000000000000000202 /* CodexUsageClient.swift */,
+				BB000000000000000000020E /* CursorUsageClient.swift */,
+				BB0000000000000000000203 /* CodexAuthProvider.swift */,
+				BB000000000000000000020F /* CursorAuthProvider.swift */,
 			);
 			path = Networking;
 			sourceTree = "<group>";
@@ -320,6 +399,11 @@
 			isa = PBXGroup;
 			children = (
 				BB0000000000000000000008 /* BalancePopoverView.swift */,
+				BB0000000000000000000205 /* CodexUsageView.swift */,
+				BB0000000000000000000211 /* CursorUsageView.swift */,
+				BB000000000000000000020A /* CodexTrendChartView.swift */,
+				BB0000000000000000000216 /* CursorTrendChartView.swift */,
+				BB000000000000000000020C /* SettingsView.swift */,
 				EE000000000000000000000C /* BalanceTrendChartView.swift */,
 				EE000000000000000000000D /* BalanceTrendEmptyView.swift */,
 			);
@@ -347,6 +431,13 @@
 				CC0000000000000000000105 /* LevelDBFailureTests.swift */,
 				CC0000000000000000000106 /* TrendChartModelTests.swift */,
 				CC0000000000000000000107 /* BuildScriptTests.swift */,
+				CC0000000000000000000108 /* CodexUsageTests.swift */,
+				CC000000000000000000010D /* CursorUsageTests.swift */,
+				CC0000000000000000000109 /* MenuBarVendorVisibilityTests.swift */,
+				CC000000000000000000010A /* InMemoryCodexHistoryStore.swift */,
+				CC000000000000000000010C /* InMemoryCursorHistoryStore.swift */,
+				CC000000000000000000010B /* CodexHistoryTests.swift */,
+				CC000000000000000000010E /* CursorHistoryTests.swift */,
 			);
 			path = DeepSeekBalanceTests;
 			sourceTree = "<group>";
@@ -371,6 +462,12 @@
 				EE0000000000000000000007 /* InMemoryBalanceHistoryStore.swift */,
 				EE0000000000000000000008 /* LevelDBBalanceHistoryStore.swift */,
 				EE0000000000000000000009 /* BalanceHistoryService.swift */,
+				BB0000000000000000000207 /* CodexHistory.swift */,
+				BB0000000000000000000213 /* CursorHistory.swift */,
+				BB0000000000000000000208 /* LevelDBCodexHistoryStore.swift */,
+				BB0000000000000000000214 /* LevelDBCursorHistoryStore.swift */,
+				BB0000000000000000000209 /* CodexHistoryService.swift */,
+				BB0000000000000000000215 /* CursorHistoryService.swift */,
 			);
 			path = Persistence;
 			sourceTree = "<group>";
@@ -394,6 +491,11 @@
 				BB0000000000000000000108 /* DeepSeekStatusMapper.swift */,
 				BB0000000000000000000109 /* DeepSeekStatusStore.swift */,
 				BB000000000000000000010A /* DeepSeekServiceStatusView.swift */,
+				BB0000000000000000000110 /* ServiceStatusStoring.swift */,
+				BB0000000000000000000111 /* StatusPageClient.swift */,
+				BB0000000000000000000112 /* StatusPageModels.swift */,
+				BB0000000000000000000113 /* StatusPageMapper.swift */,
+				BB0000000000000000000114 /* StatusPageStatusStore.swift */,
 			);
 			path = ServiceStatus;
 			sourceTree = "<group>";
@@ -620,7 +722,34 @@
 				AA0000000000000000000308 /* DeepSeekStatusMapper.swift in Sources */,
 				AA0000000000000000000309 /* DeepSeekStatusStore.swift in Sources */,
 				AA000000000000000000030A /* DeepSeekServiceStatusView.swift in Sources */,
+				AA00000000000000000003D1 /* ServiceStatusStoring.swift in Sources */,
+				AA00000000000000000003D2 /* StatusPageClient.swift in Sources */,
+				AA00000000000000000003D3 /* StatusPageModels.swift in Sources */,
+				AA00000000000000000003D4 /* StatusPageMapper.swift in Sources */,
+				AA00000000000000000003D5 /* StatusPageStatusStore.swift in Sources */,
 				AA000000000000000000030B /* StatusItemController.swift in Sources */,
+				AA0000000000000000000401 /* CodexUsageModels.swift in Sources */,
+				AA0000000000000000000402 /* CodexUsageClient.swift in Sources */,
+				AA0000000000000000000403 /* CodexAuthProvider.swift in Sources */,
+				AA0000000000000000000404 /* CodexUsageStore.swift in Sources */,
+				AA0000000000000000000405 /* CodexUsageView.swift in Sources */,
+				AA0000000000000000000406 /* CodexUsageSample.swift in Sources */,
+				AA0000000000000000000407 /* CodexHistory.swift in Sources */,
+				AA0000000000000000000408 /* LevelDBCodexHistoryStore.swift in Sources */,
+				AA0000000000000000000409 /* CodexHistoryService.swift in Sources */,
+				AA000000000000000000040A /* CodexTrendChartView.swift in Sources */,
+				AA000000000000000000040D /* CursorUsageModels.swift in Sources */,
+				AA000000000000000000040E /* CursorUsageClient.swift in Sources */,
+				AA000000000000000000040F /* CursorAuthProvider.swift in Sources */,
+				AA0000000000000000000410 /* CursorUsageStore.swift in Sources */,
+				AA0000000000000000000411 /* CursorUsageView.swift in Sources */,
+				AA0000000000000000000412 /* CursorUsageSample.swift in Sources */,
+				AA0000000000000000000413 /* CursorHistory.swift in Sources */,
+				AA0000000000000000000414 /* LevelDBCursorHistoryStore.swift in Sources */,
+				AA0000000000000000000415 /* CursorHistoryService.swift in Sources */,
+				AA0000000000000000000416 /* CursorTrendChartView.swift in Sources */,
+				AA000000000000000000040B /* SettingsWindow.swift in Sources */,
+				AA000000000000000000040C /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -640,6 +769,13 @@
 				AA000000000000000000020A /* LevelDBFailureTests.swift in Sources */,
 				AA000000000000000000020B /* TrendChartModelTests.swift in Sources */,
 				AA000000000000000000020C /* BuildScriptTests.swift in Sources */,
+				AA000000000000000000020D /* CodexUsageTests.swift in Sources */,
+				AA000000000000000000020E /* MenuBarVendorVisibilityTests.swift in Sources */,
+				AA000000000000000000020F /* InMemoryCodexHistoryStore.swift in Sources */,
+				AA0000000000000000000210 /* CodexHistoryTests.swift in Sources */,
+				AA0000000000000000000211 /* InMemoryCursorHistoryStore.swift in Sources */,
+				AA0000000000000000000212 /* CursorUsageTests.swift in Sources */,
+				AA0000000000000000000213 /* CursorHistoryTests.swift in Sources */,
 				FF0000000000000000000101 /* TimeBucketTests.swift in Sources */,
 				FF0000000000000000000102 /* InMemoryHistoryStoreTests.swift in Sources */,
 				FF0000000000000000000103 /* LevelDBBalanceHistoryStoreTests.swift in Sources */,
@@ -846,7 +982,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.1.5;
+				MARKETING_VERSION = 2.0.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lc++",
@@ -878,7 +1014,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.1.5;
+				MARKETING_VERSION = 2.0.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lc++",
@@ -908,7 +1044,7 @@
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.1.5;
+				MARKETING_VERSION = 2.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jxz.deepseekbalance.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -933,7 +1069,7 @@
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.1.5;
+				MARKETING_VERSION = 2.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jxz.deepseekbalance.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;

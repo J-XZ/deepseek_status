@@ -65,6 +65,7 @@ final class BalanceStore: ObservableObject {
   private var startupPruneTask: Task<Void, Never>?
   private var observations: [NotificationObservation] = []
   private var lastLifecycleEvent = Date.distantPast
+  private var autoRefreshInterval: TimeInterval?
 
   init(
     apiClient: any BalanceFetching = DeepSeekAPIClient(),
@@ -95,15 +96,9 @@ final class BalanceStore: ObservableObject {
     }
     setupLifecycleObservers()
 
-    if let interval = autoRefreshInterval {
-      autoRefreshTask = Task { [weak self] in
-        while !Task.isCancelled {
-          try? await Task.sleep(for: .seconds(interval))
-          guard !Task.isCancelled else { break }
-          await self?.refreshIfNeeded(maximumAge: 60)
-        }
-      }
-    }
+    // 周期刷新：保证额度与历史记录持续更新。
+    self.autoRefreshInterval = autoRefreshInterval
+    startAutoRefreshIfNeeded()
 
     // 启动刷新与启动清理相互独立、分别可注入。
     if startupRefresh {
@@ -128,6 +123,40 @@ final class BalanceStore: ObservableObject {
     startupPruneTask?.cancel()
     for observation in observations {
       observation.remove()
+    }
+  }
+
+  // MARK: - 启用/停用
+
+  /// 当前是否允许后台收集额度。菜单栏隐藏该供应商时置为 false：
+  /// 停止周期刷新、启动刷新与历史写入；重新显示时恢复并立即刷新一次。
+  private(set) var isEnabled = true
+
+  func setEnabled(_ enabled: Bool) {
+    guard isEnabled != enabled else { return }
+    isEnabled = enabled
+    if enabled {
+      startupRefreshTask = Task { [weak self] in
+        await self?.refresh()
+      }
+      startAutoRefreshIfNeeded()
+    } else {
+      startupRefreshTask?.cancel()
+      startupRefreshTask = nil
+      autoRefreshTask?.cancel()
+      autoRefreshTask = nil
+    }
+  }
+
+  private func startAutoRefreshIfNeeded() {
+    autoRefreshTask?.cancel()
+    guard isEnabled, let interval = autoRefreshInterval else { return }
+    autoRefreshTask = Task { [weak self] in
+      while !Task.isCancelled {
+        try? await Task.sleep(for: .seconds(interval))
+        guard !Task.isCancelled else { break }
+        await self?.refreshIfNeeded(maximumAge: 60)
+      }
     }
   }
 
@@ -191,6 +220,7 @@ final class BalanceStore: ObservableObject {
   // MARK: - 刷新入口
 
   func refresh(force: Bool = false) async {
+    guard isEnabled else { return }
     let credential: ResolvedCredential?
     do {
       credential = try keyProvider.resolveCredential()

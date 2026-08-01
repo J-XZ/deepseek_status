@@ -11,36 +11,98 @@ enum AppTypography {
   static let badge = Font.system(size: 11, weight: .semibold, design: .rounded)
 }
 
+/// 弹出窗口顶部切换栏：DeepSeek 用量 / Codex 用量 / Cursor 用量。
+enum UsageTab: String, CaseIterable, Identifiable {
+  case deepseek
+  case codex
+  case cursor
+
+  var id: String { rawValue }
+
+  /// 与菜单栏供应商对应，用于可见性过滤。
+  var vendor: MenuBarVendor {
+    switch self {
+    case .deepseek:
+      return .deepseek
+    case .codex:
+      return .codex
+    case .cursor:
+      return .cursor
+    }
+  }
+}
+
 /// 点击菜单栏项目后展示的弹出窗口内容。
 struct BalancePopoverView: View {
   @ObservedObject var store: BalanceStore
   @ObservedObject var statusStore: DeepSeekStatusStore
   @ObservedObject var loginItemStore: LoginItemStore
+  @ObservedObject var codexStore: CodexUsageStore
+  @ObservedObject var cursorStore: CursorUsageStore
+  @ObservedObject var codexStatusStore: StatusPageStatusStore
+  @ObservedObject var cursorStatusStore: StatusPageStatusStore
+  let visibility: MenuBarVendorVisibility
 
   @State private var apiKeyInput = ""
   @State private var validationMessage: String?
   @State private var showClearHistoryConfirmation = false
+  @State private var selectedTab: UsageTab = .deepseek
   @Environment(\.controlActiveState) private var controlActiveState
 
   private var language: AppLanguage {
     store.language
   }
 
+  /// 仅显示菜单栏可见的供应商页。
+  private var visibleTabs: [UsageTab] {
+    UsageTab.allCases.filter { visibility.isVisible($0.vendor) }
+  }
+
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 10) {
-        card { header }
-        card {
-          DeepSeekServiceStatusView(store: statusStore, language: language)
+        tabSwitcher
+        switch selectedTab {
+        case .deepseek:
+          deepSeekQuotaCard
+          card { DeepSeekServiceStatusView(store: statusStore, language: language) }
+          card { trendSection }
+          card { keyConfigurationSection }
+        case .codex:
+          CodexUsageView(store: codexStore, language: language, appearance: store.appearance)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(12)
+            .background(cardBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay {
+              RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(cardBorder, lineWidth: 1)
+            }
+          card {
+            DeepSeekServiceStatusView(
+              store: codexStatusStore,
+              language: language,
+              titleKey: .serviceTitleCodex
+            )
+          }
+          card { codexTrendSection }
+        case .cursor:
+          CursorUsageView(store: cursorStore, language: language, appearance: store.appearance)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(12)
+            .background(cardBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay {
+              RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(cardBorder, lineWidth: 1)
+            }
+          card {
+            DeepSeekServiceStatusView(
+              store: cursorStatusStore,
+              language: language,
+              titleKey: .serviceTitleCursor
+            )
+          }
+          card { cursorTrendSection }
         }
-        card {
-          sectionTitle(.balanceTitle, systemImage: "wallet.pass")
-          balanceSection
-        }
-        card { trendSection }
-        errorMessageView
-        card { settingsSection }
-        card { keyConfigurationSection }
         card { footer }
       }
       .font(AppTypography.body)
@@ -62,12 +124,57 @@ struct BalancePopoverView: View {
     .onAppear {
       Task { await store.refreshIfNeeded() }
       Task { await statusStore.refreshIfNeeded() }
+      Task { await codexStore.refreshIfNeeded() }
+      Task { await cursorStore.refreshIfNeeded() }
+      Task { await codexStatusStore.refreshIfNeeded() }
+      Task { await cursorStatusStore.refreshIfNeeded() }
+    }
+  }
+
+  // MARK: - 顶部切换栏
+
+  private var tabSwitcher: some View {
+    Picker("", selection: $selectedTab) {
+      ForEach(visibleTabs) { tab in
+        Text(L10n.string(tabLabelKey(tab), language: language))
+          .tag(tab)
+      }
+    }
+    .pickerStyle(.segmented)
+    .labelsHidden()
+    .accessibilityLabel(L10n.string(.codexTitle, language: language))
+    .onAppear {
+      if !visibleTabs.contains(selectedTab), let first = visibleTabs.first {
+        selectedTab = first
+      }
+    }
+  }
+
+  private func tabLabelKey(_ tab: UsageTab) -> L10nKey {
+    switch tab {
+    case .deepseek:
+      return .tabDeepSeek
+    case .codex:
+      return .tabCodex
+    case .cursor:
+      return .tabCursor
     }
   }
 
   /// 弹出窗口底色：浅色白色、深色黑色，均为不透明纯色。
   private var windowBackground: Color {
     store.appearance == .dark ? .black : .white
+  }
+
+  /// DeepSeek 标题与额度内容必须属于同一张卡片。
+  private var deepSeekQuotaCard: some View {
+    card {
+      VStack(alignment: .leading, spacing: 10) {
+        header
+        balanceSection
+        errorMessageView
+      }
+    }
   }
 
   /// 卡片底色：浅色为极浅灰（与白色窗口对比），深色为深灰。
@@ -106,23 +213,18 @@ struct BalancePopoverView: View {
         .renderingMode(.template)
         .resizable()
         .aspectRatio(contentMode: .fit)
-        .frame(width: 24, height: 24)
-        .padding(8)
+        .frame(width: 28, height: 28)
+        .padding(7)
         .background(Color.accentColor.opacity(0.12), in: Circle())
         .accessibilityLabel(L10n.string(.a11yDeepSeekIcon, language: language))
       VStack(alignment: .leading, spacing: 2) {
-        Text(L10n.string(.appTitle, language: language))
+        Text(L10n.string(.tabDeepSeek, language: language))
           .font(AppTypography.title)
         Text(store.menuBarText)
           .font(AppTypography.caption.monospacedDigit())
           .foregroundStyle(.secondary)
       }
       Spacer()
-      Button(language == .simplifiedChinese ? "English" : "中文") {
-        store.setLanguage(language == .simplifiedChinese ? .english : .simplifiedChinese)
-      }
-      .controlSize(.small)
-      .help("Switch language / 切换语言")
       statusBadge
     }
   }
@@ -319,6 +421,52 @@ struct BalancePopoverView: View {
     )
   }
 
+  // MARK: - Codex 趋势区
+
+  private var codexTrendSection: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Text(L10n.string(.codexTrendTitle, language: language))
+        .font(AppTypography.section)
+
+      if codexStore.historySamples.count >= 2 {
+        CodexTrendChartView(
+          samples: codexStore.historySamples,
+          language: language,
+          now: codexStore.clock.now()
+        )
+      } else {
+        BalanceTrendEmptyView(historyUnavailable: false, language: language)
+      }
+
+      Text(L10n.string(.trendLocalNote, language: language))
+        .font(AppTypography.caption)
+        .foregroundStyle(.secondary)
+    }
+  }
+
+  // MARK: - Cursor 趋势区
+
+  private var cursorTrendSection: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Text(L10n.string(.cursorTrendTitle, language: language))
+        .font(AppTypography.section)
+
+      if cursorStore.historySamples.count >= 2 {
+        CursorTrendChartView(
+          samples: cursorStore.historySamples,
+          language: language,
+          now: cursorStore.clock.now()
+        )
+      } else {
+        BalanceTrendEmptyView(historyUnavailable: false, language: language)
+      }
+
+      Text(L10n.string(.trendLocalNote, language: language))
+        .font(AppTypography.caption)
+        .foregroundStyle(.secondary)
+    }
+  }
+
   // MARK: - 错误提示
 
   @ViewBuilder
@@ -329,111 +477,6 @@ struct BalancePopoverView: View {
         .foregroundStyle(.red)
         .textSelection(.enabled)
         .fixedSize(horizontal: false, vertical: true)
-    }
-  }
-
-  // MARK: - 设置区
-
-  private var settingsSection: some View {
-    VStack(alignment: .leading, spacing: 10) {
-      Text(L10n.string(.settingsTitle, language: language))
-        .font(AppTypography.section)
-
-      HStack {
-        Text(L10n.string(.settingsLanguage, language: language))
-        Spacer()
-        Button(language == .simplifiedChinese ? "English" : "中文") {
-          store.setLanguage(
-            language == .simplifiedChinese ? .english : .simplifiedChinese
-          )
-        }
-        .controlSize(.small)
-      }
-
-      HStack {
-        Text(L10n.string(.settingsAppearance, language: language))
-        Spacer()
-        Picker("", selection: appearanceBinding) {
-          Text(L10n.string(.appearanceLight, language: language))
-            .tag(AppAppearance.light)
-          Text(L10n.string(.appearanceDark, language: language))
-            .tag(AppAppearance.dark)
-        }
-        .pickerStyle(.segmented)
-        .labelsHidden()
-        .frame(width: 150)
-      }
-
-      Divider()
-
-      VStack(alignment: .leading, spacing: 6) {
-        HStack {
-          Text(L10n.string(.settingsLaunchAtLogin, language: language))
-          Spacer()
-          Toggle("", isOn: loginBinding)
-            .labelsHidden()
-            .toggleStyle(.switch)
-            .controlSize(.small)
-            .disabled(loginItemStore.isUpdating)
-        }
-        Text(loginStatusText)
-          .font(AppTypography.caption)
-          .foregroundStyle(.secondary)
-        if let error = loginItemStore.lastError {
-          Text(error)
-            .font(AppTypography.caption)
-            .foregroundStyle(.red)
-            .textSelection(.enabled)
-        }
-        if loginItemStore.status == .requiresApproval {
-          Button(L10n.string(.loginOpenSettings, language: language)) {
-            loginItemStore.openSystemSettings()
-          }
-          .controlSize(.small)
-        }
-      }
-
-      Divider()
-
-      HStack {
-        Text(L10n.string(.settingsLocalHistory, language: language))
-        Spacer()
-        Button(L10n.string(.trendClearHistory, language: language)) {
-          showClearHistoryConfirmation = true
-        }
-        .controlSize(.small)
-      }
-    }
-  }
-
-  private var loginBinding: Binding<Bool> {
-    Binding(
-      get: { loginItemStore.status == .enabled },
-      set: { newValue in
-        Task { await loginItemStore.setEnabled(newValue) }
-      }
-    )
-  }
-
-  private var appearanceBinding: Binding<AppAppearance> {
-    Binding(
-      get: { store.appearance },
-      set: { store.setAppearance($0) }
-    )
-  }
-
-  private var loginStatusText: String {
-    switch loginItemStore.status {
-    case .enabled:
-      return L10n.string(.loginEnabled, language: language)
-    case .notRegistered:
-      return L10n.string(.loginNotRegistered, language: language)
-    case .requiresApproval:
-      return L10n.string(.loginRequiresApproval, language: language)
-    case .notFound:
-      return L10n.string(.loginNotFound, language: language)
-    case .error(let message):
-      return L10n.string(.loginError, language: language) + "：" + message
     }
   }
 
@@ -502,12 +545,20 @@ struct BalancePopoverView: View {
 
   private var footer: some View {
     HStack(spacing: 8) {
-      if store.isRefreshing || statusStore.loadState == .loading {
+      if store.isRefreshing || statusStore.loadState == .loading || codexStore.isRefreshing
+        || cursorStore.isRefreshing
+      {
         ProgressView()
           .controlSize(.small)
       }
       Button(L10n.string(.footerRefresh, language: language)) {
-        Task { await store.refreshAll() }
+        Task {
+          await store.refreshAll()
+          await codexStore.refreshIfNeeded(maximumAge: 0)
+          await cursorStore.refreshIfNeeded(maximumAge: 0)
+          await codexStatusStore.refreshIfNeeded(maximumAge: 0)
+          await cursorStatusStore.refreshIfNeeded(maximumAge: 0)
+        }
       }
       Spacer()
       Button(L10n.string(.footerQuit, language: language)) {

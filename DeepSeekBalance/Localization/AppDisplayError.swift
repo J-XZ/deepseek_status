@@ -13,6 +13,10 @@ enum AppDisplayError: Equatable, Sendable {
   case keychain(String)
   case history(String)
   case serviceStatusUnavailable
+  case codexNotConfigured
+  case codexAuthInvalid
+  case cursorNotConfigured
+  case cursorAuthInvalid
   case unknown
 
   func text(language: AppLanguage) -> String {
@@ -43,6 +47,14 @@ enum AppDisplayError: Equatable, Sendable {
       return L10n.string(.errorHistory, language: language, Self.sanitized(detail))
     case .serviceStatusUnavailable:
       return L10n.string(.errorServiceStatus, language: language)
+    case .codexNotConfigured:
+      return L10n.string(.codexNotConfigured, language: language)
+    case .codexAuthInvalid:
+      return L10n.string(.codexAuthInvalid, language: language)
+    case .cursorNotConfigured:
+      return L10n.string(.cursorNotConfigured, language: language)
+    case .cursorAuthInvalid:
+      return L10n.string(.cursorAuthInvalid, language: language)
     case .unknown:
       return L10n.string(.errorUnknown, language: language)
     }

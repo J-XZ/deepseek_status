@@ -126,7 +126,7 @@ enum DeepSeekStatusMapper {
     )
   }
 
-  private static func severity(_ status: ComponentStatus) -> Int {
+  static func severity(_ status: ComponentStatus) -> Int {
     switch status {
     case .operational, .unknown:
       return 0

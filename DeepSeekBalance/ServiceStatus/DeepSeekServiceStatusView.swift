@@ -1,19 +1,48 @@
 import SwiftUI
 
-/// DeepSeek 官方服务状态卡片。远程内容只作为纯文本展示。
-struct DeepSeekServiceStatusView: View {
-  @ObservedObject var store: DeepSeekStatusStore
+/// 官方服务状态卡片（DeepSeek / Codex / Cursor 共用，接受任一状态 store）。
+/// 远程内容只作为纯文本展示。
+struct DeepSeekServiceStatusView<Store: ServiceStatusStoring>: View {
+  @ObservedObject var store: Store
   let language: AppLanguage
+  let titleKey: L10nKey
+  @State private var isExpanded = false
+
+  init(store: Store, language: AppLanguage, titleKey: L10nKey = .serviceTitle) {
+    self.store = store
+    self.language = language
+    self.titleKey = titleKey
+  }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      HStack {
-        Text(L10n.string(.serviceTitle, language: language))
-          .font(AppTypography.section)
-        Spacer()
-        overallBadge
+      DisclosureGroup(isExpanded: $isExpanded) {
+        statusDetails
+      } label: {
+        HStack {
+          Text(L10n.string(titleKey, language: language))
+            .font(AppTypography.section)
+          Spacer()
+          overallBadge
+        }
       }
 
+      HStack(spacing: 8) {
+        Button(L10n.string(.serviceRefresh, language: language)) {
+          Task { await store.refresh() }
+        }
+        Button(L10n.string(.serviceOpenPage, language: language)) {
+          store.openOfficialStatusPage()
+        }
+        Spacer()
+      }
+      .controlSize(.small)
+    }
+  }
+
+  @ViewBuilder
+  private var statusDetails: some View {
+    VStack(alignment: .leading, spacing: 8) {
       switch store.loadState {
       case .idle, .loading:
         HStack(spacing: 8) {
@@ -42,17 +71,6 @@ struct DeepSeekServiceStatusView: View {
           .foregroundStyle(.red)
           .textSelection(.enabled)
       }
-
-      HStack(spacing: 8) {
-        Button(L10n.string(.serviceRefresh, language: language)) {
-          Task { await store.refresh() }
-        }
-        Button(L10n.string(.serviceOpenPage, language: language)) {
-          store.openOfficialStatusPage()
-        }
-        Spacer()
-      }
-      .controlSize(.small)
     }
   }
 
