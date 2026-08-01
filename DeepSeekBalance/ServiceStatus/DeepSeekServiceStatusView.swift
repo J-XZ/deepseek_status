@@ -79,7 +79,10 @@ struct DeepSeekServiceStatusView<Store: ServiceStatusStoring>: View {
     let indicator: OverallIndicator
     let text: String
     switch store.loadState {
-    case .loading, .idle where store.status == nil:
+    case .loading:
+      indicator = .unknown
+      text = L10n.string(.serviceLoading, language: language)
+    case .idle where store.status == nil:
       indicator = .unknown
       text = L10n.string(.serviceLoading, language: language)
     default:
