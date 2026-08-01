@@ -1,0 +1,696 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "a11y.currencyPicker" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Select trend currency" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "选择趋势币种" } }
+      }
+    },
+    "a11y.deepseekIcon" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "DeepSeek icon" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "DeepSeek 图标" } }
+      }
+    },
+    "a11y.legend" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Legend: total, topped-up and granted balance" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "图例：总余额、充值余额、赠送余额" } }
+      }
+    },
+    "a11y.menuBar" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "DeepSeek API balance, %@" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "DeepSeek API 余额，%@" } }
+      }
+    },
+    "a11y.status" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Status: %@" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "状态：%@" } }
+      }
+    },
+    "action.cancel" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "取消" } }
+      }
+    },
+    "action.clear" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Clear" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "清除" } }
+      }
+    },
+    "apiKey.clear" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Clear Saved Key" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "清除已保存密钥" } }
+      }
+    },
+    "apiKey.clearFailed" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Could not clear saved key: %@" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无法清除已保存的密钥：%@" } }
+      }
+    },
+    "apiKey.emptyInput" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Please enter an API key (cannot be empty)" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请输入 API Key（不能为空）" } }
+      }
+    },
+    "apiKey.placeholder" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter DeepSeek API Key" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "输入 DeepSeek API Key" } }
+      }
+    },
+    "apiKey.save" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Save" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "保存" } }
+      }
+    },
+    "apiKey.saveFailed" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Could not save key: %@" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无法保存密钥：%@" } }
+      }
+    },
+    "apiKey.source" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Key source:" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "密钥来源：" } }
+      }
+    },
+    "apiKey.source.environment" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Environment variable DEEPSEEK_API_KEY" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "环境变量 DEEPSEEK_API_KEY" } }
+      }
+    },
+    "apiKey.source.keychain" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Keychain" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "Keychain" } }
+      }
+    },
+    "apiKey.source.notConfigured" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Not configured" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未配置" } }
+      }
+    },
+    "apiKey.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "API Key" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "API Key" } }
+      }
+    },
+    "app.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "DeepSeek API Balance" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "DeepSeek API Balance" } }
+      }
+    },
+    "balance.empty" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No balance data yet" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "暂无余额数据" } }
+      }
+    },
+    "balance.granted" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Granted balance" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "赠送余额" } }
+      }
+    },
+    "balance.lastUpdated" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Last updated: %@" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "最后更新：%@" } }
+      }
+    },
+    "balance.loading" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Fetching balance…" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "正在获取余额…" } }
+      }
+    },
+    "balance.toppedUp" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Topped-up balance" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "充值余额" } }
+      }
+    },
+    "balance.total" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Total balance" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "总余额" } }
+      }
+    },
+    "common.unknown" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Unknown" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未知" } }
+      }
+    },
+    "component.degraded" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Degraded performance" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "性能下降" } }
+      }
+    },
+    "component.majorOutage" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Major outage" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "重大中断" } }
+      }
+    },
+    "component.operational" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Operational" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "正常" } }
+      }
+    },
+    "component.partialOutage" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Partial outage" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "部分中断" } }
+      }
+    },
+    "component.underMaintenance" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Under maintenance" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "维护中" } }
+      }
+    },
+    "component.unknown" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Unknown" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未知" } }
+      }
+    },
+    "error.decoding" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Could not parse the server response" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无法解析服务端响应" } }
+      }
+    },
+    "error.history" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Local history error: %@" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "本地历史错误：%@" } }
+      }
+    },
+    "error.http" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Service returned error (%d)" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "服务返回错误（%d）" } }
+      }
+    },
+    "error.insufficientBalance" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Insufficient balance (402)" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "余额不足（402）" } }
+      }
+    },
+    "error.keychain" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Keychain error: %@" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "Keychain 错误：%@" } }
+      }
+    },
+    "error.noNetwork" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cannot connect to the network. Check your connection." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无法连接网络，请检查网络连接" } }
+      }
+    },
+    "error.rateLimited" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Too many requests, try again later (429)" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请求过于频繁，请稍后再试（429）" } }
+      }
+    },
+    "error.server" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "DeepSeek service temporarily unavailable (%d)" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "DeepSeek 服务暂时不可用（%d）" } }
+      }
+    },
+    "error.serviceStatus" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Official status temporarily unavailable" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "暂时无法获取官方状态信息" } }
+      }
+    },
+    "error.timeout" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Request timed out. Try again later." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请求超时，请稍后重试" } }
+      }
+    },
+    "error.unauthorized" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Invalid API key (401)" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "API Key 无效（401）" } }
+      }
+    },
+    "error.unknown" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "An unknown error occurred" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "发生未知错误" } }
+      }
+    },
+    "footer.quit" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Quit" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "退出应用" } }
+      }
+    },
+    "footer.refresh" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Refresh" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "刷新" } }
+      }
+    },
+    "impact.critical" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Critical" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "严重" } }
+      }
+    },
+    "impact.major" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Major" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "重大" } }
+      }
+    },
+    "impact.minor" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Minor" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "轻微" } }
+      }
+    },
+    "impact.none" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No impact" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无影响" } }
+      }
+    },
+    "impact.unknown" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Unknown" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未知" } }
+      }
+    },
+    "incident.identified" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Identified" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已确认" } }
+      }
+    },
+    "incident.investigating" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Investigating" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "调查中" } }
+      }
+    },
+    "incident.monitoring" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Monitoring" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "监控中" } }
+      }
+    },
+    "incident.postmortem" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Postmortem" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已发布报告" } }
+      }
+    },
+    "incident.resolved" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Resolved" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已解决" } }
+      }
+    },
+    "incident.unknown" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Unknown" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未知" } }
+      }
+    },
+    "indicator.critical" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Critical Outage" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "严重服务中断" } }
+      }
+    },
+    "indicator.maintenance" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Maintenance" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "维护中" } }
+      }
+    },
+    "indicator.major" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Major Disruption" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "主要服务异常" } }
+      }
+    },
+    "indicator.minor" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Minor Disruption" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "部分服务异常" } }
+      }
+    },
+    "indicator.none" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "All Systems Operational" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "全部系统正常" } }
+      }
+    },
+    "indicator.unknown" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Unknown" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未知" } }
+      }
+    },
+    "legend.granted" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Granted" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "赠送余额" } }
+      }
+    },
+    "legend.toppedUp" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Topped up" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "充值余额" } }
+      }
+    },
+    "legend.total" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Total" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "总余额" } }
+      }
+    },
+    "login.enabled" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enabled" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已启用" } }
+      }
+    },
+    "login.error" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Login item operation failed" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "登录项操作失败" } }
+      }
+    },
+    "login.notFound" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "App not found" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "应用未找到" } }
+      }
+    },
+    "login.notRegistered" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Not registered" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未注册" } }
+      }
+    },
+    "login.openSettings" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Open Login Items Settings" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "打开登录项设置" } }
+      }
+    },
+    "login.requiresApproval" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Requires approval in System Settings" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "需要在系统设置中批准" } }
+      }
+    },
+    "menuBar.error" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Error" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "错误" } }
+      }
+    },
+    "menuBar.loading" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "…" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "…" } }
+      }
+    },
+    "menuBar.notConfigured" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Not configured" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未配置" } }
+      }
+    },
+    "serviceStatus.api" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "API Service" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "API 服务" } }
+      }
+    },
+    "serviceStatus.incidentImpact" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Impact: %@" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "影响：%@" } }
+      }
+    },
+    "serviceStatus.incidentPhase" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Phase: %@" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "阶段：%@" } }
+      }
+    },
+    "serviceStatus.incidentUpdated" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Last updated: %@" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "最近更新：%@" } }
+      }
+    },
+    "serviceStatus.incidents" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Open incidents" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未解决事故" } }
+      }
+    },
+    "serviceStatus.lastUpdated" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Last successful update: %@" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "最后成功更新：%@" } }
+      }
+    },
+    "serviceStatus.loading" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Fetching official status…" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "正在获取官方状态…" } }
+      }
+    },
+    "serviceStatus.maintenance" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Scheduled maintenance" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "计划维护" } }
+      }
+    },
+    "serviceStatus.openPage" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Open Official Status Page" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "打开官方状态页" } }
+      }
+    },
+    "serviceStatus.otherComponents" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Other components" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "其他组件" } }
+      }
+    },
+    "serviceStatus.overall" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Overall status" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "整体状态" } }
+      }
+    },
+    "serviceStatus.refresh" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Refresh Service Status" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "刷新服务状态" } }
+      }
+    },
+    "serviceStatus.stale" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Possibly stale" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "可能已过期" } }
+      }
+    },
+    "serviceStatus.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "DeepSeek Service Status" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "DeepSeek 服务状态" } }
+      }
+    },
+    "serviceStatus.unavailable" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Official status temporarily unavailable" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "暂时无法获取官方状态信息" } }
+      }
+    },
+    "serviceStatus.webChat" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Web Chat Service" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "网页对话服务" } }
+      }
+    },
+    "settings.language" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Language" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "语言" } }
+      }
+    },
+    "settings.languageSwitch" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "中文" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "English" } }
+      }
+    },
+    "settings.launchAtLogin" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Launch at Login" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "登录时启动" } }
+      }
+    },
+    "settings.localHistory" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Local History" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "本地历史" } }
+      }
+    },
+    "settings.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Settings" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "设置" } }
+      }
+    },
+    "status.insufficientBalance" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Insufficient balance" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "余额不足" } }
+      }
+    },
+    "status.keychainError" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Keychain error" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "Keychain 错误" } }
+      }
+    },
+    "status.loaded" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Available" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "可用" } }
+      }
+    },
+    "status.loading" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Loading" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "加载中" } }
+      }
+    },
+    "status.notConfigured" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Not configured" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未配置" } }
+      }
+    },
+    "status.requestFailed" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Request failed" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请求失败" } }
+      }
+    },
+    "trend.clearConfirmMessage" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This removes locally saved samples from the last 3 days. It does not affect your API key or current balance." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "将删除本机保存的最近 3 天历史样本。不影响 API Key 与当前余额。" } }
+      }
+    },
+    "trend.clearConfirmTitle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Clear Local History?" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "清除本地历史？" } }
+      }
+    },
+    "trend.clearHistory" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Clear Local History" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "清除本地历史" } }
+      }
+    },
+    "trend.currencyPicker" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Currency" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "币种" } }
+      }
+    },
+    "trend.emptyTitle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Not enough history data yet" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "尚无足够历史数据" } }
+      }
+    },
+    "trend.emptyUnavailable" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Your balance works normally, but local history is temporarily unavailable." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "当前余额可正常使用，但本地历史记录暂时不可用。" } }
+      }
+    },
+    "trend.emptyWaiting" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Recording starts after the first successful balance fetch, with one 10-minute bucket per sample." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "应用会从首次成功获取余额后开始记录，每 10 分钟保留一个时间桶。" } }
+      }
+    },
+    "trend.historyErrorPrefix" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Local history error: %@" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "本地历史错误：%@" } }
+      }
+    },
+    "trend.localNote" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "History is stored locally only and kept for up to 3 days." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "历史仅保存在本机，最多保留 3 天。" } }
+      }
+    },
+    "trend.selectionChange" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "vs previous sample %@" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "较前样本 %@" } }
+      }
+    },
+    "trend.summaryChange" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "72h change: %@" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "72 小时变化：%@" } }
+      }
+    },
+    "trend.summaryInsufficient" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "72h change: not enough samples" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "72 小时变化：样本不足" } }
+      }
+    },
+    "trend.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "3-Day Balance Trend" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "最近 3 天余额趋势" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

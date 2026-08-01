@@ -23,7 +23,8 @@ final class BalanceStoreTests: XCTestCase {
     keychain: FakeKeychainStore,
     environment: [String: String] = [:],
     apiClient: (any BalanceFetching)? = nil,
-    historyService: BalanceHistoryService? = nil
+    historyService: BalanceHistoryService? = nil,
+    language: AppLanguage = .simplifiedChinese
   ) -> BalanceStore {
     BalanceStore(
       apiClient: apiClient
@@ -32,7 +33,8 @@ final class BalanceStoreTests: XCTestCase {
       environment: environment,
       clock: clock,
       historyService: historyService ?? BalanceHistoryService(store: history, clock: clock),
-      autoRefreshInterval: nil
+      autoRefreshInterval: nil,
+      language: language
     )
   }
 

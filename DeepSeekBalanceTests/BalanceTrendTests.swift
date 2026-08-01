@@ -40,7 +40,10 @@ final class BalanceTrendTests: XCTestCase {
       sample(at: t0.addingTimeInterval(3600), total: "100.00"),
     ]
     let summary = BalanceTrendProcessor.summary(samples: samples, currency: "CNY")
-    XCTAssertEqual(summary.displayText, "72 小时变化：-¥10.00（-9.1%）")
+    XCTAssertEqual(
+      summary.text(language: .simplifiedChinese),
+      "72 小时变化：-¥10.00（-9.1%）"
+    )
   }
 
   func testSeventyTwoHourDeltaPositive() {
@@ -49,13 +52,19 @@ final class BalanceTrendTests: XCTestCase {
       sample(at: t0.addingTimeInterval(3600), total: "110.00"),
     ]
     let summary = BalanceTrendProcessor.summary(samples: samples, currency: "CNY")
-    XCTAssertEqual(summary.displayText, "72 小时变化：+¥10.00（+10.0%）")
+    XCTAssertEqual(
+      summary.text(language: .simplifiedChinese),
+      "72 小时变化：+¥10.00（+10.0%）"
+    )
   }
 
   func testInsufficientSamples() {
     let samples = [sample(at: t0)]
     let summary = BalanceTrendProcessor.summary(samples: samples, currency: "CNY")
-    XCTAssertEqual(summary.displayText, "72 小时变化：样本不足")
+    XCTAssertEqual(
+      summary.text(language: .simplifiedChinese),
+      "72 小时变化：样本不足"
+    )
   }
 
   func testFirstValueZeroSkipsPercent() {
@@ -69,7 +78,10 @@ final class BalanceTrendTests: XCTestCase {
     } else {
       XCTFail("应为 available")
     }
-    XCTAssertEqual(summary.displayText, "72 小时变化：+¥10.00")
+    XCTAssertEqual(
+      summary.text(language: .simplifiedChinese),
+      "72 小时变化：+¥10.00"
+    )
   }
 
   func testFiltersByCurrency() {
@@ -158,7 +170,13 @@ final class BalanceTrendTests: XCTestCase {
   }
 
   func testPercentText() {
-    XCTAssertEqual(TrendSummary.percentText(Decimal(string: "12.6")!), "+12.6%")
-    XCTAssertEqual(TrendSummary.percentText(Decimal(string: "-3.0")!), "-3.0%")
+    XCTAssertEqual(
+      TrendSummary.percentText(Decimal(string: "12.6")!, language: .simplifiedChinese),
+      "+12.6%"
+    )
+    XCTAssertEqual(
+      TrendSummary.percentText(Decimal(string: "-3.0")!, language: .simplifiedChinese),
+      "-3.0%"
+    )
   }
 }

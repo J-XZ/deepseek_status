@@ -10,12 +10,14 @@ struct MenuBarLabel: View {
         .renderingMode(.template)
         .resizable()
         .frame(width: 16, height: 16)
-        .accessibilityLabel("DeepSeek 图标")
+        .accessibilityLabel(L10n.string(.a11yDeepSeekIcon, language: store.language))
       Text(store.menuBarText)
         .font(.system(size: 13, weight: .medium))
         .monospacedDigit()
     }
     .accessibilityElement(children: .combine)
-    .accessibilityLabel("DeepSeek API 余额，\(store.menuBarText)")
+    .accessibilityLabel(
+      L10n.string(.a11yMenuBar, language: store.language, store.menuBarText)
+    )
   }
 }

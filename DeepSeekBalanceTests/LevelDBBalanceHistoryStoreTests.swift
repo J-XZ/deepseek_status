@@ -24,7 +24,7 @@ final class LevelDBBalanceHistoryStoreTests: XCTestCase {
   }
 
   private func makeStore() throws -> LevelDBBalanceHistoryStore {
-    let newStore = try LevelDBBalanceHistoryStore(directory: directory)
+    let newStore = try LevelDBBalanceHistoryStore.open(directory: directory)
     store = newStore
     return newStore
   }
@@ -50,7 +50,7 @@ final class LevelDBBalanceHistoryStoreTests: XCTestCase {
 
   func testCreatesDirectoryAutomatically() async throws {
     let deep = directory.appendingPathComponent("a/b", isDirectory: true)
-    let store = try LevelDBBalanceHistoryStore(directory: deep)
+    let store = try LevelDBBalanceHistoryStore.open(directory: deep)
     XCTAssertTrue(FileManager.default.fileExists(atPath: deep.path))
     await store.close()
   }
@@ -85,7 +85,7 @@ final class LevelDBBalanceHistoryStoreTests: XCTestCase {
     await first?.close()
     first = nil
 
-    let second = try LevelDBBalanceHistoryStore(directory: directory)
+    let second = try LevelDBBalanceHistoryStore.open(directory: directory)
     let fetched = try await second.fetch(
       credentialID: "cred", from: .distantPast, to: .distantFuture)
     XCTAssertEqual(fetched.count, 1)

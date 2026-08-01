@@ -7,7 +7,7 @@ protocol BalanceFetching: Sendable {
 
 /// DeepSeek 余额接口客户端。使用 `async/await` + `URLSession`。
 struct DeepSeekAPIClient {
-  enum APIError: Error, LocalizedError, Equatable {
+  enum APIError: Error, Equatable {
     case unauthorized
     case insufficientBalance
     case rateLimited
@@ -18,26 +18,27 @@ struct DeepSeekAPIClient {
     case decodingFailed
     case cancelled
 
-    var errorDescription: String? {
+    /// 语义化映射：状态层只保存错误种类，翻译由 UI 层按当前语言生成。
+    func asDisplayError() -> AppDisplayError {
       switch self {
       case .unauthorized:
-        return "API Key 无效（401）"
+        return .unauthorized
       case .insufficientBalance:
-        return "余额不足（402）"
+        return .insufficientBalance
       case .rateLimited:
-        return "请求过于频繁，请稍后再试（429）"
+        return .rateLimited
       case .httpError(let code):
-        return "服务返回错误（\(code)）"
+        return .http(code)
       case .server(let code):
-        return "DeepSeek 服务暂时不可用（\(code)）"
+        return .server(code)
       case .noNetwork:
-        return "无法连接网络，请检查网络连接"
+        return .noNetwork
       case .timedOut:
-        return "请求超时，请稍后重试"
+        return .timeout
       case .decodingFailed:
-        return "无法解析服务端响应"
+        return .decoding
       case .cancelled:
-        return "请求已取消"
+        return .unknown
       }
     }
   }

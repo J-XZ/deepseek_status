@@ -54,8 +54,15 @@ struct BalanceHistoryService: Sendable {
   /// 节流清理：默认每 6 小时最多执行一次。
   func pruneThrottled(interval: TimeInterval = 6 * 3600) async throws {
     let now = clock.now()
-    guard await pruneGate.shouldPrune(now: now, interval: interval) else { return }
-    try await store.prune(before: now.addingTimeInterval(-72 * 3600))
+    guard await pruneGate.shouldBegin(now: now, interval: interval) else { return }
+    do {
+      try await store.prune(before: now.addingTimeInterval(-72 * 3600))
+      await pruneGate.finish(success: true, at: now)
+    } catch {
+      // 失败不记录成功时间，下一次刷新可以立即重试。
+      await pruneGate.finish(success: false, at: now)
+      throw error
+    }
   }
 
   func clear(credentialID: String) async throws {
@@ -63,15 +70,25 @@ struct BalanceHistoryService: Sendable {
   }
 }
 
-/// 节流状态，actor 隔离避免并发竞态。
+/// 节流状态：只有 prune 真正成功后才记录 lastPrune；
+/// isPruning 防止两个并发调用同时执行 prune。
 actor PruneGate {
   private var lastPrune: Date?
+  private var isPruning = false
 
-  func shouldPrune(now: Date, interval: TimeInterval) -> Bool {
+  func shouldBegin(now: Date, interval: TimeInterval) -> Bool {
+    guard !isPruning else { return false }
     if let lastPrune, now.timeIntervalSince(lastPrune) < interval {
       return false
     }
-    lastPrune = now
+    isPruning = true
     return true
+  }
+
+  func finish(success: Bool, at now: Date) {
+    isPruning = false
+    if success {
+      lastPrune = now
+    }
   }
 }

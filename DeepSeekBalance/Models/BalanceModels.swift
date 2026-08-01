@@ -31,17 +31,19 @@ struct BalanceInfo: Codable, Equatable, Identifiable, Sendable {
 /// 金额格式化：优先使用 `Decimal`，避免浮点精度问题。
 enum BalanceFormatter {
   /// 菜单栏紧凑格式，例如 `¥110.00` 或 `¥110.00 · $2.50`。
-  static func summary(for infos: [BalanceInfo]) -> String? {
-    let parts = infos.map { format(total: $0.totalBalance, currency: $0.currency) }
+  static func summary(for infos: [BalanceInfo], locale: Locale = .current) -> String? {
+    let parts = infos.map {
+      format(total: $0.totalBalance, currency: $0.currency, locale: locale)
+    }
     return parts.isEmpty ? nil : parts.joined(separator: " · ")
   }
 
   /// 单个金额：CNY 显示 `¥110.00`，USD 显示 `$10.25`，未知货币显示 `EUR 10.00`。
-  static func format(total: String, currency: String) -> String {
+  static func format(total: String, currency: String, locale: Locale = .current) -> String {
     if let symbol = currencySymbol(for: currency) {
-      return withSymbol(symbol, amount: total)
+      return withSymbol(symbol, amount: total, locale: locale)
     }
-    return "\(currency) \(numberString(from: total))"
+    return "\(currency) \(numberString(from: total, locale: locale))"
   }
 
   static func currencySymbol(for currency: String) -> String? {
@@ -69,8 +71,8 @@ enum BalanceFormatter {
     return formatter.string(from: NSDecimalNumber(decimal: decimal)) ?? raw
   }
 
-  private static func withSymbol(_ symbol: String, amount: String) -> String {
-    let formatted = numberString(from: amount)
+  private static func withSymbol(_ symbol: String, amount: String, locale: Locale) -> String {
+    let formatted = numberString(from: amount, locale: locale)
     if formatted.hasPrefix("-") {
       return "-" + symbol + formatted.dropFirst()
     }

@@ -7,6 +7,30 @@ enum HistoryKeyCodec {
   static let schemaPrefix = "balance/v1/"
   private static let width = 10
 
+  /// 币种标准化：大写并拒绝可能破坏 key schema 的字符。
+  static func normalizedCurrency(_ currency: String) -> String? {
+    let normalized = currency
+      .uppercased()
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !normalized.isEmpty,
+      !normalized.contains("/"),
+      !normalized.contains("\0"),
+      !normalized.contains("\\"),
+      !normalized.contains(":")
+    else {
+      return nil
+    }
+    return normalized
+  }
+
+  static func validCredentialID(_ credentialID: String) -> Bool {
+    !credentialID.isEmpty
+      && !credentialID.contains("/")
+      && !credentialID.contains("\0")
+      && !credentialID.contains("\\")
+      && !credentialID.contains(":")
+  }
+
   static func key(credentialID: String, currency: String, bucketStart: Date) -> String {
     let seconds = Int64(bucketStart.timeIntervalSince1970)
     return "\(schemaPrefix)\(credentialID)/\(currency)/\(padded(seconds))"

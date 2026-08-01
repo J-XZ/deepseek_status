@@ -172,6 +172,16 @@ final class StoreStateCoordinationTests: XCTestCase {
     XCTAssertEqual(store.selectedCurrency, "USD")
   }
 
+  func testCurrencyPickerOnlyShowsRealCurrencies() async {
+    let json =
+      #"{"is_available":true,"balance_infos":[{"currency":"EUR","total_balance":"5.00","granted_balance":"0.00","topped_up_balance":"5.00"}]}"#
+    stub(statusCode: 200, body: Data(json.utf8))
+    let store = makeStore()
+    await store.refresh()
+    XCTAssertEqual(store.availableCurrencies, ["EUR"])
+    XCTAssertEqual(store.selectedCurrency, "EUR")
+  }
+
   func testWakeEventsOnlyTriggerSingleCoordinatedRefresh() async throws {
     stub(statusCode: 200, body: Data(TestFixtures.cnyJSON.utf8))
     let store = makeStore()
@@ -185,6 +195,46 @@ final class StoreStateCoordinationTests: XCTestCase {
     try? await Task.sleep(nanoseconds: 300_000_000)
     XCTAssertEqual(MockURLProtocol.recordedRequestCount, 1)
     XCTAssertEqual(store.status, .loaded)
+  }
+
+  func testDidBecomeActiveTriggersCoordinatedRefresh() async throws {
+    stub(statusCode: 200, body: Data(TestFixtures.cnyJSON.utf8))
+    let mutableClock = MutableClock(date: Date(timeIntervalSince1970: 1_752_000_000))
+    clock = mutableClock
+    let store = makeStore()
+
+    await store.refresh()
+    XCTAssertEqual(MockURLProtocol.recordedRequestCount, 1)
+
+    // 推进时间超过 60 秒新鲜度窗口后，didBecomeActive 应触发刷新。
+    mutableClock.advance(by: 120)
+    NotificationCenter.default.post(
+      name: NSApplication.didBecomeActiveNotification,
+      object: nil
+    )
+    await waitForRecordedRequests(2)
+    XCTAssertEqual(store.status, .loaded)
+  }
+
+  func testStoreDeinitStopsLifecycleCallbacks() async throws {
+    stub(statusCode: 200, body: Data(TestFixtures.cnyJSON.utf8))
+
+    var store: BalanceStore? = makeStore()
+    await store?.refresh()
+    XCTAssertEqual(MockURLProtocol.recordedRequestCount, 1)
+
+    store = nil
+    // 销毁后发布生命周期事件：不应产生新的请求，也不应崩溃。
+    NSWorkspace.shared.notificationCenter.post(
+      name: NSWorkspace.didWakeNotification,
+      object: nil
+    )
+    NotificationCenter.default.post(
+      name: NSApplication.didBecomeActiveNotification,
+      object: nil
+    )
+    try? await Task.sleep(nanoseconds: 300_000_000)
+    XCTAssertEqual(MockURLProtocol.recordedRequestCount, 1)
   }
 
   func testAutoRefreshLoopTriggersPeriodicRefresh() async throws {
@@ -230,6 +280,22 @@ final class StoreStateCoordinationTests: XCTestCase {
     XCTAssertTrue(store.historySamples.isEmpty)
     XCTAssertEqual(keychain.storedValue, "sk-test")
     XCTAssertEqual(store.status, .loaded)
+  }
+
+  func testClearingHistoryKeepsBalanceCurrencies() async throws {
+    stub(statusCode: 200, body: Data(TestFixtures.multiCurrencyJSON.utf8))
+    let store = makeStore()
+    await store.refresh()
+    XCTAssertEqual(store.availableCurrencies, ["CNY", "USD"])
+    XCTAssertEqual(store.historySamples.count, 2)
+
+    await store.clearLocalHistory()
+    XCTAssertTrue(store.historySamples.isEmpty)
+    // 清除历史后，当前余额中的真实币种仍保留在 Picker 中。
+    XCTAssertEqual(store.availableCurrencies, ["CNY", "USD"])
+    XCTAssertEqual(store.selectedCurrency, "CNY")
+    XCTAssertEqual(store.status, .loaded)
+    XCTAssertNotNil(store.balance)
   }
 
   private func waitForRecordedRequests(_ count: Int, timeout: TimeInterval = 2) async {

@@ -17,11 +17,29 @@
 		AA0000000000000000000108 /* BalancePopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000008 /* BalancePopoverView.swift */; };
 		AA0000000000000000000109 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000009 /* Assets.xcassets */; };
 		AA000000000000000000010A /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BB000000000000000000000C /* Security.framework */; };
+		AA000000000000000000010B /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000010C /* Localizable.xcstrings */; };
 		AA0000000000000000000201 /* DeepSeekBalanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000001 /* DeepSeekBalanceTests.swift */; };
 		AA0000000000000000000202 /* MockURLProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000002 /* MockURLProtocol.swift */; };
 		AA0000000000000000000203 /* Fakes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000003 /* Fakes.swift */; };
 		AA0000000000000000000204 /* BalanceClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000004 /* BalanceClientTests.swift */; };
 		AA0000000000000000000205 /* BalanceStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000005 /* BalanceStoreTests.swift */; };
+		AA0000000000000000000206 /* AppLanguageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000101 /* AppLanguageTests.swift */; };
+		AA0000000000000000000207 /* L10nTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000102 /* L10nTests.swift */; };
+		AA0000000000000000000208 /* ServiceStatusTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000103 /* ServiceStatusTests.swift */; };
+		AA0000000000000000000209 /* LoginItemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000104 /* LoginItemTests.swift */; };
+		AA000000000000000000020A /* LevelDBFailureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000105 /* LevelDBFailureTests.swift */; };
+		AA000000000000000000020B /* TrendChartModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000106 /* TrendChartModelTests.swift */; };
+		AA000000000000000000020C /* BuildScriptTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000107 /* BuildScriptTests.swift */; };
+		AA0000000000000000000301 /* AppLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000101 /* AppLanguage.swift */; };
+		AA0000000000000000000302 /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000102 /* L10n.swift */; };
+		AA0000000000000000000303 /* AppDisplayError.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000103 /* AppDisplayError.swift */; };
+		AA0000000000000000000304 /* NotificationObservation.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000104 /* NotificationObservation.swift */; };
+		AA0000000000000000000305 /* LoginItemManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000105 /* LoginItemManager.swift */; };
+		AA0000000000000000000306 /* DeepSeekStatusModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000106 /* DeepSeekStatusModels.swift */; };
+		AA0000000000000000000307 /* DeepSeekStatusClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000107 /* DeepSeekStatusClient.swift */; };
+		AA0000000000000000000308 /* DeepSeekStatusMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000108 /* DeepSeekStatusMapper.swift */; };
+		AA0000000000000000000309 /* DeepSeekStatusStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000109 /* DeepSeekStatusStore.swift */; };
+		AA000000000000000000030A /* DeepSeekServiceStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000010A /* DeepSeekServiceStatusView.swift */; };
 		DD00000000000000001001 /* builder.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000101 /* builder.cc */; };
 		DD00000000000000001002 /* c.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000102 /* c.cc */; };
 		DD00000000000000001003 /* db_impl.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000103 /* db_impl.cc */; };
@@ -114,11 +132,29 @@
 		BB000000000000000000000A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BB000000000000000000000B /* DeepSeekBalance.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DeepSeekBalance.entitlements; sourceTree = "<group>"; };
 		BB000000000000000000000C /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		BB0000000000000000000101 /* AppLanguage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLanguage.swift; sourceTree = "<group>"; };
+		BB0000000000000000000102 /* L10n.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = L10n.swift; sourceTree = "<group>"; };
+		BB0000000000000000000103 /* AppDisplayError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDisplayError.swift; sourceTree = "<group>"; };
+		BB0000000000000000000104 /* NotificationObservation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationObservation.swift; sourceTree = "<group>"; };
+		BB0000000000000000000105 /* LoginItemManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginItemManager.swift; sourceTree = "<group>"; };
+		BB0000000000000000000106 /* DeepSeekStatusModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepSeekStatusModels.swift; sourceTree = "<group>"; };
+		BB0000000000000000000107 /* DeepSeekStatusClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepSeekStatusClient.swift; sourceTree = "<group>"; };
+		BB0000000000000000000108 /* DeepSeekStatusMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepSeekStatusMapper.swift; sourceTree = "<group>"; };
+		BB0000000000000000000109 /* DeepSeekStatusStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepSeekStatusStore.swift; sourceTree = "<group>"; };
+		BB000000000000000000010A /* DeepSeekServiceStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepSeekServiceStatusView.swift; sourceTree = "<group>"; };
+		BB000000000000000000010C /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		CC0000000000000000000001 /* DeepSeekBalanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepSeekBalanceTests.swift; sourceTree = "<group>"; };
 		CC0000000000000000000002 /* MockURLProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockURLProtocol.swift; sourceTree = "<group>"; };
 		CC0000000000000000000003 /* Fakes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Fakes.swift; sourceTree = "<group>"; };
 		CC0000000000000000000004 /* BalanceClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BalanceClientTests.swift; sourceTree = "<group>"; };
 		CC0000000000000000000005 /* BalanceStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BalanceStoreTests.swift; sourceTree = "<group>"; };
+		CC0000000000000000000101 /* AppLanguageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLanguageTests.swift; sourceTree = "<group>"; };
+		CC0000000000000000000102 /* L10nTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = L10nTests.swift; sourceTree = "<group>"; };
+		CC0000000000000000000103 /* ServiceStatusTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceStatusTests.swift; sourceTree = "<group>"; };
+		CC0000000000000000000104 /* LoginItemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginItemTests.swift; sourceTree = "<group>"; };
+		CC0000000000000000000105 /* LevelDBFailureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelDBFailureTests.swift; sourceTree = "<group>"; };
+		CC0000000000000000000106 /* TrendChartModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrendChartModelTests.swift; sourceTree = "<group>"; };
+		CC0000000000000000000107 /* BuildScriptTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildScriptTests.swift; sourceTree = "<group>"; };
 		DD0000000000000000000101 /* builder.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/builder.cc"; sourceTree = "<group>"; };
 		DD0000000000000000000102 /* c.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/c.cc"; sourceTree = "<group>"; };
 		DD0000000000000000000103 /* db_impl.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/db_impl.cc"; sourceTree = "<group>"; };
@@ -222,6 +258,8 @@
 			children = (
 				BB0000000000000000000001 /* DeepSeekBalanceApp.swift */,
 				EE0000000000000000000010 /* Persistence */,
+				AA0000000000000000001009 /* Localization */,
+				AA000000000000000000100A /* ServiceStatus */,
 				AA0000000000000000001002 /* AppState */,
 				AA0000000000000000001003 /* Models */,
 				AA0000000000000000001004 /* Networking */,
@@ -229,6 +267,7 @@
 				AA0000000000000000001006 /* Views */,
 				EE000000000000000000000E /* LevelDBBridge.h */,
 				BB0000000000000000000009 /* Assets.xcassets */,
+				AA000000000000000000100B /* Resources */,
 				BB000000000000000000000A /* Info.plist */,
 				BB000000000000000000000B /* DeepSeekBalance.entitlements */,
 			);
@@ -240,6 +279,8 @@
 			children = (
 				BB0000000000000000000002 /* BalanceStore.swift */,
 				EE000000000000000000000B /* RefreshCoordinator.swift */,
+				BB0000000000000000000104 /* NotificationObservation.swift */,
+				BB0000000000000000000105 /* LoginItemManager.swift */,
 			);
 			path = AppState;
 			sourceTree = "<group>";
@@ -297,6 +338,13 @@
 				FF0000000000000000000004 /* BalanceHistoryServiceTests.swift */,
 				FF0000000000000000000005 /* BalanceTrendTests.swift */,
 				FF0000000000000000000006 /* StoreStateCoordinationTests.swift */,
+				CC0000000000000000000101 /* AppLanguageTests.swift */,
+				CC0000000000000000000102 /* L10nTests.swift */,
+				CC0000000000000000000103 /* ServiceStatusTests.swift */,
+				CC0000000000000000000104 /* LoginItemTests.swift */,
+				CC0000000000000000000105 /* LevelDBFailureTests.swift */,
+				CC0000000000000000000106 /* TrendChartModelTests.swift */,
+				CC0000000000000000000107 /* BuildScriptTests.swift */,
 			);
 			path = DeepSeekBalanceTests;
 			sourceTree = "<group>";
@@ -323,6 +371,36 @@
 				EE0000000000000000000009 /* BalanceHistoryService.swift */,
 			);
 			path = Persistence;
+			sourceTree = "<group>";
+		};
+		AA0000000000000000001009 /* Localization */ = {
+			isa = PBXGroup;
+			children = (
+				BB0000000000000000000101 /* AppLanguage.swift */,
+				BB0000000000000000000102 /* L10n.swift */,
+				BB0000000000000000000103 /* AppDisplayError.swift */,
+			);
+			path = Localization;
+			sourceTree = "<group>";
+		};
+		AA000000000000000000100A /* ServiceStatus */ = {
+			isa = PBXGroup;
+			children = (
+				BB0000000000000000000106 /* DeepSeekStatusModels.swift */,
+				BB0000000000000000000107 /* DeepSeekStatusClient.swift */,
+				BB0000000000000000000108 /* DeepSeekStatusMapper.swift */,
+				BB0000000000000000000109 /* DeepSeekStatusStore.swift */,
+				BB000000000000000000010A /* DeepSeekServiceStatusView.swift */,
+			);
+			path = ServiceStatus;
+			sourceTree = "<group>";
+		};
+		AA000000000000000000100B /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				BB000000000000000000010C /* Localizable.xcstrings */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		EE0000000000000000000011 /* LevelDB */ = {
@@ -483,6 +561,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA0000000000000000000109 /* Assets.xcassets in Resources */,
+				AA000000000000000000010B /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -528,6 +607,16 @@
 				EE000000000000000000010B /* RefreshCoordinator.swift in Sources */,
 				EE000000000000000000010C /* BalanceTrendChartView.swift in Sources */,
 				EE000000000000000000010D /* BalanceTrendEmptyView.swift in Sources */,
+				AA0000000000000000000301 /* AppLanguage.swift in Sources */,
+				AA0000000000000000000302 /* L10n.swift in Sources */,
+				AA0000000000000000000303 /* AppDisplayError.swift in Sources */,
+				AA0000000000000000000304 /* NotificationObservation.swift in Sources */,
+				AA0000000000000000000305 /* LoginItemManager.swift in Sources */,
+				AA0000000000000000000306 /* DeepSeekStatusModels.swift in Sources */,
+				AA0000000000000000000307 /* DeepSeekStatusClient.swift in Sources */,
+				AA0000000000000000000308 /* DeepSeekStatusMapper.swift in Sources */,
+				AA0000000000000000000309 /* DeepSeekStatusStore.swift in Sources */,
+				AA000000000000000000030A /* DeepSeekServiceStatusView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -540,6 +629,13 @@
 				AA0000000000000000000203 /* Fakes.swift in Sources */,
 				AA0000000000000000000204 /* BalanceClientTests.swift in Sources */,
 				AA0000000000000000000205 /* BalanceStoreTests.swift in Sources */,
+				AA0000000000000000000206 /* AppLanguageTests.swift in Sources */,
+				AA0000000000000000000207 /* L10nTests.swift in Sources */,
+				AA0000000000000000000208 /* ServiceStatusTests.swift in Sources */,
+				AA0000000000000000000209 /* LoginItemTests.swift in Sources */,
+				AA000000000000000000020A /* LevelDBFailureTests.swift in Sources */,
+				AA000000000000000000020B /* TrendChartModelTests.swift in Sources */,
+				AA000000000000000000020C /* BuildScriptTests.swift in Sources */,
 				FF0000000000000000000101 /* TimeBucketTests.swift in Sources */,
 				FF0000000000000000000102 /* InMemoryHistoryStoreTests.swift in Sources */,
 				FF0000000000000000000103 /* LevelDBBalanceHistoryStoreTests.swift in Sources */,

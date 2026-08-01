@@ -4,19 +4,30 @@ import SwiftUI
 /// 点击菜单栏项目后展示的弹出窗口内容。
 struct BalancePopoverView: View {
   @ObservedObject var store: BalanceStore
+  @ObservedObject var statusStore: DeepSeekStatusStore
+  @ObservedObject var loginItemStore: LoginItemStore
+
   @State private var apiKeyInput = ""
   @State private var validationMessage: String?
   @State private var showClearHistoryConfirmation = false
+
+  private var language: AppLanguage {
+    store.language
+  }
 
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 14) {
         header
         Divider()
+        DeepSeekServiceStatusView(store: statusStore, language: language)
+        Divider()
         balanceSection
         Divider()
         trendSection
         errorMessageView
+        Divider()
+        settingsSection
         Divider()
         keyConfigurationSection
         Divider()
@@ -27,6 +38,7 @@ struct BalancePopoverView: View {
     .frame(width: 500)
     .onAppear {
       Task { await store.refreshIfNeeded() }
+      Task { await statusStore.refreshIfNeeded() }
     }
   }
 
@@ -39,9 +51,15 @@ struct BalancePopoverView: View {
         .resizable()
         .aspectRatio(contentMode: .fit)
         .frame(width: 28, height: 28)
-      Text("DeepSeek API Balance")
+        .accessibilityLabel(L10n.string(.a11yDeepSeekIcon, language: language))
+      Text(L10n.string(.appTitle, language: language))
         .font(.headline)
       Spacer()
+      Button(language == .simplifiedChinese ? "English" : "中文") {
+        store.setLanguage(language == .simplifiedChinese ? .english : .simplifiedChinese)
+      }
+      .controlSize(.small)
+      .help("Switch language / 切换语言")
       statusBadge
     }
   }
@@ -53,7 +71,7 @@ struct BalancePopoverView: View {
       .padding(.vertical, 3)
       .background(statusColor.opacity(0.14), in: Capsule())
       .foregroundStyle(statusColor)
-      .accessibilityLabel("状态：\(store.statusTitle)")
+      .accessibilityLabel(L10n.string(.a11yStatus, language: language, store.statusTitle))
   }
 
   private var statusColor: Color {
@@ -84,16 +102,28 @@ struct BalancePopoverView: View {
               .font(.caption.weight(.semibold))
               .foregroundStyle(.secondary)
             row(
-              title: "总余额",
-              value: BalanceFormatter.format(total: info.totalBalance, currency: info.currency)
+              title: L10n.string(.balanceTotal, language: language),
+              value: BalanceFormatter.format(
+                total: info.totalBalance,
+                currency: info.currency,
+                locale: language.locale
+              )
             )
             row(
-              title: "充值余额",
-              value: BalanceFormatter.format(total: info.toppedUpBalance, currency: info.currency)
+              title: L10n.string(.balanceToppedUp, language: language),
+              value: BalanceFormatter.format(
+                total: info.toppedUpBalance,
+                currency: info.currency,
+                locale: language.locale
+              )
             )
             row(
-              title: "赠送余额",
-              value: BalanceFormatter.format(total: info.grantedBalance, currency: info.currency)
+              title: L10n.string(.balanceGranted, language: language),
+              value: BalanceFormatter.format(
+                total: info.grantedBalance,
+                currency: info.currency,
+                locale: language.locale
+              )
             )
           }
         }
@@ -101,17 +131,23 @@ struct BalancePopoverView: View {
         HStack(spacing: 8) {
           ProgressView()
             .controlSize(.small)
-          Text("正在获取余额…")
+          Text(L10n.string(.balanceLoading, language: language))
             .foregroundStyle(.secondary)
         }
       } else {
-        Text("暂无余额数据")
+        Text(L10n.string(.balanceEmpty, language: language))
           .foregroundStyle(.secondary)
       }
 
       if let last = store.lastUpdated {
         Label(
-          "最后更新：\(last.formatted(date: .abbreviated, time: .shortened))",
+          L10n.string(
+            .balanceLastUpdated,
+            language: language,
+            last.formatted(
+              Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
+            )
+          ),
           systemImage: "clock"
         )
         .font(.caption)
@@ -135,50 +171,56 @@ struct BalancePopoverView: View {
   private var trendSection: some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack {
-        Text("最近 3 天余额趋势")
+        Text(L10n.string(.trendTitle, language: language))
           .font(.headline)
         Spacer()
-        Button("清除本地历史") {
+        Button(L10n.string(.trendClearHistory, language: language)) {
           showClearHistoryConfirmation = true
         }
         .controlSize(.small)
       }
 
       if !store.availableCurrencies.isEmpty {
-        Picker("币种", selection: currencyBinding) {
+        Picker(
+          L10n.string(.trendCurrencyPicker, language: language),
+          selection: currencyBinding
+        ) {
           ForEach(store.availableCurrencies, id: \.self) { currency in
             Text(currency).tag(currency)
           }
         }
         .pickerStyle(.segmented)
         .labelsHidden()
-        .accessibilityLabel("选择趋势币种")
+        .accessibilityLabel(L10n.string(.a11yCurrencyPicker, language: language))
       }
 
       if store.historySamples.isEmpty, store.historyError != nil {
-        BalanceTrendEmptyView(historyUnavailable: true)
+        BalanceTrendEmptyView(historyUnavailable: true, language: language)
       } else if let currency = store.selectedCurrency {
         let currencySamples = store.historySamples.filter { $0.currency == currency }
         if currencySamples.isEmpty {
-          BalanceTrendEmptyView(historyUnavailable: false)
+          BalanceTrendEmptyView(historyUnavailable: false, language: language)
         } else {
           BalanceTrendChartView(
             samples: store.historySamples,
             currency: currency,
             summary: BalanceTrendProcessor.summary(
-              samples: store.historySamples, currency: currency)
+              samples: store.historySamples, currency: currency
+            ),
+            language: language,
+            now: store.clock.now()
           )
         }
       } else {
-        BalanceTrendEmptyView(historyUnavailable: false)
+        BalanceTrendEmptyView(historyUnavailable: false, language: language)
       }
 
-      Text("历史仅保存在本机，最多保留 3 天。")
+      Text(L10n.string(.trendLocalNote, language: language))
         .font(.caption2)
         .foregroundStyle(.secondary)
 
-      if let historyError = store.historyError {
-        Text(historyError)
+      if let historyError = store.historyDisplayError {
+        Text(historyError.text(language: language))
           .font(.caption)
           .foregroundStyle(.red)
           .textSelection(.enabled)
@@ -186,16 +228,16 @@ struct BalancePopoverView: View {
       }
     }
     .confirmationDialog(
-      "清除本地历史？",
+      L10n.string(.trendClearConfirmTitle, language: language),
       isPresented: $showClearHistoryConfirmation,
       titleVisibility: .visible
     ) {
-      Button("清除", role: .destructive) {
+      Button(L10n.string(.actionClear, language: language), role: .destructive) {
         Task { await store.clearLocalHistory() }
       }
-      Button("取消", role: .cancel) {}
+      Button(L10n.string(.actionCancel, language: language), role: .cancel) {}
     } message: {
-      Text("将删除本机保存的最近 3 天历史样本。不影响 API Key 与当前余额。")
+      Text(L10n.string(.trendClearConfirmMessage, language: language))
     }
   }
 
@@ -210,8 +252,8 @@ struct BalancePopoverView: View {
 
   @ViewBuilder
   private var errorMessageView: some View {
-    if let message = store.lastErrorMessage {
-      Text(message)
+    if let message = store.lastDisplayError {
+      Text(message.text(language: language))
         .font(.caption)
         .foregroundStyle(.red)
         .textSelection(.enabled)
@@ -219,14 +261,98 @@ struct BalancePopoverView: View {
     }
   }
 
+  // MARK: - 设置区
+
+  private var settingsSection: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      Text(L10n.string(.settingsTitle, language: language))
+        .font(.headline)
+
+      HStack {
+        Text(L10n.string(.settingsLanguage, language: language))
+        Spacer()
+        Button(language == .simplifiedChinese ? "English" : "中文") {
+          store.setLanguage(
+            language == .simplifiedChinese ? .english : .simplifiedChinese
+          )
+        }
+        .controlSize(.small)
+      }
+
+      Divider()
+
+      VStack(alignment: .leading, spacing: 6) {
+        HStack {
+          Text(L10n.string(.settingsLaunchAtLogin, language: language))
+          Spacer()
+          Toggle("", isOn: loginBinding)
+            .labelsHidden()
+            .toggleStyle(.switch)
+            .controlSize(.small)
+            .disabled(loginItemStore.isUpdating)
+        }
+        Text(loginStatusText)
+          .font(.caption)
+          .foregroundStyle(.secondary)
+        if let error = loginItemStore.lastError {
+          Text(error)
+            .font(.caption)
+            .foregroundStyle(.red)
+            .textSelection(.enabled)
+        }
+        if loginItemStore.status == .requiresApproval {
+          Button(L10n.string(.loginOpenSettings, language: language)) {
+            loginItemStore.openSystemSettings()
+          }
+          .controlSize(.small)
+        }
+      }
+
+      Divider()
+
+      HStack {
+        Text(L10n.string(.settingsLocalHistory, language: language))
+        Spacer()
+        Button(L10n.string(.trendClearHistory, language: language)) {
+          showClearHistoryConfirmation = true
+        }
+        .controlSize(.small)
+      }
+    }
+  }
+
+  private var loginBinding: Binding<Bool> {
+    Binding(
+      get: { loginItemStore.status == .enabled },
+      set: { newValue in
+        Task { await loginItemStore.setEnabled(newValue) }
+      }
+    )
+  }
+
+  private var loginStatusText: String {
+    switch loginItemStore.status {
+    case .enabled:
+      return L10n.string(.loginEnabled, language: language)
+    case .notRegistered:
+      return L10n.string(.loginNotRegistered, language: language)
+    case .requiresApproval:
+      return L10n.string(.loginRequiresApproval, language: language)
+    case .notFound:
+      return L10n.string(.loginNotFound, language: language)
+    case .error(let message):
+      return L10n.string(.loginError, language: language) + "：" + message
+    }
+  }
+
   // MARK: - API Key 配置区
 
   private var keyConfigurationSection: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text("API Key")
+      Text(L10n.string(.apiKeyTitle, language: language))
         .font(.headline)
 
-      SecureField("输入 DeepSeek API Key", text: $apiKeyInput)
+      SecureField(L10n.string(.apiKeyPlaceholder, language: language), text: $apiKeyInput)
         .textFieldStyle(.roundedBorder)
         .onSubmit(saveAndRefresh)
 
@@ -238,8 +364,8 @@ struct BalancePopoverView: View {
       }
 
       HStack(spacing: 8) {
-        Button("保存") { saveAndRefresh() }
-        Button("清除已保存密钥") {
+        Button(L10n.string(.apiKeySave, language: language)) { saveAndRefresh() }
+        Button(L10n.string(.apiKeyClear, language: language)) {
           Task { await store.clearSavedKey() }
         }
         Spacer()
@@ -247,12 +373,23 @@ struct BalancePopoverView: View {
       .controlSize(.small)
 
       HStack(spacing: 4) {
-        Text("密钥来源：")
-        Text(store.keySource.displayName)
+        Text(L10n.string(.apiKeySource, language: language))
+        Text(keySourceText)
           .fontWeight(.medium)
       }
       .font(.caption)
       .foregroundStyle(.secondary)
+    }
+  }
+
+  private var keySourceText: String {
+    switch store.keySource {
+    case .keychain:
+      return L10n.string(.apiKeySourceKeychain, language: language)
+    case .environment:
+      return L10n.string(.apiKeySourceEnvironment, language: language)
+    case .notConfigured:
+      return L10n.string(.apiKeySourceNotConfigured, language: language)
     }
   }
 
@@ -263,9 +400,9 @@ struct BalancePopoverView: View {
       apiKeyInput = ""
       Task { await store.refresh() }
     case .emptyInput:
-      validationMessage = "请输入 API Key（不能为空）"
-    case .failure(let message):
-      validationMessage = message
+      validationMessage = L10n.string(.apiKeyEmptyInput, language: language)
+    case .failure(let error):
+      validationMessage = error.text(language: language)
     }
   }
 
@@ -273,15 +410,15 @@ struct BalancePopoverView: View {
 
   private var footer: some View {
     HStack(spacing: 8) {
-      if store.isRefreshing {
+      if store.isRefreshing || statusStore.loadState == .loading {
         ProgressView()
           .controlSize(.small)
       }
-      Button("刷新") {
-        Task { await store.refresh() }
+      Button(L10n.string(.footerRefresh, language: language)) {
+        Task { await store.refreshAll() }
       }
       Spacer()
-      Button("退出应用") {
+      Button(L10n.string(.footerQuit, language: language)) {
         NSApplication.shared.terminate(nil)
       }
     }

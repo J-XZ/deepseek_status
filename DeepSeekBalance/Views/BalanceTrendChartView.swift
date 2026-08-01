@@ -7,36 +7,17 @@ struct BalanceTrendChartView: View {
   let samples: [BalanceSample]
   let currency: String
   let summary: TrendSummary
+  let language: AppLanguage
+  let now: Date
 
   @State private var selectedSample: BalanceSample?
 
-  private var symbol: String {
-    BalanceFormatter.currencySymbol(for: currency) ?? currency
-  }
-
-  private var points: [TrendPoint] {
-    BalanceTrendProcessor.points(for: samples, currency: currency)
-  }
-
-  private var segments: [[TrendPoint]] {
-    BalanceTrendProcessor.segments(from: points)
-  }
-
-  private struct SegmentPoint: Identifiable {
-    let segment: Int
-    let point: TrendPoint
-
-    var id: String { point.id }
-  }
-
-  private var segmentPoints: [SegmentPoint] {
-    segments.enumerated().flatMap { index, segment in
-      segment.map { SegmentPoint(segment: index, point: $0) }
-    }
-  }
-
-  private func seriesName(for item: SegmentPoint) -> String {
-    "\(item.point.metric.rawValue)-\(item.segment)"
+  private var model: BalanceTrendProcessor.ChartModel {
+    BalanceTrendProcessor.chartModel(
+      samples: samples,
+      currency: currency,
+      now: now
+    )
   }
 
   private func metricColor(_ metric: TrendPoint.Metric) -> Color {
@@ -63,7 +44,7 @@ struct BalanceTrendChartView: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text(summary.displayText)
+      Text(summary.text(language: language))
         .font(.subheadline.weight(.medium))
       chartView
       legend
@@ -75,17 +56,20 @@ struct BalanceTrendChartView: View {
 
   private var chartView: some View {
     Chart {
-      ForEach(segmentPoints) { item in
-        LineMark(
-          x: .value("时间", item.point.date),
-          y: .value("金额", item.point.value),
-          series: .value("分段", seriesName(for: item))
-        )
-        .foregroundStyle(metricColor(item.point.metric))
-        .lineStyle(metricLineStyle(item.point.metric))
+      ForEach(model.segments) { segment in
+        ForEach(segment.points) { point in
+          LineMark(
+            x: .value("时间", point.date),
+            y: .value("金额", point.value),
+            series: .value("分段", segment.id)
+          )
+          .foregroundStyle(metricColor(segment.metric))
+          .lineStyle(metricLineStyle(segment.metric))
+        }
       }
 
-      ForEach(segmentPoints) { item in
+      // 只对孤立单样本画点，避免为全部样本生成大量 PointMark。
+      ForEach(model.isolatedPoints) { item in
         PointMark(
           x: .value("时间", item.point.date),
           y: .value("金额", item.point.value)
@@ -97,8 +81,17 @@ struct BalanceTrendChartView: View {
         RuleMark(x: .value("选中时间", selectedSample.bucketStart))
           .foregroundStyle(.secondary)
           .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
+        ForEach(selectedPoints(selectedSample)) { point in
+          PointMark(
+            x: .value("时间", point.date),
+            y: .value("金额", point.value)
+          )
+          .symbolSize(90)
+          .foregroundStyle(metricColor(point.metric))
+        }
       }
     }
+    .chartXScale(domain: model.xDomain)
     .chartXAxis {
       AxisMarks(values: .automatic(desiredCount: 6)) { _ in
         AxisGridLine().foregroundStyle(.quaternary)
@@ -108,33 +101,62 @@ struct BalanceTrendChartView: View {
     .chartYAxis {
       AxisMarks(position: .leading) { _ in
         AxisGridLine().foregroundStyle(.quaternary)
-        AxisValueLabel(format: BalanceAxisFormat(symbol: symbol))
+        AxisValueLabel(format: BalanceAxisFormat(currency: currency))
       }
     }
     .chartLegend(.hidden)
     .frame(height: 180)
+    .chartOverlay { proxy in
+      GeometryReader { geometry in
+        Rectangle()
+          .fill(.clear)
+          .contentShape(Rectangle())
+          .gesture(selectionGesture(proxy: proxy, geometry: geometry))
+      }
+    }
+    .accessibilityLabel(
+      L10n.string(
+        .a11yLegend,
+        language: language
+      )
+    )
   }
 
   private func selectionGesture(proxy: ChartProxy, geometry: GeometryProxy) -> some Gesture {
     DragGesture(minimumDistance: 0)
       .onChanged { value in
+        if value.translation.width == 0, value.translation.height == 0 {
+          // 点击开始时先记录，onEnded 中再决定是否取消。
+          tapStartedSample = selectedSample
+        }
         select(at: value.location, proxy: proxy, geometry: geometry)
       }
-      .onEnded { _ in
-        selectedSample = nil
+      .onEnded { value in
+        let isTap =
+          abs(value.translation.width) < 4 && abs(value.translation.height) < 4
+        if isTap, tapStartedSample != nil, selectedSample == tapStartedSample {
+          // 再次点击同一选中样本：取消选择，便于阅读图表。
+          selectedSample = nil
+        }
+        tapStartedSample = nil
       }
+  }
+
+  @State private var tapStartedSample: BalanceSample?
+
+  private func selectedPoints(_ sample: BalanceSample) -> [TrendPoint] {
+    let points = BalanceTrendProcessor.points(for: [sample], currency: currency)
+    return points
   }
 
   private var legend: some View {
     HStack(spacing: 14) {
-      legendItem(label: "总余额", color: .blue, dash: [])
-      legendItem(label: "充值余额", color: .green, dash: [5, 4])
-      legendItem(label: "赠送余额", color: .orange, dash: [2, 3])
+      legendItem(label: L10n.string(.legendTotal, language: language), color: .blue, dash: [])
+      legendItem(label: L10n.string(.legendToppedUp, language: language), color: .green, dash: [5, 4])
+      legendItem(label: L10n.string(.legendGranted, language: language), color: .orange, dash: [2, 3])
       Spacer()
     }
     .font(.caption)
-    .accessibilityElement(children: .combine)
-    .accessibilityLabel("图例：总余额、充值余额、赠送余额")
   }
 
   private func legendItem(label: String, color: Color, dash: [CGFloat]) -> some View {
@@ -152,19 +174,20 @@ struct BalanceTrendChartView: View {
 
   private func select(at location: CGPoint, proxy: ChartProxy, geometry: GeometryProxy) {
     let frame = geometry[proxy.plotAreaFrame]
-    let x = location.x - frame.origin.x
-    guard x >= 0, x <= frame.width else {
+    guard BalanceTrendProcessor.containsPlotCoordinate(location, in: frame) else {
       selectedSample = nil
       return
     }
+    let x = location.x - frame.origin.x
     guard let date = proxy.value(atX: x, as: Date.self) else {
       selectedSample = nil
       return
     }
-    let candidates = samples.filter { $0.currency == currency }
-    selectedSample = candidates.min {
-      abs($0.bucketStart.timeIntervalSince(date)) < abs($1.bucketStart.timeIntervalSince(date))
-    }
+    selectedSample = BalanceTrendProcessor.nearestSample(
+      to: date,
+      samples: samples,
+      currency: currency
+    )
   }
 
   @ViewBuilder
@@ -175,18 +198,45 @@ struct BalanceTrendChartView: View {
       .sorted { $0.bucketStart < $1.bucketStart }
       .last
     VStack(alignment: .leading, spacing: 3) {
-      Text(sample.bucketStart.formatted(date: .abbreviated, time: .shortened))
+      Text(
+        sample.bucketStart.formatted(
+          Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
+        )
+      )
         .font(.caption.weight(.medium))
       HStack {
-        Text("总余额 \(BalanceFormatter.format(total: sample.totalBalance, currency: currency))")
-        Text("充值 \(BalanceFormatter.format(total: sample.toppedUpBalance, currency: currency))")
-        Text("赠送 \(BalanceFormatter.format(total: sample.grantedBalance, currency: currency))")
+        Text(
+          "\(L10n.string(.balanceTotal, language: language)) "
+            + BalanceFormatter.format(
+              total: sample.totalBalance, currency: currency, locale: language.locale
+            )
+        )
+        Text(
+          "\(L10n.string(.balanceToppedUp, language: language)) "
+            + BalanceFormatter.format(
+              total: sample.toppedUpBalance, currency: currency, locale: language.locale
+            )
+        )
+        Text(
+          "\(L10n.string(.balanceGranted, language: language)) "
+            + BalanceFormatter.format(
+              total: sample.grantedBalance, currency: currency, locale: language.locale
+            )
+        )
         if let previous,
           let previousTotal = BalanceTrendProcessor.decimal(from: previous.totalBalance),
           let currentTotal = BalanceTrendProcessor.decimal(from: sample.totalBalance)
         {
           Text(
-            "较前样本 \(BalanceTrendProcessor.deltaText(delta: currentTotal - previousTotal, currency: currency))"
+            L10n.string(
+              .trendSelectionChange,
+              language: language,
+              BalanceTrendProcessor.deltaText(
+                delta: currentTotal - previousTotal,
+                currency: currency,
+                locale: language.locale
+              )
+            )
           )
         }
       }
@@ -202,7 +252,7 @@ struct BalanceAxisFormat: FormatStyle {
   typealias FormatInput = Double
   typealias FormatOutput = String
 
-  let symbol: String
+  let currency: String
 
   func format(_ value: Double) -> String {
     let formatter = NumberFormatter()
@@ -211,6 +261,9 @@ struct BalanceAxisFormat: FormatStyle {
     formatter.minimumFractionDigits = 2
     formatter.maximumFractionDigits = 2
     let text = formatter.string(from: NSNumber(value: value)) ?? "\(value)"
-    return symbol + text
+    if let symbol = BalanceFormatter.currencySymbol(for: currency) {
+      return symbol + text
+    }
+    return currency + " " + text
   }
 }

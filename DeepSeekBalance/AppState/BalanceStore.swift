@@ -24,7 +24,7 @@ final class BalanceStore: ObservableObject {
   enum SaveResult: Equatable {
     case success
     case emptyInput
-    case failure(String)
+    case failure(AppDisplayError)
   }
 
   @Published private(set) var status: Status = .idle
@@ -32,23 +32,37 @@ final class BalanceStore: ObservableObject {
   @Published private(set) var lastUpdated: Date?
   @Published private(set) var isRefreshing = false
   @Published private(set) var keySource: APIKeySource = .notConfigured
-  @Published private(set) var lastErrorMessage: String?
+  @Published private(set) var lastDisplayError: AppDisplayError?
   @Published private(set) var currentCredentialID: String?
 
   @Published private(set) var historySamples: [BalanceSample] = []
   @Published private(set) var availableCurrencies: [String] = []
   @Published private(set) var selectedCurrency: String?
-  @Published private(set) var historyError: String?
+  @Published private(set) var historyDisplayError: AppDisplayError?
+  @Published private(set) var language: AppLanguage
+
+  /// 兼容旧测试/旧调用的文本视图：按当前语言即时渲染。
+  var lastErrorMessage: String? {
+    lastDisplayError?.text(language: language)
+  }
+
+  var historyError: String? {
+    historyDisplayError?.text(language: language)
+  }
 
   let apiClient: any BalanceFetching
   let keyProvider: any APIKeyProviding
   let keychainStore: any APIKeyStoring
   let historyService: BalanceHistoryService
   let clock: any DateProviding
+  let statusStore: DeepSeekStatusStore?
+  let loginItemStore: LoginItemStore?
 
   private let coordinator = RefreshCoordinator()
   private var autoRefreshTask: Task<Void, Never>?
-  private var observers: [NSObjectProtocol] = []
+  private var startupRefreshTask: Task<Void, Never>?
+  private var startupPruneTask: Task<Void, Never>?
+  private var observations: [NotificationObservation] = []
   private var lastLifecycleEvent = Date.distantPast
 
   init(
@@ -57,81 +71,109 @@ final class BalanceStore: ObservableObject {
     environment: [String: String] = ProcessInfo.processInfo.environment,
     clock: any DateProviding = SystemClock(),
     historyService: BalanceHistoryService? = nil,
-    autoRefreshInterval: TimeInterval? = 300
+    autoRefreshInterval: TimeInterval? = 300,
+    startupRefresh: Bool = true,
+    startupPrune: Bool = true,
+    language: AppLanguage = AppLanguage.initial(),
+    statusStore: DeepSeekStatusStore? = nil,
+    loginItemStore: LoginItemStore? = nil
   ) {
     self.apiClient = apiClient
     self.keychainStore = keychainStore
     self.keyProvider = APIKeyProvider(keychainStore: keychainStore, environment: environment)
     self.clock = clock
     self.historyService = historyService ?? Self.makeDefaultHistoryService(clock: clock)
+    self.language = language
+    self.statusStore = statusStore
+    self.loginItemStore = loginItemStore
 
     coordinator.onIsRefreshingChange = { [weak self] value in
       self?.isRefreshing = value
     }
     setupLifecycleObservers()
 
-    guard let interval = autoRefreshInterval else { return }
-    autoRefreshTask = Task { [weak self] in
-      while !Task.isCancelled {
-        try? await Task.sleep(for: .seconds(interval))
-        guard !Task.isCancelled else { break }
-        await self?.refreshIfNeeded(maximumAge: 60)
+    if let interval = autoRefreshInterval {
+      autoRefreshTask = Task { [weak self] in
+        while !Task.isCancelled {
+          try? await Task.sleep(for: .seconds(interval))
+          guard !Task.isCancelled else { break }
+          await self?.refreshIfNeeded(maximumAge: 60)
+        }
       }
     }
-    Task { [weak self] in
-      await self?.refresh()
+
+    // 启动刷新与启动清理相互独立、分别可注入。
+    if startupRefresh {
+      startupRefreshTask = Task { [weak self] in
+        await self?.refresh()
+      }
     }
 
-    // 启动时执行一次 72 小时清理（失败只影响历史，不影响余额）。
-    let history = self.historyService
-    Task.detached(priority: .utility) {
-      try? await history.pruneAll(before: Date().addingTimeInterval(-72 * 3600))
+    if startupPrune {
+      let history = self.historyService
+      let clock = self.clock
+      startupPruneTask = Task(priority: .utility) { [weak self] in
+        try? await history.pruneAll(before: clock.now().addingTimeInterval(-72 * 3600))
+        try? await self?.historyService.pruneThrottled()
+      }
     }
   }
 
   deinit {
     autoRefreshTask?.cancel()
-    for observer in observers {
-      NSWorkspace.shared.notificationCenter.removeObserver(observer)
+    startupRefreshTask?.cancel()
+    startupPruneTask?.cancel()
+    for observation in observations {
+      observation.remove()
     }
-    NotificationCenter.default.removeObserver(self)
+  }
+
+  // MARK: - 语言切换
+
+  func setLanguage(_ newLanguage: AppLanguage) {
+    guard language != newLanguage else { return }
+    language = newLanguage
+    newLanguage.save()
   }
 
   // MARK: - 菜单栏文字
 
   var menuBarText: String {
-    if let balance, let summary = BalanceFormatter.summary(for: balance.balanceInfos) {
+    if let balance, let summary = BalanceFormatter.summary(
+      for: balance.balanceInfos,
+      locale: language.locale
+    ) {
       return summary
     }
     switch status {
     case .idle, .loading:
-      return "…"
+      return L10n.string(.menuBarLoading, language: language)
     case .notConfigured:
-      return "未配置"
+      return L10n.string(.menuBarNotConfigured, language: language)
     case .loaded:
       return "—"
     case .keychainError, .authenticationFailed, .insufficientBalance,
       .rateLimited, .httpError, .networkError, .serverError,
       .decodingError, .historyStorageError:
-      return "错误"
+      return L10n.string(.menuBarError, language: language)
     }
   }
 
   var statusTitle: String {
     switch status {
     case .idle, .loading:
-      return "加载中"
+      return L10n.string(.statusLoading, language: language)
     case .loaded:
-      return "可用"
+      return L10n.string(.statusLoaded, language: language)
     case .notConfigured:
-      return "未配置"
+      return L10n.string(.statusNotConfigured, language: language)
     case .keychainError:
-      return "Keychain 错误"
+      return L10n.string(.statusKeychainError, language: language)
     case .authenticationFailed, .rateLimited, .httpError, .networkError,
       .serverError, .decodingError, .historyStorageError:
-      return "请求失败"
+      return L10n.string(.statusRequestFailed, language: language)
     case .insufficientBalance:
-      return "余额不足"
+      return L10n.string(.statusInsufficientBalance, language: language)
     }
   }
 
@@ -178,6 +220,13 @@ final class BalanceStore: ObservableObject {
     await refresh()
   }
 
+  /// 底部总刷新：并发刷新余额与官方状态，两者错误互不覆盖。
+  func refreshAll() async {
+    async let balanceRefresh: Void = refresh()
+    async let statusRefresh: Void = statusStore?.refreshIfNeeded(maximumAge: 0) ?? ()
+    _ = await (balanceRefresh, statusRefresh)
+  }
+
   // MARK: - API Key 管理
 
   func saveAPIKey(_ rawValue: String) -> SaveResult {
@@ -188,7 +237,7 @@ final class BalanceStore: ObservableObject {
       keySource = resolvedSource()
       return .success
     } catch {
-      return .failure(error.localizedDescription)
+      return .failure(.keychain(error.localizedDescription))
     }
   }
 
@@ -196,7 +245,7 @@ final class BalanceStore: ObservableObject {
     do {
       try keychainStore.deleteAPIKey()
     } catch {
-      lastErrorMessage = "无法清除已保存的密钥：\(error.localizedDescription)"
+      lastDisplayError = .keychain(error.localizedDescription)
       return
     }
     await refresh()
@@ -212,16 +261,17 @@ final class BalanceStore: ObservableObject {
     guard let credentialID = currentCredentialID else {
       historySamples = []
       selectedCurrency = nil
+      availableCurrencies = []
       return
     }
     do {
       try await historyService.clear(credentialID: credentialID)
       historySamples = []
-      availableCurrencies = []
-      selectedCurrency = nil
-      historyError = nil
+      historyDisplayError = nil
+      // 清除历史后，当前余额中真实存在的币种仍然保留在 Picker 中。
+      updateAvailableCurrencies(response: balance, history: [])
     } catch {
-      historyError = "清除本地历史失败：\(error.localizedDescription)"
+      historyDisplayError = .history(error.localizedDescription)
     }
   }
 
@@ -252,7 +302,7 @@ final class BalanceStore: ObservableObject {
       applyFailure(error)
     } catch {
       guard currentCredentialID == credential.credentialID else { return }
-      lastErrorMessage = "发生未知错误"
+      lastDisplayError = .unknown
       status = .networkError
     }
   }
@@ -262,7 +312,7 @@ final class BalanceStore: ObservableObject {
     keySource = credential.source
     balance = response
     lastUpdated = clock.now()
-    lastErrorMessage = nil
+    lastDisplayError = nil
     status = response.isAvailable ? .loaded : .insufficientBalance
   }
 
@@ -275,28 +325,28 @@ final class BalanceStore: ObservableObject {
       // 认证失败：不再把旧缓存当作有效余额显示。
       balance = nil
       status = .authenticationFailed
-      lastErrorMessage = error.errorDescription
+      lastDisplayError = error.asDisplayError()
     case .insufficientBalance:
       status = .insufficientBalance
-      lastErrorMessage = error.errorDescription
+      lastDisplayError = error.asDisplayError()
     case .rateLimited:
       status = .rateLimited
-      lastErrorMessage = error.errorDescription
+      lastDisplayError = error.asDisplayError()
     case .server:
       status = .serverError
-      lastErrorMessage = error.errorDescription
+      lastDisplayError = error.asDisplayError()
     case .httpError:
       status = .httpError
-      lastErrorMessage = error.errorDescription
+      lastDisplayError = error.asDisplayError()
     case .noNetwork:
       status = .networkError
-      lastErrorMessage = error.errorDescription
+      lastDisplayError = error.asDisplayError()
     case .timedOut:
       status = .networkError
-      lastErrorMessage = error.errorDescription
+      lastDisplayError = error.asDisplayError()
     case .decodingFailed:
       status = .decodingError
-      lastErrorMessage = error.errorDescription
+      lastDisplayError = error.asDisplayError()
     }
   }
 
@@ -306,11 +356,11 @@ final class BalanceStore: ObservableObject {
     keySource = credential.source
     balance = nil
     lastUpdated = nil
-    lastErrorMessage = nil
+    lastDisplayError = nil
     historySamples = []
     availableCurrencies = []
     selectedCurrency = nil
-    historyError = nil
+    historyDisplayError = nil
     status = .loading
   }
 
@@ -319,20 +369,27 @@ final class BalanceStore: ObservableObject {
     keySource = .notConfigured
     balance = nil
     lastUpdated = nil
-    lastErrorMessage = nil
+    lastDisplayError = nil
     historySamples = []
     availableCurrencies = []
     selectedCurrency = nil
-    historyError = nil
+    historyDisplayError = nil
     status = .notConfigured
   }
 
   private func presentKeychainError(_ error: Error) {
-    // 保守处理：无法确认凭据时清空当前余额显示，避免旧账号金额误显示。
+    // 无法确认凭据：取消请求并清空所有旧账号可见状态，避免残留显示。
+    coordinator.cancelAll()
+    currentCredentialID = nil
     balance = nil
     lastUpdated = nil
+    historySamples = []
+    availableCurrencies = []
+    selectedCurrency = nil
+    historyDisplayError = nil
+    keySource = .notConfigured
     status = .keychainError
-    lastErrorMessage = error.localizedDescription
+    lastDisplayError = .keychain(error.localizedDescription)
   }
 
   private func resolvedSource() -> APIKeySource {
@@ -353,53 +410,69 @@ final class BalanceStore: ObservableObject {
       guard currentCredentialID == credentialID else { return }
       historySamples = recent
       updateAvailableCurrencies(response: response, history: recent)
-      historyError = nil
+      historyDisplayError = nil
     } catch {
       guard currentCredentialID == credentialID else { return }
-      historyError = error.localizedDescription
+      historyDisplayError = .history(error.localizedDescription)
     }
     // 清理失败只影响过期数据回收，不影响当前余额与趋势显示。
     try? await historyService.pruneThrottled()
   }
 
-  private func updateAvailableCurrencies(response: BalanceResponse, history: [BalanceSample]) {
+  /// 币种选择只来自真实数据：当前余额响应 + 当前凭据历史，不做无条件 CNY/USD 兜底。
+  private func updateAvailableCurrencies(response: BalanceResponse?, history: [BalanceSample]) {
     var ordered: [String] = []
     func append(_ currency: String) {
       if !ordered.contains(currency) {
         ordered.append(currency)
       }
     }
-    ["CNY", "USD"].forEach(append)
-    response.balanceInfos.map(\.currency).forEach(append)
+    response?.balanceInfos.map(\.currency).forEach(append)
     Set(history.map(\.currency)).sorted().forEach(append)
-    availableCurrencies = ordered
-    if let selected = selectedCurrency, ordered.contains(selected) {
+    // 排序优先：CNY（若真实存在）、USD（若真实存在），其余按稳定顺序。
+    var sorted: [String] = []
+    if let cny = ordered.first(where: { $0 == "CNY" }) {
+      sorted.append(cny)
+    }
+    if let usd = ordered.first(where: { $0 == "USD" }) {
+      sorted.append(usd)
+    }
+    sorted.append(contentsOf: ordered.filter { $0 != "CNY" && $0 != "USD" })
+    availableCurrencies = sorted
+    if let selected = selectedCurrency, sorted.contains(selected) {
       return
     }
-    selectedCurrency = ordered.first
+    selectedCurrency = sorted.first
   }
 
   // MARK: - 生命周期
 
   private func setupLifecycleObservers() {
     let workspaceCenter = NSWorkspace.shared.notificationCenter
-    observers.append(
-      workspaceCenter.addObserver(
-        forName: NSWorkspace.didWakeNotification,
-        object: nil,
-        queue: .main
-      ) { [weak self] _ in
-        Task { @MainActor in await self?.handleLifecycleEvent() }
-      }
+    observations.append(
+      NotificationObservation(
+        center: workspaceCenter,
+        token: workspaceCenter.addObserver(
+          forName: NSWorkspace.didWakeNotification,
+          object: nil,
+          queue: .main
+        ) { [weak self] _ in
+          Task { @MainActor in await self?.handleLifecycleEvent() }
+        }
+      )
     )
-    observers.append(
-      NotificationCenter.default.addObserver(
-        forName: NSApplication.didBecomeActiveNotification,
-        object: nil,
-        queue: .main
-      ) { [weak self] _ in
-        Task { @MainActor in await self?.handleLifecycleEvent() }
-      }
+    let defaultCenter = NotificationCenter.default
+    observations.append(
+      NotificationObservation(
+        center: defaultCenter,
+        token: defaultCenter.addObserver(
+          forName: NSApplication.didBecomeActiveNotification,
+          object: nil,
+          queue: .main
+        ) { [weak self] _ in
+          Task { @MainActor in await self?.handleLifecycleEvent() }
+        }
+      )
     )
   }
 
@@ -408,7 +481,10 @@ final class BalanceStore: ObservableObject {
     let now = clock.now()
     guard now.timeIntervalSince(lastLifecycleEvent) >= 5 else { return }
     lastLifecycleEvent = now
-    await refreshIfNeeded(maximumAge: 60)
+    async let balanceRefresh: Void = refreshIfNeeded(maximumAge: 60)
+    async let statusRefresh: Void = statusStore?.refreshIfNeeded(maximumAge: 60) ?? ()
+    async let loginSync: Void = loginItemStore?.syncFromSystem() ?? ()
+    _ = await (balanceRefresh, statusRefresh, loginSync)
   }
 
   private static func makeDefaultHistoryService(clock: any DateProviding) -> BalanceHistoryService {
@@ -426,7 +502,7 @@ final class BalanceStore: ObservableObject {
         isDirectory: true
       )
       .appendingPathComponent("BalanceHistory.leveldb", isDirectory: true)
-    if let store = try? LevelDBBalanceHistoryStore(directory: directory) {
+    if let store = try? LevelDBBalanceHistoryStore.open(directory: directory) {
       return BalanceHistoryService(store: store, clock: clock)
     }
     return BalanceHistoryService(store: UnavailableBalanceHistoryStore(), clock: clock)

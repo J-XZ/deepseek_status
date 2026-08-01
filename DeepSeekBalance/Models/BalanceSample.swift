@@ -21,11 +21,14 @@ struct BalanceSample: Codable, Equatable, Identifiable, Sendable {
 enum TimeBucket {
   static let bucketSeconds: Int64 = 600
 
-  /// 返回给定时刻所在时间桶的开始时间（UTC 取整，与本地时区无关）。
+  /// 返回给定时刻所在时间桶的开始时间。
+  /// 对负 Unix 时间使用严格 floor：`floor(seconds / 600) * 600`。
   static func bucketStart(for date: Date) -> Date {
-    let seconds = Int64(date.timeIntervalSince1970)
-    let bucket = (seconds / bucketSeconds) * bucketSeconds
-    return Date(timeIntervalSince1970: TimeInterval(bucket))
+    let seconds = Int64(date.timeIntervalSince1970.rounded(.down))
+    let quotient = seconds / bucketSeconds
+    let remainder = seconds % bucketSeconds
+    let flooredQuotient = remainder < 0 ? quotient - 1 : quotient
+    return Date(timeIntervalSince1970: TimeInterval(flooredQuotient * bucketSeconds))
   }
 }
 
