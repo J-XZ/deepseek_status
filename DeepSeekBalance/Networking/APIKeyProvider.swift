@@ -5,17 +5,6 @@ enum APIKeySource: Equatable, Sendable {
   case keychain
   case environment
   case notConfigured
-
-  var displayName: String {
-    switch self {
-    case .keychain:
-      return "Keychain"
-    case .environment:
-      return "环境变量 DEEPSEEK_API_KEY"
-    case .notConfigured:
-      return "未配置"
-    }
-  }
 }
 
 /// 一次性解析得到的凭据：apiKey、来源与不可逆 credentialID。

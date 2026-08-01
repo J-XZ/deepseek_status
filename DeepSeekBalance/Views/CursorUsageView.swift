@@ -71,7 +71,7 @@ struct CursorUsageView: View {
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
             .background(Color.accentColor.opacity(0.14), in: Capsule())
-            .foregroundStyle(.blue)
+            .foregroundStyle(Color.accentColor)
         }
         statusBadge
       }
@@ -130,9 +130,9 @@ struct CursorUsageView: View {
           .font(AppTypography.section)
         Spacer()
         if usage.hasNoPlanUsage {
-          Text(L10n.string(.cursorFreePlan, language: language))
+          Text(L10n.string(.cursorNoLimit, language: language))
             .font(AppTypography.badge)
-            .foregroundStyle(.blue)
+            .foregroundStyle(.secondary)
         } else {
           Text(
             usage.limitReached

@@ -3,17 +3,31 @@ import Foundation
 /// 把 Flashcat 官方状态 JSON 映射为展示模型。
 enum DeepSeekStatusMapper {
   static func map(_ response: FlashcatStatusResponse) -> DeepSeekServiceStatus {
-    let page = response.data?.page
-    let components = page?.components ?? []
-    let sections = page?.sections ?? []
-    let sectionNames = Dictionary(
-      uniqueKeysWithValues: sections.compactMap { section -> (String, String)? in
-        guard let id = section.sectionID, let name = section.name else { return nil }
-        return (id, name)
-      }
-    )
+    // 缺少顶层 data/page 时视为未知，避免空包被误判为“全部正常”。
+    guard let data = response.data, let page = data.page else {
+      return DeepSeekServiceStatus(
+        overall: .unknown,
+        overallDescription: "",
+        updatedAt: nil,
+        apiComponents: [],
+        webChatComponents: [],
+        otherComponents: [],
+        incidents: [],
+        scheduledMaintenances: []
+      )
+    }
 
-    let changes = response.data?.activeChanges ?? []
+    let components = page.components ?? []
+    let sections = page.sections ?? []
+    var sectionNames: [String: String] = [:]
+    for section in sections {
+      guard let id = section.sectionID, let name = section.name else { continue }
+      if sectionNames[id] == nil {
+        sectionNames[id] = name
+      }
+    }
+
+    let changes = data.activeChanges ?? []
     let unresolvedChanges = changes.filter {
       let status = IncidentStatus.from(raw: $0.status)
       return status != .resolved && status != .postmortem
@@ -26,17 +40,13 @@ enum DeepSeekStatusMapper {
     for change in unresolvedChanges {
       for affected in change.affectedComponents ?? [] {
         guard let id = affected.componentID else { continue }
-        let raw = affected.status?.lowercased()
-        if raw == "critical" {
-          worstSeverity = max(worstSeverity, 4)
-          continue
-        }
-        let status = ComponentStatus.from(raw: affected.status)
+        let raw = affected.status
+        let status = ComponentStatus.from(raw: raw)
         if status == .unknown, raw != nil {
           sawUnknownStatus = true
         }
         componentStatusByID[id] = Self.worse(status, componentStatusByID[id])
-        worstSeverity = max(worstSeverity, Self.severity(status))
+        worstSeverity = max(worstSeverity, Self.severity(forRawAffectedStatus: raw))
       }
     }
 
@@ -86,12 +96,17 @@ enum DeepSeekStatusMapper {
           )
         )
       } else {
+        // 事故影响按该变更自身 affected 组件计算，不套用全局最差值。
+        let changeSeverity = (change.affectedComponents ?? []).compactMap { affected -> Int? in
+          guard affected.componentID != nil else { return nil }
+          return Self.severity(forRawAffectedStatus: affected.status)
+        }.max() ?? 0
         incidents.append(
           DeepSeekServiceStatus.Incident(
             id: String(change.changeID ?? 0),
             title: title,
             status: IncidentStatus.from(raw: change.status),
-            impact: impact(forSeverity: worstSeverity),
+            impact: impact(forSeverity: changeSeverity),
             updatedAt: updatedAt,
             latestUpdateBody: latestBody
           )
@@ -99,13 +114,14 @@ enum DeepSeekStatusMapper {
       }
     }
 
+    // 故障严重度优先于维护：存在 critical/major 时不应被维护黄标掩盖。
     let overall: OverallIndicator
-    if hasMaintenance {
-      overall = .maintenance
-    } else if worstSeverity >= 4 {
+    if worstSeverity >= 4 {
       overall = .critical
     } else if worstSeverity == 3 {
       overall = .major
+    } else if hasMaintenance {
+      overall = .maintenance
     } else if worstSeverity > 0 {
       overall = .minor
     } else if !incidents.isEmpty || sawUnknownStatus {
@@ -137,6 +153,14 @@ enum DeepSeekStatusMapper {
     case .majorOutage:
       return 3
     }
+  }
+
+  /// critical 映射为 majorOutage（组件层无独立 critical 枚举），严重度记为 4。
+  static func severity(forRawAffectedStatus raw: String?) -> Int {
+    if raw?.lowercased() == "critical" {
+      return 4
+    }
+    return severity(ComponentStatus.from(raw: raw))
   }
 
   private static func worse(_ lhs: ComponentStatus, _ rhs: ComponentStatus?) -> ComponentStatus {

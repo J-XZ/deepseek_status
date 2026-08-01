@@ -4,22 +4,24 @@ import XCTest
 
 final class AppLanguageTests: XCTestCase {
   private var suiteName: String!
+  private var defaults: UserDefaults!
 
   override func setUp() {
     super.setUp()
     suiteName = "AppLanguageTests-\(UUID().uuidString)"
+    defaults = UserDefaults(suiteName: suiteName)!
+    defaults.removePersistentDomain(forName: suiteName)
   }
 
   override func tearDown() {
-    UserDefaults.standard.removePersistentDomain(forName: suiteName)
+    defaults.removePersistentDomain(forName: suiteName)
+    defaults = nil
     suiteName = nil
     super.tearDown()
   }
 
-  private func makeDefaults(_ name: String = "AppLanguageTests") -> UserDefaults {
-    let suite = UserDefaults(suiteName: "\(name)-\(UUID().uuidString)")!
-    suite.removePersistentDomain(forName: "\(name)-\(UUID().uuidString)")
-    return suite
+  private func makeDefaults() -> UserDefaults {
+    defaults
   }
 
   func testInitialChineseSystemChoosesChinese() {
@@ -42,6 +44,14 @@ final class AppLanguageTests: XCTestCase {
     let suite = makeDefaults()
     XCTAssertEqual(
       AppLanguage.initial(defaults: suite, systemLanguages: ["fr-FR", "ja-JP"]),
+      .english
+    )
+  }
+
+  func testPrimaryUnsupportedLanguageDoesNotFallBackToSecondaryChinese() {
+    let suite = makeDefaults()
+    XCTAssertEqual(
+      AppLanguage.initial(defaults: suite, systemLanguages: ["fr-FR", "zh-Hans"]),
       .english
     )
   }

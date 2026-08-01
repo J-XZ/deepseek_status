@@ -292,6 +292,8 @@ final class ServiceStatusMapperTests: XCTestCase {
   func testCritical() throws {
     let status = try map(ServiceStatusFixtures.withActiveChange(affectedStatus: "critical"))
     XCTAssertEqual(status.overall, .critical)
+    XCTAssertEqual(status.apiComponents.first?.status, .majorOutage)
+    XCTAssertEqual(status.incidents.first?.impact, .critical)
   }
 
   func testUnderMaintenance() throws {
@@ -306,6 +308,88 @@ final class ServiceStatusMapperTests: XCTestCase {
     XCTAssertEqual(status.apiComponents.first?.status, .underMaintenance)
     XCTAssertEqual(status.scheduledMaintenances.count, 1)
     XCTAssertTrue(status.incidents.isEmpty)
+  }
+
+  func testCriticalOutageOutranksMaintenance() throws {
+    let json = """
+    {
+      "data": {
+        "page": {
+          "components": [
+            {"component_id": "api", "name": "API Service"},
+            {"component_id": "web", "name": "Web Chat Service"}
+          ],
+          "sections": []
+        },
+        "active_changes": [
+          {
+            "change_id": 1,
+            "type": "maintenance",
+            "status": "scheduled",
+            "title": "Planned",
+            "affected_components": [
+              {"component_id": "web", "status": "under_maintenance"}
+            ]
+          },
+          {
+            "change_id": 2,
+            "type": "incident",
+            "status": "investigating",
+            "title": "Outage",
+            "affected_components": [
+              {"component_id": "api", "status": "critical"}
+            ]
+          }
+        ]
+      }
+    }
+    """
+    let status = try map(json)
+    XCTAssertEqual(status.overall, .critical)
+    XCTAssertEqual(status.incidents.count, 1)
+    XCTAssertEqual(status.incidents.first?.impact, .critical)
+    XCTAssertEqual(status.scheduledMaintenances.count, 1)
+  }
+
+  func testIncidentImpactIsPerChange() throws {
+    let json = """
+    {
+      "data": {
+        "page": {
+          "components": [
+            {"component_id": "api", "name": "API Service"},
+            {"component_id": "web", "name": "Web Chat Service"}
+          ],
+          "sections": []
+        },
+        "active_changes": [
+          {
+            "change_id": 1,
+            "type": "incident",
+            "status": "investigating",
+            "title": "Minor blip",
+            "affected_components": [
+              {"component_id": "web", "status": "degraded"}
+            ]
+          },
+          {
+            "change_id": 2,
+            "type": "incident",
+            "status": "investigating",
+            "title": "Major outage",
+            "affected_components": [
+              {"component_id": "api", "status": "critical"}
+            ]
+          }
+        ]
+      }
+    }
+    """
+    let status = try map(json)
+    XCTAssertEqual(status.overall, .critical)
+    let byTitle = Dictionary(uniqueKeysWithValues: status.incidents.map { ($0.title, $0.impact) })
+    XCTAssertEqual(byTitle["Minor blip"], .minor)
+    XCTAssertEqual(byTitle["Major outage"], .critical)
   }
 
   func testResolvedChangeIsFilteredOut() throws {
@@ -329,7 +413,7 @@ final class ServiceStatusMapperTests: XCTestCase {
 
   func testMissingOptionalFields() throws {
     let status = try map("{}")
-    XCTAssertEqual(status.overall, .none)
+    XCTAssertEqual(status.overall, .unknown)
     XCTAssertTrue(status.apiComponents.isEmpty)
     XCTAssertTrue(status.webChatComponents.isEmpty)
     XCTAssertTrue(status.otherComponents.isEmpty)
@@ -710,6 +794,28 @@ final class StatusPageMapperTests: XCTestCase {
       )
     )
     XCTAssertEqual(mapped.overall, .minor)
+  }
+
+  func testDegradedComponentEscalatesGreenOverall() {
+    let mapped = StatusPageMapper.map(
+      makeSummary(
+        indicator: "none",
+        components: [["id": "c1", "name": "API", "status": "degraded_performance"]]
+      )
+    )
+    XCTAssertEqual(mapped.overall, .minor)
+    XCTAssertEqual(mapped.apiComponents.first?.status, .degradedPerformance)
+  }
+
+  func testCriticalOverallIsPreserved() {
+    let mapped = StatusPageMapper.map(
+      makeSummary(
+        indicator: "critical",
+        description: "Major outage",
+        components: [["id": "c1", "name": "API", "status": "operational"]]
+      )
+    )
+    XCTAssertEqual(mapped.overall, .critical)
   }
 }
 

@@ -41,9 +41,9 @@ struct CodexTrendChartView: View {
       ForEach(Array(segments.enumerated()), id: \.offset) { index, segment in
         ForEach(segment) { sample in
           LineMark(
-            x: .value("时间", sample.bucketStart),
-            y: .value("剩余", sample.remainingPercent),
-            series: .value("分段", index)
+            x: .value(L10n.string(.chartTime, language: language), sample.bucketStart),
+            y: .value(L10n.string(.chartRemaining, language: language), sample.remainingPercent),
+            series: .value(L10n.string(.chartSegment, language: language), index)
           )
           .foregroundStyle(.blue)
           .lineStyle(StrokeStyle(lineWidth: 2))
@@ -78,7 +78,7 @@ struct CodexTrendChartView: View {
     }
     .chartLegend(.hidden)
     .frame(height: 160)
-    .accessibilityLabel(L10n.string(.a11yLegend, language: language))
+    .accessibilityLabel(L10n.string(.a11yCodexLegend, language: language))
   }
 
   private func axisLabel(for date: Date) -> String {

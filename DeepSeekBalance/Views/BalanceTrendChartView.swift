@@ -59,9 +59,9 @@ struct BalanceTrendChartView: View {
       ForEach(model.segments) { segment in
         ForEach(segment.points) { point in
           LineMark(
-            x: .value("时间", point.date),
-            y: .value("金额", point.value),
-            series: .value("分段", segment.id)
+            x: .value(L10n.string(.chartTime, language: language), point.date),
+            y: .value(L10n.string(.chartAmount, language: language), point.value),
+            series: .value(L10n.string(.chartSegment, language: language), segment.id)
           )
           .foregroundStyle(metricColor(segment.metric))
           .lineStyle(metricLineStyle(segment.metric))
@@ -69,7 +69,7 @@ struct BalanceTrendChartView: View {
       }
 
       if let selectedSample {
-        RuleMark(x: .value("选中时间", selectedSample.bucketStart))
+        RuleMark(x: .value(L10n.string(.chartSelectedTime, language: language), selectedSample.bucketStart))
           .foregroundStyle(.secondary)
           .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
       }

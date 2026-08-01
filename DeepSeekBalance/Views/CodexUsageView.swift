@@ -71,7 +71,7 @@ struct CodexUsageView: View {
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
             .background(Color.accentColor.opacity(0.14), in: Capsule())
-            .foregroundStyle(.blue)
+            .foregroundStyle(Color.accentColor)
         }
         statusBadge
       }
@@ -145,9 +145,11 @@ struct CodexUsageView: View {
       }
 
       if usage.rateLimit == nil {
-        Text(L10n.string(.codexFreePlan, language: language))
-          .font(AppTypography.caption)
-          .foregroundStyle(.secondary)
+        if usage.planType?.lowercased() == "free" {
+          Text(L10n.string(.codexFreePlan, language: language))
+            .font(AppTypography.caption)
+            .foregroundStyle(.secondary)
+        }
       } else {
         if let primary = usage.rateLimit?.primaryWindow {
           windowRow(primary, isPrimary: true)
@@ -336,7 +338,7 @@ struct CodexUsageView: View {
       return L10n.string(.codexCreditsUnlimited, language: language)
     }
     if credits.hasCredits {
-      return L10n.string(.codexCreditsBalance, language: language, credits.balance ?? "0")
+      return L10n.string(.codexCreditsBalance, language: language)
     }
     return L10n.string(.codexCreditsNone, language: language)
   }

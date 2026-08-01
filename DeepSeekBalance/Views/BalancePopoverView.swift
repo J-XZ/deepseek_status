@@ -142,7 +142,7 @@ struct BalancePopoverView: View {
     }
     .pickerStyle(.segmented)
     .labelsHidden()
-    .accessibilityLabel(L10n.string(.codexTitle, language: language))
+    .accessibilityLabel(L10n.string(.a11yProviderPicker, language: language))
     .onAppear {
       if !visibleTabs.contains(selectedTab), let first = visibleTabs.first {
         selectedTab = first
@@ -213,8 +213,8 @@ struct BalancePopoverView: View {
         .renderingMode(.template)
         .resizable()
         .aspectRatio(contentMode: .fit)
-        .frame(width: 28, height: 28)
-        .padding(7)
+        .frame(width: 24, height: 24)
+        .padding(8)
         .background(Color.accentColor.opacity(0.12), in: Circle())
         .accessibilityLabel(L10n.string(.a11yDeepSeekIcon, language: language))
       VStack(alignment: .leading, spacing: 2) {
@@ -546,7 +546,8 @@ struct BalancePopoverView: View {
   private var footer: some View {
     HStack(spacing: 8) {
       if store.isRefreshing || statusStore.loadState == .loading || codexStore.isRefreshing
-        || cursorStore.isRefreshing
+        || cursorStore.isRefreshing || codexStatusStore.loadState == .loading
+        || cursorStatusStore.loadState == .loading
       {
         ProgressView()
           .controlSize(.small)
@@ -560,6 +561,11 @@ struct BalancePopoverView: View {
           await cursorStatusStore.refreshIfNeeded(maximumAge: 0)
         }
       }
+      .disabled(
+        store.isRefreshing || statusStore.loadState == .loading || codexStore.isRefreshing
+          || cursorStore.isRefreshing || codexStatusStore.loadState == .loading
+          || cursorStatusStore.loadState == .loading
+      )
       Spacer()
       Button(L10n.string(.footerQuit, language: language)) {
         NSApplication.shared.terminate(nil)
