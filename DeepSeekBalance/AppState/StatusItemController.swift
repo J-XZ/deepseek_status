@@ -9,6 +9,29 @@ enum MenuBarVendor: Int, CaseIterable {
   case cursor = 2
 }
 
+/// 弹出窗口尺寸计算：页面内容决定目标高度，屏幕可用区域决定硬上限。
+enum PopoverSizing {
+  static let width: CGFloat = 500
+  static let fallbackHeight: CGFloat = 820
+  /// 给菜单栏、Dock 和窗口边缘留出安全空间，避免小屏上沿/底部贴边。
+  static let verticalSafetyMargin: CGFloat = 32
+
+  static func largestPageHeight(_ pageHeights: [CGFloat]) -> CGFloat {
+    pageHeights.max() ?? fallbackHeight
+  }
+
+  static func constrainedHeight(
+    pageHeights: [CGFloat],
+    visibleFrameHeight: CGFloat?
+  ) -> CGFloat {
+    let targetHeight = largestPageHeight(pageHeights)
+    guard let visibleFrameHeight else { return targetHeight }
+
+    let screenLimit = max(1, visibleFrameHeight - verticalSafetyMargin)
+    return min(targetHeight, screenLimit)
+  }
+}
+
 /// 菜单栏供应商可见性：UserDefaults 持久化，至少保留一个可见。
 struct MenuBarVendorVisibility {
   static let deepseekKey = "menuBar.showDeepSeek"
@@ -125,6 +148,7 @@ final class StatusItemController: NSObject {
   private let statusItem: NSStatusItem
   private let popover: NSPopover
   private let visibility: MenuBarVendorVisibility
+  private var vendorPageHeights: [UsageTab: CGFloat] = [:]
   private lazy var settingsWindow = SettingsWindow(
     store: store,
     loginItemStore: loginItemStore
@@ -326,18 +350,43 @@ final class StatusItemController: NSObject {
       cursorStore: cursorStore,
       codexStatusStore: codexStatusStore,
       cursorStatusStore: cursorStatusStore,
-      visibility: visibility
+      visibility: visibility,
+      onPageHeightsChange: { [weak self] pageHeights in
+        self?.updatePopoverSize(for: pageHeights)
+      }
     )
     .environment(\.locale, store.language.locale)
     popover.contentViewController = NSHostingController(rootView: rootView)
-    popover.contentSize = NSSize(width: 500, height: 720)
+    popover.contentSize = NSSize(
+      width: PopoverSizing.width,
+      height: PopoverSizing.fallbackHeight
+    )
     popover.behavior = .transient
+  }
+
+  private func updatePopoverSize(for pageHeights: [UsageTab: CGFloat]) {
+    vendorPageHeights = pageHeights
+    guard let button = statusItem.button else { return }
+    applyPopoverSize(for: button)
+  }
+
+  private func applyPopoverSize(for button: NSStatusBarButton) {
+    let visibleFrameHeight = button.window?.screen?.visibleFrame.height
+      ?? NSScreen.main?.visibleFrame.height
+    let height = PopoverSizing.constrainedHeight(
+      pageHeights: Array(vendorPageHeights.values),
+      visibleFrameHeight: visibleFrameHeight
+    )
+    let size = NSSize(width: PopoverSizing.width, height: height)
+    popover.contentSize = size
+    popover.contentViewController?.preferredContentSize = size
   }
 
   private func togglePopover(_ sender: NSStatusBarButton) {
     if popover.isShown {
       popover.performClose(nil)
     } else {
+      applyPopoverSize(for: sender)
       popover.show(relativeTo: sender.bounds, of: sender, preferredEdge: .minY)
     }
   }

@@ -12,7 +12,7 @@ enum AppTypography {
 }
 
 /// 弹出窗口顶部切换栏：DeepSeek 用量 / Codex 用量 / Cursor 用量。
-enum UsageTab: String, CaseIterable, Identifiable {
+enum UsageTab: String, CaseIterable, Identifiable, Hashable {
   case deepseek
   case codex
   case cursor
@@ -32,6 +32,17 @@ enum UsageTab: String, CaseIterable, Identifiable {
   }
 }
 
+private struct VendorPageHeightPreferenceKey: PreferenceKey {
+  static var defaultValue: [UsageTab: CGFloat] = [:]
+
+  static func reduce(
+    value: inout [UsageTab: CGFloat],
+    nextValue: () -> [UsageTab: CGFloat]
+  ) {
+    value.merge(nextValue(), uniquingKeysWith: { max($0, $1) })
+  }
+}
+
 /// 点击菜单栏项目后展示的弹出窗口内容。
 struct BalancePopoverView: View {
   @ObservedObject var store: BalanceStore
@@ -42,6 +53,7 @@ struct BalancePopoverView: View {
   @ObservedObject var codexStatusStore: StatusPageStatusStore
   @ObservedObject var cursorStatusStore: StatusPageStatusStore
   let visibility: MenuBarVendorVisibility
+  let onPageHeightsChange: ([UsageTab: CGFloat]) -> Void
 
   @State private var apiKeyInput = ""
   @State private var validationMessage: String?
@@ -60,63 +72,26 @@ struct BalancePopoverView: View {
 
   var body: some View {
     ScrollView {
-      VStack(alignment: .leading, spacing: 10) {
-        tabSwitcher
-        switch selectedTab {
-        case .deepseek:
-          deepSeekQuotaCard
-          card { DeepSeekServiceStatusView(store: statusStore, language: language) }
-          card { trendSection }
-          card { keyConfigurationSection }
-        case .codex:
-          CodexUsageView(store: codexStore, language: language, appearance: store.appearance)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(12)
-            .background(cardBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .overlay {
-              RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(cardBorder, lineWidth: 1)
-            }
-          card {
-            DeepSeekServiceStatusView(
-              store: codexStatusStore,
-              language: language,
-              titleKey: .serviceTitleCodex
-            )
-          }
-          card { codexTrendSection }
-        case .cursor:
-          CursorUsageView(store: cursorStore, language: language, appearance: store.appearance)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(12)
-            .background(cardBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .overlay {
-              RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(cardBorder, lineWidth: 1)
-            }
-          card {
-            DeepSeekServiceStatusView(
-              store: cursorStatusStore,
-              language: language,
-              titleKey: .serviceTitleCursor
-            )
-          }
-          card { cursorTrendSection }
-        }
-        card { footer }
-      }
-      .font(AppTypography.body)
+      contentStack(for: selectedTab)
       .padding(14)
+    }
+    // 在 ScrollView 外测量所有可见供应商页，避免当前页的滚动约束反过来
+    // 把其它页面的自然高度压缩成固定值。
+    .overlay(alignment: .topLeading) {
+      pageHeightMeasurements
+        .opacity(0)
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
     // MenuBarExtra 窗口按视图的固有尺寸定高，ScrollView 没有固有高度，
     // 必须给出明确的高度，否则窗口会塌成一条窄条。
     .frame(
-      minWidth: 500,
-      idealWidth: 500,
-      maxWidth: 500,
-      minHeight: 400,
-      idealHeight: 720,
-      maxHeight: 940
+      minWidth: PopoverSizing.width,
+      idealWidth: PopoverSizing.width,
+      maxWidth: PopoverSizing.width,
+      minHeight: 1,
+      idealHeight: PopoverSizing.fallbackHeight,
+      maxHeight: .infinity
     )
     // 纯色背景：浅色为白色、深色为黑色，不做毛玻璃/半透明。
     .background(windowBackground)
@@ -129,6 +104,82 @@ struct BalancePopoverView: View {
       Task { await codexStatusStore.refreshIfNeeded() }
       Task { await cursorStatusStore.refreshIfNeeded() }
     }
+    .onPreferenceChange(VendorPageHeightPreferenceKey.self) { pageHeights in
+      guard !pageHeights.isEmpty else { return }
+      onPageHeightsChange(pageHeights)
+    }
+  }
+
+  /// 每个供应商页都包含顶部切换栏、供应商内容和底部操作区，测量口径与实际页一致。
+  @ViewBuilder
+  private func contentStack(for tab: UsageTab) -> some View {
+    VStack(alignment: .leading, spacing: 10) {
+      tabSwitcher
+      switch tab {
+      case .deepseek:
+        deepSeekQuotaCard
+        card { DeepSeekServiceStatusView(store: statusStore, language: language) }
+        card { trendSection }
+        card { keyConfigurationSection }
+      case .codex:
+        CodexUsageView(store: codexStore, language: language, appearance: store.appearance)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .padding(12)
+          .background(cardBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+          .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+              .stroke(cardBorder, lineWidth: 1)
+          }
+        card {
+          DeepSeekServiceStatusView(
+            store: codexStatusStore,
+            language: language,
+            titleKey: .serviceTitleCodex
+          )
+        }
+        card { codexTrendSection }
+      case .cursor:
+        CursorUsageView(store: cursorStore, language: language, appearance: store.appearance)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .padding(12)
+          .background(cardBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+          .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+              .stroke(cardBorder, lineWidth: 1)
+          }
+        card {
+          DeepSeekServiceStatusView(
+            store: cursorStatusStore,
+            language: language,
+            titleKey: .serviceTitleCursor
+          )
+        }
+        card { cursorTrendSection }
+      }
+      card { footer }
+    }
+    .font(AppTypography.body)
+  }
+
+  /// 以实际弹窗宽度测量各页完整自然高度；隐藏供应商不参与高度计算。
+  private var pageHeightMeasurements: some View {
+    VStack(spacing: 0) {
+      ForEach(visibleTabs) { tab in
+        contentStack(for: tab)
+          .padding(14)
+          .frame(width: PopoverSizing.width)
+          .fixedSize(horizontal: false, vertical: true)
+          .background {
+            GeometryReader { proxy in
+              Color.clear.preference(
+                key: VendorPageHeightPreferenceKey.self,
+                value: [tab: proxy.size.height]
+              )
+            }
+          }
+      }
+    }
+    .fixedSize(horizontal: false, vertical: true)
   }
 
   // MARK: - 顶部切换栏

@@ -152,3 +152,42 @@ final class BalanceFormattingTests: XCTestCase {
     XCTAssertEqual(summary, "¥110.00 · $2.50")
   }
 }
+
+final class PopoverSizingTests: XCTestCase {
+  func testTargetHeightUsesLargestVisibleVendorPage() {
+    XCTAssertEqual(
+      PopoverSizing.largestPageHeight([640, 812, 704]),
+      812
+    )
+  }
+
+  func testTargetHeightIsNotCappedOnAComfortableScreen() {
+    XCTAssertEqual(
+      PopoverSizing.constrainedHeight(
+        pageHeights: [640, 812, 704],
+        visibleFrameHeight: 1_000
+      ),
+      812
+    )
+  }
+
+  func testTargetHeightIsCappedByTheScreenVisibleFrame() {
+    XCTAssertEqual(
+      PopoverSizing.constrainedHeight(
+        pageHeights: [640, 812, 704],
+        visibleFrameHeight: 700
+      ),
+      668
+    )
+  }
+
+  func testTinyScreensNeverReceiveAHeightAboveTheirVisibleFrame() {
+    XCTAssertEqual(
+      PopoverSizing.constrainedHeight(
+        pageHeights: [640],
+        visibleFrameHeight: 20
+      ),
+      1
+    )
+  }
+}
