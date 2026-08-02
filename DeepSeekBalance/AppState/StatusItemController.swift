@@ -23,6 +23,25 @@ enum MenuBarDisplayLayout {
   }
 }
 
+/// 菜单栏图标布局：按最大边缩放，保持 PDF 图标的原始宽高比。
+enum MenuBarIconLayout {
+  static let deepSeekMaxDimension: CGFloat = 16
+  static let codexMaxDimension: CGFloat = 13
+  static let cursorMaxDimension: CGFloat = 13
+
+  static func fittingSize(_ imageSize: NSSize, maxDimension: CGFloat) -> NSSize {
+    guard imageSize.width > 0, imageSize.height > 0, maxDimension > 0 else {
+      return NSSize(width: maxDimension, height: maxDimension)
+    }
+
+    let scale = maxDimension / max(imageSize.width, imageSize.height)
+    return NSSize(
+      width: imageSize.width * scale,
+      height: imageSize.height * scale
+    )
+  }
+}
+
 /// 菜单栏内容视图：用明确的几何布局绘制供应商信息，避免 NSStatusBarButton
 /// 对多行 attributedTitle 按单行宽度计算而产生截断或错位。
 private final class MenuBarStatusContentView: NSView {
@@ -103,11 +122,11 @@ private final class MenuBarStatusContentView: NSView {
       }
 
       if let icon = segment.icon {
-        let firstLineCenterY = segmentBottom + totalHeight - lineHeight / 2
+        let iconCenterY = segmentBottom + totalHeight / 2
         icon.draw(
           in: NSRect(
             x: x,
-            y: firstLineCenterY - icon.size.height / 2,
+            y: iconCenterY - icon.size.height / 2,
             width: icon.size.width,
             height: icon.size.height
           ),
@@ -343,7 +362,7 @@ final class StatusItemController: NSObject {
       return nil
     }
     icon.isTemplate = true
-    icon.size = NSSize(width: size, height: size)
+    icon.size = MenuBarIconLayout.fittingSize(icon.size, maxDimension: size)
     return icon
   }
 
@@ -409,7 +428,11 @@ final class StatusItemController: NSObject {
     if visibility.showsDeepSeek {
       segments.append(
         MenuBarStatusContentView.Segment(
-          icon: menuBarTintedIcon(named: "DeepSeekIcon", size: 14, isDark: isDark),
+          icon: menuBarTintedIcon(
+            named: "DeepSeekIcon",
+            size: MenuBarIconLayout.deepSeekMaxDimension,
+            isDark: isDark
+          ),
           lines: [store.menuBarText],
           font: font
         )
@@ -418,7 +441,11 @@ final class StatusItemController: NSObject {
     if visibility.showsCodex {
       segments.append(
         MenuBarStatusContentView.Segment(
-          icon: menuBarTintedIcon(named: "CodexIcon", size: 13, isDark: isDark),
+          icon: menuBarTintedIcon(
+            named: "CodexIcon",
+            size: MenuBarIconLayout.codexMaxDimension,
+            isDark: isDark
+          ),
           lines: [codexStore.menuBarText],
           font: font
         )
@@ -427,7 +454,11 @@ final class StatusItemController: NSObject {
     if visibility.showsCursor {
       segments.append(
         MenuBarStatusContentView.Segment(
-          icon: menuBarTintedIcon(named: "CursorIcon", size: 10, isDark: isDark),
+          icon: menuBarTintedIcon(
+            named: "CursorIcon",
+            size: MenuBarIconLayout.cursorMaxDimension,
+            isDark: isDark
+          ),
           lines: MenuBarDisplayLayout.cursorLines(cursorStore.menuBarText),
           font: cursorFont
         )

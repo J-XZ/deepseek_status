@@ -126,4 +126,26 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
       MenuBarDisplayLayout.regularFontSize
     )
   }
+
+  func testMenuBarIconLayoutPreservesAspectRatio() {
+    let size = MenuBarIconLayout.fittingSize(
+      NSSize(width: 466.73, height: 532.09),
+      maxDimension: 10
+    )
+
+    XCTAssertEqual(size.height, 10, accuracy: 0.001)
+    XCTAssertEqual(size.width / size.height, 466.73 / 532.09, accuracy: 0.001)
+    XCTAssertLessThan(size.width, size.height)
+  }
+
+  func testMenuBarIconSizesBalanceOpticalHeight() {
+    XCTAssertGreaterThan(
+      MenuBarIconLayout.deepSeekMaxDimension,
+      MenuBarIconLayout.codexMaxDimension
+    )
+    XCTAssertEqual(
+      MenuBarIconLayout.cursorMaxDimension,
+      MenuBarIconLayout.codexMaxDimension
+    )
+  }
 }
