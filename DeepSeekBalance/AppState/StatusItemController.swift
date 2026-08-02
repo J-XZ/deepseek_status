@@ -13,6 +13,8 @@ enum MenuBarVendor: Int, CaseIterable {
 enum MenuBarDisplayLayout {
   static let regularFontSize: CGFloat = 12
   static let cursorFontSize: CGFloat = 9
+  static let cursorLineHeight: CGFloat = 10
+  static let cursorVerticalInset: CGFloat = 1
 
   static func cursorText(_ text: String) -> String {
     text.replacingOccurrences(of: "/", with: "\n")
@@ -49,6 +51,8 @@ private final class MenuBarStatusContentView: NSView {
     let icon: NSImage?
     let lines: [String]
     let font: NSFont
+    let lineHeight: CGFloat?
+    let verticalInset: CGFloat
   }
 
   private let horizontalPadding: CGFloat = 4
@@ -99,12 +103,13 @@ private final class MenuBarStatusContentView: NSView {
     for (index, segment) in segments.enumerated() {
       let lines = segment.lines.isEmpty ? [""] : segment.lines
       let iconWidth = segment.icon.map { $0.size.width + iconTextSpacing } ?? 0
-      let lineHeight = max(
-        fontLineHeight(segment.font),
-        segment.icon?.size.height ?? 0
-      )
-      let totalHeight = lineHeight * CGFloat(lines.count)
-      let segmentBottom = max(0, (bounds.height - totalHeight) / 2)
+      let lineHeight = segment.lineHeight ?? fontLineHeight(segment.font)
+      let textHeight = lineHeight * CGFloat(lines.count)
+      let iconHeight = segment.icon?.size.height ?? 0
+      let contentHeight = max(textHeight, iconHeight)
+        + segment.verticalInset * 2
+      let segmentBottom = max(0, (bounds.height - contentHeight) / 2)
+      let textBottom = segmentBottom + (contentHeight - textHeight) / 2
       let textX = x + iconWidth
 
       for (lineIndex, line) in lines.enumerated() {
@@ -114,7 +119,7 @@ private final class MenuBarStatusContentView: NSView {
         ]
         let attributedLine = NSAttributedString(string: line, attributes: attributes)
         let lineSize = attributedLine.size()
-        let lineCenterY = segmentBottom + totalHeight
+        let lineCenterY = textBottom + textHeight
           - lineHeight * (CGFloat(lineIndex) + 0.5)
         attributedLine.draw(
           at: NSPoint(x: textX, y: lineCenterY - lineSize.height / 2)
@@ -122,7 +127,7 @@ private final class MenuBarStatusContentView: NSView {
       }
 
       if let icon = segment.icon {
-        let iconCenterY = segmentBottom + totalHeight / 2
+        let iconCenterY = segmentBottom + contentHeight / 2
         icon.draw(
           in: NSRect(
             x: x,
@@ -434,7 +439,9 @@ final class StatusItemController: NSObject {
             isDark: isDark
           ),
           lines: [store.menuBarText],
-          font: font
+          font: font,
+          lineHeight: nil,
+          verticalInset: 0
         )
       )
     }
@@ -447,7 +454,9 @@ final class StatusItemController: NSObject {
             isDark: isDark
           ),
           lines: [codexStore.menuBarText],
-          font: font
+          font: font,
+          lineHeight: nil,
+          verticalInset: 0
         )
       )
     }
@@ -460,7 +469,9 @@ final class StatusItemController: NSObject {
             isDark: isDark
           ),
           lines: MenuBarDisplayLayout.cursorLines(cursorStore.menuBarText),
-          font: cursorFont
+          font: cursorFont,
+          lineHeight: MenuBarDisplayLayout.cursorLineHeight,
+          verticalInset: MenuBarDisplayLayout.cursorVerticalInset
         )
       )
     }

@@ -127,6 +127,14 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
     )
   }
 
+  func testCursorMenuBarUsesCompactLinesWithTopInset() {
+    XCTAssertLessThan(
+      MenuBarDisplayLayout.cursorLineHeight,
+      MenuBarIconLayout.cursorMaxDimension
+    )
+    XCTAssertGreaterThan(MenuBarDisplayLayout.cursorVerticalInset, 0)
+  }
+
   func testMenuBarIconLayoutPreservesAspectRatio() {
     let size = MenuBarIconLayout.fittingSize(
       NSSize(width: 466.73, height: 532.09),
