@@ -9,6 +9,157 @@ enum MenuBarVendor: Int, CaseIterable {
   case cursor = 2
 }
 
+/// 菜单栏数字布局：Cursor 的第一方/API 两组用量纵向排列，避免横向挤占空间。
+enum MenuBarDisplayLayout {
+  static let regularFontSize: CGFloat = 12
+  static let cursorFontSize: CGFloat = 9
+
+  static func cursorText(_ text: String) -> String {
+    text.replacingOccurrences(of: "/", with: "\n")
+  }
+
+  static func cursorLines(_ text: String) -> [String] {
+    cursorText(text).components(separatedBy: "\n")
+  }
+}
+
+/// 菜单栏内容视图：用明确的几何布局绘制供应商信息，避免 NSStatusBarButton
+/// 对多行 attributedTitle 按单行宽度计算而产生截断或错位。
+private final class MenuBarStatusContentView: NSView {
+  struct Segment {
+    let icon: NSImage?
+    let lines: [String]
+    let font: NSFont
+  }
+
+  private let horizontalPadding: CGFloat = 4
+  private let iconTextSpacing: CGFloat = 4
+  private let separatorText = "  |  "
+  private let separatorFont = NSFont.monospacedDigitSystemFont(
+    ofSize: MenuBarDisplayLayout.regularFontSize,
+    weight: .semibold
+  )
+
+  var segments: [Segment] = [] {
+    didSet {
+      invalidateIntrinsicContentSize()
+      needsDisplay = true
+    }
+  }
+
+  var requiredWidth: CGFloat {
+    guard !segments.isEmpty else { return horizontalPadding * 2 }
+
+    let separatorsWidth = separatorWidth * CGFloat(max(segments.count - 1, 0))
+    let segmentsWidth = segments.reduce(CGFloat.zero) { partial, segment in
+      partial + segmentWidth(segment)
+    }
+    return ceil(horizontalPadding * 2 + segmentsWidth + separatorsWidth)
+  }
+
+  override var intrinsicContentSize: NSSize {
+    NSSize(width: requiredWidth, height: NSStatusBar.system.thickness)
+  }
+
+  // 让外层 NSStatusBarButton 继续接收点击和右键事件。
+  override func hitTest(_ point: NSPoint) -> NSView? {
+    nil
+  }
+
+  override func viewDidChangeEffectiveAppearance() {
+    super.viewDidChangeEffectiveAppearance()
+    needsDisplay = true
+  }
+
+  override func draw(_ dirtyRect: NSRect) {
+    super.draw(dirtyRect)
+
+    var x = horizontalPadding
+    let textColor = NSColor.labelColor
+
+    for (index, segment) in segments.enumerated() {
+      let lines = segment.lines.isEmpty ? [""] : segment.lines
+      let iconWidth = segment.icon.map { $0.size.width + iconTextSpacing } ?? 0
+      let lineHeight = max(
+        fontLineHeight(segment.font),
+        segment.icon?.size.height ?? 0
+      )
+      let totalHeight = lineHeight * CGFloat(lines.count)
+      let segmentBottom = max(0, (bounds.height - totalHeight) / 2)
+      let textX = x + iconWidth
+
+      for (lineIndex, line) in lines.enumerated() {
+        let attributes: [NSAttributedString.Key: Any] = [
+          .font: segment.font,
+          .foregroundColor: textColor
+        ]
+        let attributedLine = NSAttributedString(string: line, attributes: attributes)
+        let lineSize = attributedLine.size()
+        let lineCenterY = segmentBottom + totalHeight
+          - lineHeight * (CGFloat(lineIndex) + 0.5)
+        attributedLine.draw(
+          at: NSPoint(x: textX, y: lineCenterY - lineSize.height / 2)
+        )
+      }
+
+      if let icon = segment.icon {
+        let firstLineCenterY = segmentBottom + totalHeight - lineHeight / 2
+        icon.draw(
+          in: NSRect(
+            x: x,
+            y: firstLineCenterY - icon.size.height / 2,
+            width: icon.size.width,
+            height: icon.size.height
+          ),
+          from: .zero,
+          operation: .sourceOver,
+          fraction: 1
+        )
+      }
+
+      x += segmentWidth(segment)
+      if index < segments.count - 1 {
+        let attributes: [NSAttributedString.Key: Any] = [
+          .font: separatorFont,
+          .foregroundColor: textColor
+        ]
+        let separator = NSAttributedString(string: separatorText, attributes: attributes)
+        let separatorSize = separator.size()
+        separator.draw(
+          at: NSPoint(
+            x: x,
+            y: bounds.midY - separatorSize.height / 2
+          )
+        )
+        x += separatorWidth
+      }
+    }
+  }
+
+  private var separatorWidth: CGFloat {
+    attributedWidth(separatorText, font: separatorFont)
+  }
+
+  private func segmentWidth(_ segment: Segment) -> CGFloat {
+    let textWidth = segment.lines.map {
+      attributedWidth($0, font: segment.font)
+    }.max() ?? 0
+    let iconWidth = segment.icon.map { $0.size.width + iconTextSpacing } ?? 0
+    return ceil(iconWidth + textWidth)
+  }
+
+  private func attributedWidth(_ text: String, font: NSFont) -> CGFloat {
+    NSAttributedString(
+      string: text,
+      attributes: [.font: font]
+    ).size().width
+  }
+
+  private func fontLineHeight(_ font: NSFont) -> CGFloat {
+    ceil(font.ascender - font.descender + font.leading)
+  }
+}
+
 /// 弹出窗口尺寸计算：页面内容决定目标高度，屏幕可用区域决定硬上限。
 enum PopoverSizing {
   static let width: CGFloat = 500
@@ -148,6 +299,7 @@ final class StatusItemController: NSObject {
   private let statusItem: NSStatusItem
   private let popover: NSPopover
   private let visibility: MenuBarVendorVisibility
+  private var menuBarContentView: MenuBarStatusContentView?
   private var vendorPageHeights: [UsageTab: CGFloat] = [:]
   private lazy var settingsWindow = SettingsWindow(
     store: store,
@@ -219,6 +371,13 @@ final class StatusItemController: NSObject {
     guard let button = statusItem.button else { return }
 
     button.imagePosition = .noImage
+    button.title = ""
+    button.attributedTitle = NSAttributedString(string: "")
+
+    let contentView = MenuBarStatusContentView(frame: button.bounds)
+    contentView.autoresizingMask = [.width, .height]
+    button.addSubview(contentView)
+    menuBarContentView = contentView
     updateTitle()
 
     button.target = self
@@ -227,61 +386,58 @@ final class StatusItemController: NSObject {
   }
 
   /// 菜单栏组合展示：`DeepSeek 图标 + 额度 | Codex 图标 + 剩余用量 | Cursor 图标 + 剩余用量`。
-  /// 被隐藏的供应商不显示。文字不设置前景色，由 NSStatusBarButton 自行处理
-  /// 活动/非活动与高亮状态的颜色；图标按当前外观手动着色。
+  /// Cursor 的第一方/API 两组用量使用较小字体纵向排列。
+  /// 被隐藏的供应商不显示。内容视图使用系统标签颜色，图标按当前外观手动着色。
   private func updateTitle() {
     guard let button = statusItem.button else { return }
 
-    let font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .semibold)
+    let font = NSFont.monospacedDigitSystemFont(
+      ofSize: MenuBarDisplayLayout.regularFontSize,
+      weight: .semibold
+    )
+    let cursorFont = NSFont.monospacedDigitSystemFont(
+      ofSize: MenuBarDisplayLayout.cursorFontSize,
+      weight: .semibold
+    )
     button.font = font
     button.toolTip = L10n.string(.appTitle, language: store.language)
 
     let isDark = (button.window?.effectiveAppearance ?? NSApp.effectiveAppearance)
       .bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
 
-    var parts: [NSAttributedString] = []
+    var segments: [MenuBarStatusContentView.Segment] = []
     if visibility.showsDeepSeek {
-      parts.append(
-        menuBarPart(
-          iconName: "DeepSeekIcon",
-          iconSize: 14,
-          text: store.menuBarText,
-          font: font,
-          isDark: isDark
+      segments.append(
+        MenuBarStatusContentView.Segment(
+          icon: menuBarTintedIcon(named: "DeepSeekIcon", size: 14, isDark: isDark),
+          lines: [store.menuBarText],
+          font: font
         )
       )
     }
     if visibility.showsCodex {
-      parts.append(
-        menuBarPart(
-          iconName: "CodexIcon",
-          iconSize: 13,
-          text: codexStore.menuBarText,
-          font: font,
-          isDark: isDark
+      segments.append(
+        MenuBarStatusContentView.Segment(
+          icon: menuBarTintedIcon(named: "CodexIcon", size: 13, isDark: isDark),
+          lines: [codexStore.menuBarText],
+          font: font
         )
       )
     }
     if visibility.showsCursor {
-      parts.append(
-        menuBarPart(
-          iconName: "CursorIcon",
-          iconSize: 13,
-          text: cursorStore.menuBarText,
-          font: font,
-          isDark: isDark
+      segments.append(
+        MenuBarStatusContentView.Segment(
+          icon: menuBarTintedIcon(named: "CursorIcon", size: 10, isDark: isDark),
+          lines: MenuBarDisplayLayout.cursorLines(cursorStore.menuBarText),
+          font: cursorFont
         )
       )
     }
 
-    let attributed = NSMutableAttributedString()
-    for (index, part) in parts.enumerated() {
-      if index > 0 {
-        attributed.append(NSAttributedString(string: "  |  ", attributes: [.font: font]))
-      }
-      attributed.append(part)
-    }
-    button.attributedTitle = attributed
+    guard let contentView = menuBarContentView else { return }
+    contentView.segments = segments
+    statusItem.length = contentView.requiredWidth
+    contentView.frame = button.bounds
 
     let deepseekLabel = L10n.string(
       .a11yMenuBar, language: store.language, store.menuBarText
@@ -303,40 +459,6 @@ final class StatusItemController: NSObject {
       }
       .map(\.element)
       .joined(separator: " | "))
-  }
-
-  /// 图标可选：资源缺失时仍展示文字，避免整段供应商信息消失。
-  private func menuBarPart(
-    iconName: String,
-    iconSize: CGFloat,
-    text: String,
-    font: NSFont,
-    isDark: Bool
-  ) -> NSAttributedString {
-    if let icon = menuBarTintedIcon(named: iconName, size: iconSize, isDark: isDark) {
-      return iconText(icon: icon, text: text, font: font)
-    }
-    return NSAttributedString(string: text, attributes: [.font: font])
-  }
-
-  private func iconText(icon: NSImage, text: String, font: NSFont) -> NSAttributedString {
-    let result = NSMutableAttributedString()
-    result.append(attachment(for: icon, font: font))
-    result.append(NSAttributedString(string: " " + text, attributes: [.font: font]))
-    return result
-  }
-
-  /// 内联图像附件：按当前字体基线垂直居中。
-  private func attachment(for image: NSImage, font: NSFont) -> NSAttributedString {
-    let attachment = NSTextAttachment()
-    attachment.image = image
-    attachment.bounds = NSRect(
-      x: 0,
-      y: (font.capHeight - image.size.height) / 2,
-      width: image.size.width,
-      height: image.size.height
-    )
-    return NSAttributedString(attachment: attachment)
   }
 
   // MARK: - 弹窗

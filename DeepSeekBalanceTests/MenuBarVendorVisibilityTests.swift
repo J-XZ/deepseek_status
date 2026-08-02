@@ -108,4 +108,22 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
     XCTAssertFalse(visibility.showsDeepSeek)
     XCTAssertFalse(visibility.showsCodex)
   }
+
+  func testCursorMenuBarTextStacksTwoChannelsVertically() {
+    XCTAssertEqual(
+      MenuBarDisplayLayout.cursorText("30% (+20%)/17% (+33%)"),
+      "30% (+20%)\n17% (+33%)"
+    )
+  }
+
+  func testCursorMenuBarTextKeepsSingleChannelOnOneLine() {
+    XCTAssertEqual(MenuBarDisplayLayout.cursorText("30% (+20%)"), "30% (+20%)")
+  }
+
+  func testCursorMenuBarUsesSmallerFont() {
+    XCTAssertLessThan(
+      MenuBarDisplayLayout.cursorFontSize,
+      MenuBarDisplayLayout.regularFontSize
+    )
+  }
 }
