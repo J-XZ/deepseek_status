@@ -234,7 +234,7 @@ struct CodexUsageView: View {
         Capsule()
           .fill(trackColor)
         Capsule()
-          .fill(barColor(usedPercent))
+          .fill(barColor(usedPercent, idealPercent: expected))
           .frame(width: geo.size.width * CGFloat(min(max(usedPercent, 0), 100)) / 100)
         if let expected {
           Rectangle()
@@ -262,8 +262,18 @@ struct CodexUsageView: View {
     appearance == .dark ? Color(white: 0.25) : Color(white: 0.85)
   }
 
-  private func barColor(_ _: Int) -> Color {
-    .blue
+  private func barColor(_ usedPercent: Int, idealPercent: Double?) -> Color {
+    switch UsageProgressEvaluator.status(
+      usedPercent: usedPercent,
+      idealPercent: idealPercent
+    ) {
+    case .noIdeal, .onTrack:
+      return .blue
+    case .behindIdeal:
+      return .green
+    case .aheadOfIdeal:
+      return .orange
+    }
   }
 
   /// 红线中心 x：夹在 [2, 宽度−2] 内，保证 3pt 宽红线不超出轨道左右边缘。

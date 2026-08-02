@@ -11,6 +11,33 @@ enum AppTypography {
   static let badge = Font.system(size: 11, weight: .semibold, design: .rounded)
 }
 
+/// 实际进度与理想进度的差异分类；阈值按百分比百分点计算。
+enum UsageProgressStatus: Equatable {
+  case noIdeal
+  case onTrack
+  case behindIdeal
+  case aheadOfIdeal
+}
+
+enum UsageProgressEvaluator {
+  static let tolerance: Double = 10
+
+  static func status(usedPercent: Int, idealPercent: Double?) -> UsageProgressStatus {
+    guard let idealPercent, idealPercent.isFinite else { return .noIdeal }
+
+    let actual = Double(min(max(usedPercent, 0), 100))
+    let ideal = min(max(idealPercent, 0), 100)
+    let gap = actual - ideal
+    if gap < -tolerance {
+      return .behindIdeal
+    }
+    if gap > tolerance {
+      return .aheadOfIdeal
+    }
+    return .onTrack
+  }
+}
+
 /// 弹出窗口顶部切换栏：DeepSeek 用量 / Codex 用量 / Cursor 用量。
 enum UsageTab: String, CaseIterable, Identifiable, Hashable {
   case deepseek

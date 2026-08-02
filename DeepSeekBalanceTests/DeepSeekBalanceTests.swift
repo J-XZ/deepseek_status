@@ -191,3 +191,48 @@ final class PopoverSizingTests: XCTestCase {
     )
   }
 }
+
+final class UsageProgressEvaluatorTests: XCTestCase {
+  func testMissingIdealProgressUsesBlueClassification() {
+    XCTAssertEqual(
+      UsageProgressEvaluator.status(usedPercent: 80, idealPercent: nil),
+      .noIdeal
+    )
+  }
+
+  func testProgressWithinTenPercentagePointsStaysOnTrack() {
+    XCTAssertEqual(
+      UsageProgressEvaluator.status(usedPercent: 59, idealPercent: 50),
+      .onTrack
+    )
+    XCTAssertEqual(
+      UsageProgressEvaluator.status(usedPercent: 41, idealPercent: 50),
+      .onTrack
+    )
+  }
+
+  func testProgressExactlyTenPercentagePointsStaysOnTrack() {
+    XCTAssertEqual(
+      UsageProgressEvaluator.status(usedPercent: 60, idealPercent: 50),
+      .onTrack
+    )
+    XCTAssertEqual(
+      UsageProgressEvaluator.status(usedPercent: 40, idealPercent: 50),
+      .onTrack
+    )
+  }
+
+  func testProgressMoreThanTenPointsBehindIsGreenClassification() {
+    XCTAssertEqual(
+      UsageProgressEvaluator.status(usedPercent: 39, idealPercent: 50),
+      .behindIdeal
+    )
+  }
+
+  func testProgressMoreThanTenPointsAheadIsOrangeClassification() {
+    XCTAssertEqual(
+      UsageProgressEvaluator.status(usedPercent: 61, idealPercent: 50),
+      .aheadOfIdeal
+    )
+  }
+}
