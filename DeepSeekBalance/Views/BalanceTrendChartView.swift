@@ -6,7 +6,6 @@ import SwiftUI
 struct BalanceTrendChartView: View {
   let samples: [BalanceSample]
   let currency: String
-  let summary: TrendSummary
   let language: AppLanguage
   let now: Date
 
@@ -44,8 +43,6 @@ struct BalanceTrendChartView: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text(summary.text(language: language))
-        .font(AppTypography.body.weight(.medium))
       chartView
       legend
       if let selectedSample {

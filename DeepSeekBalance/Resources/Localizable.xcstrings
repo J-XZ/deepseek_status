@@ -1974,13 +1974,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "72h change: %@"
+            "value": "Usage change over the last 72 hours: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "72 小时变化：%@"
+            "value": "近72小时用量变化：%@"
           }
         }
       }
@@ -1990,13 +1990,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "72h change: not enough samples"
+            "value": "Usage change over the last 72 hours: not enough samples"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "72 小时变化：样本不足"
+            "value": "近72小时用量变化：样本不足"
           }
         }
       }
@@ -2006,13 +2006,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "3-Day Balance Trend"
+            "value": "Usage Trend"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "最近 3 天余额趋势"
+            "value": "用量趋势"
           }
         }
       }
@@ -2438,13 +2438,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Not enough history for a trend yet"
+            "value": "Usage change over the last 72 hours: not enough samples"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "历史数据不足，暂无法生成趋势"
+            "value": "近72小时用量变化：样本不足"
           }
         }
       }
@@ -2454,13 +2454,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "72 h change in remaining usage: %@"
+            "value": "Usage change over the last 72 hours: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "近 72 小时剩余用量变化：%@"
+            "value": "近72小时用量变化：%@"
           }
         }
       }
@@ -2966,13 +2966,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "72 h change in remaining usage: %@"
+            "value": "Usage change over the last 72 hours: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "近 72 小时剩余用量变化：%@"
+            "value": "近72小时用量变化：%@"
           }
         }
       }
@@ -2982,13 +2982,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Not enough history for a trend yet"
+            "value": "Usage change over the last 72 hours: not enough samples"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "历史数据不足，暂无法生成趋势"
+            "value": "近72小时用量变化：样本不足"
           }
         }
       }
@@ -3495,20 +3495,20 @@
     },
     "openCode.trendGoSummary": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Go monthly usage change: %@ percentage points"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Go 月度用量变化：%@ 个百分点"}}
+        "en": {"stringUnit": {"state": "translated", "value": "Usage change over the last 72 hours: %@"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "近72小时用量变化：%@"}}
       }
     },
     "openCode.trendInsufficient": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Not enough history yet"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "历史数据不足"}}
+        "en": {"stringUnit": {"state": "translated", "value": "Usage change over the last 72 hours: not enough samples"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "近72小时用量变化：样本不足"}}
       }
     },
     "openCode.trendTitle": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "OpenCode Trends"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode 趋势"}}
+        "en": {"stringUnit": {"state": "translated", "value": "Usage Trend"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "用量趋势"}}
       }
     },
     "openCode.trendWaiting": {
@@ -3525,8 +3525,8 @@
     },
     "openCode.trendZenSummary": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Balance change: %@"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "余额变化：%@"}}
+        "en": {"stringUnit": {"state": "translated", "value": "Usage change over the last 72 hours: %@"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "近72小时用量变化：%@"}}
       }
     },
     "openCode.usageUnavailable": {

@@ -42,23 +42,18 @@ struct CursorTrendChartView: View {
     now.addingTimeInterval(-CursorTrendProcessor.chartWindowHours * 3600)...now
   }
 
-  private var summaryText: String {
+  /// 统一趋势摘要所需的变化值；摘要前缀由供应商趋势卡片统一渲染。
+  var usageChangeValue: String? {
     let firstParty = points.filter { $0.channel == .firstParty }
-    guard let first = firstParty.first, let last = firstParty.last else {
-      return L10n.string(.cursorTrendInsufficient, language: language)
+    guard let first = firstParty.first, let last = firstParty.last, first.id != last.id else {
+      return nil
     }
     let delta = last.percent - first.percent
-    return L10n.string(
-      .cursorTrendSummary,
-      language: language,
-      "\(delta >= 0 ? "+" : "")\(delta)%"
-    )
+    return "\(delta >= 0 ? "+" : "")\(delta)%"
   }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text(summaryText)
-        .font(AppTypography.body.weight(.medium))
       chartView
     }
   }

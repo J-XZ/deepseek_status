@@ -27,7 +27,7 @@ The menu bar shows the monochrome icon and current balance:
 - Save your API key to the macOS Keychain from the UI, or clear it and fall back to the environment variable
 - Refresh on launch, every 5 minutes, and when the popover opens after more than 60 seconds
 - Keeps the last successful balance after request failures; authentication failure or an unreadable Keychain clears stale account data instead of showing it
-- 3-day balance trend chart (Apple Swift Charts, 10-minute time buckets, local LevelDB storage)
+- All provider trend cards use the consistent `Usage Trend` title and `Usage change over the last 72 hours:` second line; charts use Apple Swift Charts, 10-minute time buckets, and local storage
 - Trend chart supports click/drag selection with local time, each balance figure, and the delta from the previous sample
 - OpenCode page: paste a complete Netscape Cookie file or a local absolute path to load Zen balance and Go subscription usage
 - OpenCode Go shows a red not-subscribed indicator when no subscription exists; an active subscription shows 5-hour, weekly, and monthly windows with blue, green, or orange progress colors based on ideal-progress deviation
@@ -56,9 +56,9 @@ If you downloaded an unsigned release, macOS may say that it cannot verify the d
 - Currency symbols follow the API response: CNY → `¥`, USD → `$`, unknown currencies → `EUR 10.00` style
 - Number grouping, dates, times, and percentages use the locale of the currently selected UI language and update instantly when the language changes
 
-## 3-Day Balance Trend
+## Usage Trend
 
-- DeepSeek has no public balance-history API, so the app records each successful balance fetch locally.
+- All provider trend cards use the same `Usage Trend` title and `Usage change over the last 72 hours:` description. DeepSeek has no public balance-history API, so the app records each successful balance fetch locally.
 - History is stored in **10-minute UTC buckets**: one record per currency per bucket, with newer refreshes overwriting older ones; negative Unix timestamps use strict floor.
 - The balance query cadence is unchanged (immediate refresh on launch + every 5 minutes); multiple successes within 5 minutes share one 10-minute bucket.
 - History starts from the first successful sample; no data is produced while the app is not running; sleep gaps appear as broken lines (gaps over 20 minutes are not interpolated).
@@ -226,8 +226,8 @@ Full pipeline (clean + Debug + Release + tests + analyze):
 Push a version tag to publish automatically:
 
 ```bash
-git tag v2.1.0
-git push origin v2.1.0
+git tag v2.1.1
+git push origin v2.1.1
 ```
 
 `.github/workflows/release.yml` initializes the LevelDB submodule on a macOS runner, runs the unit tests, and publishes every artifact to the matching GitHub Release. Signing is optional:

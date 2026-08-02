@@ -50,7 +50,7 @@ final class L10nTests: XCTestCase {
     )
     XCTAssertEqual(
       L10n.string(.codexTrendSummary, language: .english, "+5%"),
-      "72 h change in remaining usage: +5%"
+      "Usage change over the last 72 hours: +5%"
     )
     XCTAssertEqual(
       L10n.string(.codexCreditsBalance, language: .english),

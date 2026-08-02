@@ -16,22 +16,18 @@ struct CodexTrendChartView: View {
     now.addingTimeInterval(-CodexTrendProcessor.chartWindowHours * 3600)...now
   }
 
-  private var summaryText: String {
-    guard let first = samples.first, let last = samples.last else {
-      return L10n.string(.codexTrendInsufficient, language: language)
+  /// 统一趋势摘要所需的变化值；摘要前缀由供应商趋势卡片统一渲染。
+  var usageChangeValue: String? {
+    let ordered = samples.sorted { $0.bucketStart < $1.bucketStart }
+    guard let first = ordered.first, let last = ordered.last, first.id != last.id else {
+      return nil
     }
     let delta = last.remainingPercent - first.remainingPercent
-    return L10n.string(
-      .codexTrendSummary,
-      language: language,
-      "\(delta >= 0 ? "+" : "")\(delta)%"
-    )
+    return "\(delta >= 0 ? "+" : "")\(delta)%"
   }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text(summaryText)
-        .font(AppTypography.body.weight(.medium))
       chartView
     }
   }

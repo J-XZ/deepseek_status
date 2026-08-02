@@ -75,6 +75,19 @@ struct OpenCodeTrendChartView: View {
     return points
   }
 
+  /// 统一趋势摘要所需的变化值；Go 只使用月度额度，Zen 使用余额变化。
+  /// 摘要前缀由供应商趋势卡片统一渲染。
+  var usageChangeValue: String? {
+    var values: [String] = []
+    if showGoTrend, let goChange = goMonthlyChangeValue {
+      values.append("\(L10n.string(.openCodeTrendGo, language: language)): \(goChange)")
+    }
+    if let zenChange = zenBalanceChangeValue {
+      values.append("\(L10n.string(.openCodeTrendZen, language: language)): \(zenChange)")
+    }
+    return values.isEmpty ? nil : values.joined(separator: " · ")
+  }
+
   var body: some View {
     VStack(alignment: .leading, spacing: 14) {
       if showGoTrend {
@@ -87,12 +100,6 @@ struct OpenCodeTrendChartView: View {
 
   private var goAndZenSection: some View {
     VStack(alignment: .leading, spacing: 6) {
-      Text(L10n.string(.openCodeTrendGo, language: language))
-        .font(AppTypography.section)
-      Text(goSummary)
-        .font(AppTypography.caption)
-        .foregroundStyle(.secondary)
-
       if canDrawGoChart || canDrawZenChart {
         combinedChart
       } else {
@@ -103,12 +110,6 @@ struct OpenCodeTrendChartView: View {
 
   private var zenSection: some View {
     VStack(alignment: .leading, spacing: 6) {
-      Text(L10n.string(.openCodeTrendZen, language: language))
-        .font(AppTypography.section)
-      Text(zenSummary)
-        .font(AppTypography.caption)
-        .foregroundStyle(.secondary)
-
       if canDrawZenChart {
         zenChart
       } else {
@@ -217,29 +218,25 @@ struct OpenCodeTrendChartView: View {
     }
   }
 
-  private var goSummary: String {
+  private var goMonthlyChangeValue: String? {
     let monthlyPoints = makeGoSeries(
       kind: .monthly,
       value: \OpenCodeUsageSample.goMonthlyUsedPercent,
       color: .orange
     ).points
     guard let first = monthlyPoints.first, let last = monthlyPoints.last, first.id != last.id else {
-      return L10n.string(.openCodeTrendInsufficient, language: language)
+      return nil
     }
     let delta = (last.value - first.value) * 100
-    return L10n.string(
-      .openCodeTrendGoSummary,
-      language: language,
-      String(format: "%+.0f", delta)
-    )
+    return String(format: "%+.0f%%", delta)
   }
 
-  private var zenSummary: String {
+  private var zenBalanceChangeValue: String? {
     guard let first = zenPoints.first, let last = zenPoints.last, first.id != last.id else {
-      return L10n.string(.openCodeTrendInsufficient, language: language)
+      return nil
     }
     let delta = last.value - first.value
-    return L10n.string(.openCodeTrendZenSummary, language: language, formattedUSD(delta))
+    return formattedUSD(delta)
   }
 
   private var zenYDomain: ClosedRange<Double> {

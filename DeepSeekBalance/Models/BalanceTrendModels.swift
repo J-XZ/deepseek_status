@@ -33,25 +33,30 @@ struct TrendSummary: Equatable, Sendable {
   let kind: Kind
   let currency: String
 
-  func text(language: AppLanguage) -> String {
+  /// 只返回摘要中的变化值，统一的“近 72 小时用量变化”前缀由趋势卡片渲染。
+  func usageChangeValue(language: AppLanguage) -> String? {
     switch kind {
     case .insufficientSamples:
-      return L10n.string(.trendSummaryInsufficient, language: language)
+      return nil
     case .available(let delta, let percent):
-      let base = L10n.string(
-        .trendSummaryChange,
-        language: language,
-        BalanceTrendProcessor.deltaText(delta: delta, currency: currency, locale: language.locale)
+      var value = BalanceTrendProcessor.deltaText(
+        delta: delta,
+        currency: currency,
+        locale: language.locale
       )
       if let percent {
         let percentText = Self.percentText(percent, language: language)
-        if language == .simplifiedChinese {
-          return base + "（" + percentText + "）"
-        }
-        return base + " (" + percentText + ")"
+        value += language == .simplifiedChinese ? "（" + percentText + "）" : " (" + percentText + ")"
       }
-      return base
+      return value
     }
+  }
+
+  func text(language: AppLanguage) -> String {
+    guard let value = usageChangeValue(language: language) else {
+      return L10n.string(.trendSummaryInsufficient, language: language)
+    }
+    return L10n.string(.trendSummaryChange, language: language, value)
   }
 
   static func percentText(_ percent: Decimal, language: AppLanguage) -> String {

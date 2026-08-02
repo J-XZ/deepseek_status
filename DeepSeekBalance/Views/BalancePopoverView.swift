@@ -443,6 +443,24 @@ struct BalancePopoverView: View {
 
   // MARK: - 趋势区
 
+  private var deepSeekUsageChangeValue: String? {
+    guard let currency = store.selectedCurrency else { return nil }
+    return BalanceTrendProcessor.summary(
+      samples: store.historySamples,
+      currency: currency
+    )
+    .usageChangeValue(language: language)
+  }
+
+  private func usageTrendSummary(_ value: String?) -> some View {
+    Text(
+      value.map {
+        L10n.string(.trendSummaryChange, language: language, $0)
+      } ?? L10n.string(.trendSummaryInsufficient, language: language)
+    )
+    .font(AppTypography.body.weight(.medium))
+  }
+
   private var trendSection: some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack {
@@ -454,6 +472,8 @@ struct BalancePopoverView: View {
         }
         .controlSize(.small)
       }
+
+      usageTrendSummary(deepSeekUsageChangeValue)
 
       if !store.availableCurrencies.isEmpty {
         Picker(
@@ -479,9 +499,6 @@ struct BalancePopoverView: View {
           BalanceTrendChartView(
             samples: store.historySamples,
             currency: currency,
-            summary: BalanceTrendProcessor.summary(
-              samples: store.historySamples, currency: currency
-            ),
             language: language,
             now: store.clock.now()
           )
@@ -527,15 +544,18 @@ struct BalancePopoverView: View {
 
   private var codexTrendSection: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text(L10n.string(.codexTrendTitle, language: language))
+      Text(L10n.string(.trendTitle, language: language))
         .font(AppTypography.section)
 
+      let chart = CodexTrendChartView(
+        samples: codexStore.historySamples,
+        language: language,
+        now: codexStore.clock.now()
+      )
+      usageTrendSummary(chart.usageChangeValue)
+
       if codexStore.historySamples.count >= 2 {
-        CodexTrendChartView(
-          samples: codexStore.historySamples,
-          language: language,
-          now: codexStore.clock.now()
-        )
+        chart
       } else {
         BalanceTrendEmptyView(historyUnavailable: false, language: language)
       }
@@ -550,15 +570,18 @@ struct BalancePopoverView: View {
 
   private var cursorTrendSection: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text(L10n.string(.cursorTrendTitle, language: language))
+      Text(L10n.string(.trendTitle, language: language))
         .font(AppTypography.section)
 
+      let chart = CursorTrendChartView(
+        samples: cursorStore.historySamples,
+        language: language,
+        now: cursorStore.clock.now()
+      )
+      usageTrendSummary(chart.usageChangeValue)
+
       if cursorStore.historySamples.count >= 2 {
-        CursorTrendChartView(
-          samples: cursorStore.historySamples,
-          language: language,
-          now: cursorStore.clock.now()
-        )
+        chart
       } else {
         BalanceTrendEmptyView(historyUnavailable: false, language: language)
       }
@@ -573,16 +596,19 @@ struct BalancePopoverView: View {
 
   private var openCodeTrendSection: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text(L10n.string(.openCodeTrendTitle, language: language))
+      Text(L10n.string(.trendTitle, language: language))
         .font(AppTypography.section)
 
+      let chart = OpenCodeTrendChartView(
+        samples: openCodeStore.historySamples,
+        showGoTrend: openCodeStore.snapshot?.isGoSubscribed == true,
+        language: language,
+        now: openCodeStore.clock.now()
+      )
+      usageTrendSummary(chart.usageChangeValue)
+
       if openCodeStore.historySamples.count >= 2 {
-        OpenCodeTrendChartView(
-          samples: openCodeStore.historySamples,
-          showGoTrend: openCodeStore.snapshot?.isGoSubscribed == true,
-          language: language,
-          now: openCodeStore.clock.now()
-        )
+        chart
       } else {
         BalanceTrendEmptyView(historyUnavailable: false, language: language)
       }
