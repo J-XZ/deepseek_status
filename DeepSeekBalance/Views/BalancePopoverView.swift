@@ -38,11 +38,12 @@ enum UsageProgressEvaluator {
   }
 }
 
-/// 弹出窗口顶部切换栏：DeepSeek 用量 / Codex 用量 / Cursor 用量。
+/// 弹出窗口顶部切换栏：DeepSeek 用量 / Codex 用量 / Cursor 用量 / OpenCode 用量。
 enum UsageTab: String, CaseIterable, Identifiable, Hashable {
   case deepseek
   case codex
   case cursor
+  case openCode
 
   var id: String { rawValue }
 
@@ -55,6 +56,8 @@ enum UsageTab: String, CaseIterable, Identifiable, Hashable {
       return .codex
     case .cursor:
       return .cursor
+    case .openCode:
+      return .openCode
     }
   }
 }
@@ -77,13 +80,16 @@ struct BalancePopoverView: View {
   @ObservedObject var loginItemStore: LoginItemStore
   @ObservedObject var codexStore: CodexUsageStore
   @ObservedObject var cursorStore: CursorUsageStore
+  @ObservedObject var openCodeStore: OpenCodeUsageStore
   @ObservedObject var codexStatusStore: StatusPageStatusStore
   @ObservedObject var cursorStatusStore: StatusPageStatusStore
   let visibility: MenuBarVendorVisibility
   let onPageHeightsChange: ([UsageTab: CGFloat]) -> Void
 
   @State private var apiKeyInput = ""
+  @State private var openCodeCookieInput = ""
   @State private var validationMessage: String?
+  @State private var openCodeCookieValidationMessage: String?
   @State private var showClearHistoryConfirmation = false
   @State private var selectedTab: UsageTab = .deepseek
   @Environment(\.controlActiveState) private var controlActiveState
@@ -128,6 +134,7 @@ struct BalancePopoverView: View {
       Task { await statusStore.refreshIfNeeded() }
       Task { await codexStore.refreshIfNeeded() }
       Task { await cursorStore.refreshIfNeeded() }
+      Task { await openCodeStore.refreshIfNeeded() }
       Task { await codexStatusStore.refreshIfNeeded() }
       Task { await cursorStatusStore.refreshIfNeeded() }
     }
@@ -182,6 +189,21 @@ struct BalancePopoverView: View {
           )
         }
         card { cursorTrendSection }
+      case .openCode:
+        OpenCodeUsageView(
+          store: openCodeStore,
+          language: language,
+          appearance: store.appearance
+        )
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(cardBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay {
+          RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .stroke(cardBorder, lineWidth: 1)
+        }
+        card { openCodeTrendSection }
+        card { openCodeCookieConfigurationSection }
       }
       card { footer }
     }
@@ -236,6 +258,8 @@ struct BalancePopoverView: View {
       return .tabCodex
     case .cursor:
       return .tabCursor
+    case .openCode:
+      return .tabOpenCode
     }
   }
 
@@ -545,6 +569,30 @@ struct BalancePopoverView: View {
     }
   }
 
+  // MARK: - OpenCode 趋势区
+
+  private var openCodeTrendSection: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Text(L10n.string(.openCodeTrendTitle, language: language))
+        .font(AppTypography.section)
+
+      if openCodeStore.historySamples.count >= 2 {
+        OpenCodeTrendChartView(
+          samples: openCodeStore.historySamples,
+          showGoTrend: openCodeStore.snapshot?.isGoSubscribed == true,
+          language: language,
+          now: openCodeStore.clock.now()
+        )
+      } else {
+        BalanceTrendEmptyView(historyUnavailable: false, language: language)
+      }
+
+      Text(L10n.string(.trendLocalNote, language: language))
+        .font(AppTypography.caption)
+        .foregroundStyle(.secondary)
+    }
+  }
+
   // MARK: - 错误提示
 
   @ViewBuilder
@@ -619,12 +667,90 @@ struct BalancePopoverView: View {
     }
   }
 
+  // MARK: - OpenCode Cookie 配置区
+
+  private var openCodeCookieConfigurationSection: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Text(L10n.string(.openCodeCookieTitle, language: language))
+        .font(AppTypography.section)
+
+      TextEditor(text: $openCodeCookieInput)
+        .font(AppTypography.caption.monospaced())
+        .frame(minHeight: 86, maxHeight: 120)
+        .padding(4)
+        .overlay {
+          RoundedRectangle(cornerRadius: 8, style: .continuous)
+            .stroke(cardBorder, lineWidth: 1)
+        }
+        .accessibilityLabel(L10n.string(.openCodeCookiePlaceholder, language: language))
+
+      Text(L10n.string(.openCodeCookieHelp, language: language))
+        .font(AppTypography.caption)
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
+
+      if let message = openCodeCookieValidationMessage {
+        Text(message)
+          .font(AppTypography.caption)
+          .foregroundStyle(.red)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+
+      HStack(spacing: 8) {
+        Button(L10n.string(.openCodeCookieSave, language: language)) {
+          saveOpenCodeCookie()
+        }
+        Button(L10n.string(.openCodeCookieClear, language: language)) {
+          openCodeStore.clearSavedCookie()
+          openCodeCookieInput = ""
+          openCodeCookieValidationMessage = nil
+        }
+        Spacer()
+      }
+      .controlSize(.small)
+
+      HStack(spacing: 4) {
+        Text(L10n.string(.openCodeCookieSource, language: language))
+        Text(
+          openCodeStore.hasSavedCookie
+            ? L10n.string(.openCodeCookieSourceKeychain, language: language)
+            : L10n.string(.openCodeCookieSourceNotConfigured, language: language)
+        )
+        .fontWeight(.medium)
+      }
+      .font(AppTypography.caption)
+      .foregroundStyle(.secondary)
+    }
+  }
+
+  private func saveOpenCodeCookie() {
+    switch openCodeStore.saveCookieInput(openCodeCookieInput) {
+    case .success:
+      openCodeCookieValidationMessage = nil
+      openCodeCookieInput = ""
+      Task { await openCodeStore.refresh() }
+    case .emptyInput:
+      openCodeCookieValidationMessage = L10n.string(.openCodeCookieEmpty, language: language)
+    case .invalidCookie, .cookieNotFound:
+      openCodeCookieValidationMessage = L10n.string(.openCodeCookieInvalid, language: language)
+    case .fileReadFailed:
+      openCodeCookieValidationMessage = L10n.string(.openCodeCookieFileReadFailed, language: language)
+    case .keychainFailed(let detail):
+      openCodeCookieValidationMessage = L10n.string(
+        .openCodeCookieSaveFailed,
+        language: language,
+        AppDisplayError.sanitized(detail)
+      )
+    }
+  }
+
   // MARK: - 底部操作区
 
   private var footer: some View {
     HStack(spacing: 8) {
       if store.isRefreshing || statusStore.loadState == .loading || codexStore.isRefreshing
-        || cursorStore.isRefreshing || codexStatusStore.loadState == .loading
+        || cursorStore.isRefreshing || openCodeStore.isRefreshing
+        || codexStatusStore.loadState == .loading
         || cursorStatusStore.loadState == .loading
       {
         ProgressView()
@@ -635,13 +761,15 @@ struct BalancePopoverView: View {
           await store.refreshAll()
           await codexStore.refreshIfNeeded(maximumAge: 0)
           await cursorStore.refreshIfNeeded(maximumAge: 0)
+          await openCodeStore.refreshIfNeeded(maximumAge: 0)
           await codexStatusStore.refreshIfNeeded(maximumAge: 0)
           await cursorStatusStore.refreshIfNeeded(maximumAge: 0)
         }
       }
       .disabled(
         store.isRefreshing || statusStore.loadState == .loading || codexStore.isRefreshing
-          || cursorStore.isRefreshing || codexStatusStore.loadState == .loading
+        || cursorStore.isRefreshing || openCodeStore.isRefreshing
+        || codexStatusStore.loadState == .loading
           || cursorStatusStore.loadState == .loading
       )
       Spacer()

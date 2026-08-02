@@ -2,7 +2,7 @@
 
 [中文](README.md) | [English]
 
-A pure-Swift native macOS menu bar app that shows your DeepSeek API balance in real time, records a 3-day balance trend, and displays DeepSeek's official service status. It lives in the system menu bar with no Dock icon. The only third-party dependency is Google LevelDB (a Git submodule, see below).
+A pure-Swift native macOS menu bar app that shows your DeepSeek API balance, OpenCode Zen balance, and OpenCode Go usage in real time, records 3-day trends, and displays DeepSeek's official service status. It lives in the system menu bar with no Dock icon. The only third-party dependency is Google LevelDB (a Git submodule, see below).
 
 ## Screenshots
 
@@ -29,6 +29,10 @@ The menu bar shows the monochrome icon and current balance:
 - Keeps the last successful balance after request failures; authentication failure or an unreadable Keychain clears stale account data instead of showing it
 - 3-day balance trend chart (Apple Swift Charts, 10-minute time buckets, local LevelDB storage)
 - Trend chart supports click/drag selection with local time, each balance figure, and the delta from the previous sample
+- OpenCode page: paste a complete Netscape Cookie file or a local absolute path to load Zen balance and Go subscription usage
+- OpenCode Go shows a red not-subscribed indicator when no subscription exists; an active subscription shows 5-hour, weekly, and monthly windows with blue, green, or orange progress colors based on ideal-progress deviation
+- OpenCode uses a two-line menu bar layout for Go monthly remaining percentage and Zen balance; the first line is `--` when Go is not subscribed
+- OpenCode trends show only an independent Zen chart without a legend when Go is not subscribed; with Go active, Go windows and Zen share one dual-axis chart with a legend
 - DeepSeek official service status card: overall status, API Service, Web Chat Service, incidents, and scheduled maintenance
 - Launch at Login using Apple's native `SMAppService.mainApp`
 - One-click Simplified Chinese / English switching, applied instantly without restart
@@ -41,6 +45,8 @@ The menu bar shows the monochrome icon and current balance:
 3. Click the menu bar icon, enter your DeepSeek API key in the API Key section under Settings, and save it. Saving it to the macOS Keychain is recommended because it also works when the app is launched from Finder.
 4. After the key is saved, the app fetches your balance and the official service status. Click the menu bar item to see total, topped-up, and granted balances, the last update time, and the 3-day trend. Use the bottom Refresh button for an immediate update.
 5. Settings lets you switch between Chinese and English, enable Launch at Login, and clear local history.
+6. Select the OpenCode page. In the Cookie section, paste the complete Netscape Cookie file content or the file's local absolute path, then click Save and Refresh. Only the OpenCode authentication Cookie is extracted and stored in the macOS Keychain.
+7. The OpenCode page shows Zen balance and Go subscription status. Without Go, it shows an explicit red not-subscribed indicator; with Go, it shows 5-hour, weekly, and monthly usage windows and reset times. OpenCode history is stored locally only.
 
 If you downloaded an unsigned release, macOS may say that it cannot verify the developer on first launch. In Finder, Control-click the app, choose Open, and confirm once. Do not disable Gatekeeper globally just to run this app.
 
@@ -63,6 +69,15 @@ If you downloaded an unsigned release, macOS may say that it cannot verify the d
 - The popover offers a "Clear Local History" button (with confirmation) that removes only the current account's history; it does not affect the API key or current balance. Currencies that really exist in the current balance remain in the picker after clearing.
 - The currency picker only shows currencies that truly exist in the current balance response or in the current account's history (CNY and USD are prioritized only when they actually exist); no fake options are shown.
 - The chart shows total, topped-up, and granted balance per currency and supports light/dark mode.
+
+## OpenCode Usage and Trends
+
+- Cookie input accepts either complete Netscape Cookie file content or a local absolute path (including a `~` prefix). The app keeps only the `auth` / `__Host-auth` login Cookie in the Keychain; it does not store the complete Cookie file or write Cookie data into trend history.
+- OpenCode Zen is represented by a USD balance. OpenCode Go is represented by independent subscription usage windows, with server-provided reset times shown next to each window.
+- Go keeps separate 5-hour, weekly, and monthly windows. Progress bars are blue when ideal usage data is unavailable or the difference is within 10 percentage points, green when actual usage is more than 10 points behind ideal progress, and orange when it is more than 10 points ahead.
+- When Go is not subscribed, the Go card explicitly says so and uses one red indicator bar; the trend area hides Go entirely and keeps only an independent Zen chart without a single-series legend.
+- When Go is subscribed, the trend area combines the 5-hour, weekly, and monthly Go curves with the Zen balance curve in one chart: the left Y axis is Go used percentage, the right Y axis is Zen USD balance, and the bottom legend identifies each curve.
+- OpenCode trends use local 10-minute samples for the most recent 72 hours. Go and Zen share one time axis, and missing samples never create synthetic data. Clearing local history does not delete the saved Cookie.
 
 ## DeepSeek Official Service Status
 
@@ -104,7 +119,8 @@ The popover's Settings section contains:
 1. Language: one-click switch button
 2. Launch at Login: toggle + status text + "Open Login Items Settings" when approval is required
 3. API Key: the existing Keychain configuration
-4. Local History: the existing "Clear Local History" button
+4. OpenCode Cookie: paste Netscape Cookie content or a local path and save it in a separate Keychain item
+5. Local History: the existing "Clear Local History" button
 
 The window uses a ScrollView at about 500 points wide and fits common MacBook screens.
 
@@ -210,8 +226,8 @@ Full pipeline (clean + Debug + Release + tests + analyze):
 Push a version tag to publish automatically:
 
 ```bash
-git tag v2.0.5
-git push origin v2.0.5
+git tag v2.1.0
+git push origin v2.1.0
 ```
 
 `.github/workflows/release.yml` initializes the LevelDB submodule on a macOS runner, runs the unit tests, and publishes every artifact to the matching GitHub Release. Signing is optional:

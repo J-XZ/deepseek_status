@@ -3264,6 +3264,312 @@
           }
         }
       }
+    },
+    "a11y.menuBarOpenCode": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "OpenCode usage: %@"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode 用量：%@"}}
+      }
+    },
+    "a11y.openCodeGoLegend": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "OpenCode Go usage windows and Zen balance trend"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode Go 用量窗口与 Zen 余额趋势"}}
+      }
+    },
+    "a11y.openCodeIcon": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "OpenCode icon"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode 图标"}}
+      }
+    },
+    "a11y.openCodeZenLegend": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "OpenCode Zen balance trend"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode Zen 余额趋势"}}
+      }
+    },
+    "menu.showOpenCode": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Show OpenCode"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "显示 OpenCode"}}
+      }
+    },
+    "openCode.authInvalid": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Cookie expired"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Cookie 已过期"}}
+      }
+    },
+    "openCode.cookieClear": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Clear Saved Cookie"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "清除已保存 Cookie"}}
+      }
+    },
+    "openCode.cookieEmpty": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Please enter Cookie content or a file path."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "请输入 Cookie 内容或文件路径。"}}
+      }
+    },
+    "openCode.cookieFileReadFailed": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Could not read the Cookie file."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "无法读取 Cookie 文件。"}}
+      }
+    },
+    "openCode.cookieHelp": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Paste a complete Netscape Cookie file, or paste its local path (for example ~/Downloads/cookies.txt). Only the OpenCode auth cookie is stored in Keychain."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "可粘贴完整 Netscape Cookie 文件内容，也可粘贴本机路径（例如 ~/Downloads/cookies.txt）。应用只会把 OpenCode 登录 Cookie 保存到 Keychain。"}}
+      }
+    },
+    "openCode.cookieInvalid": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "No valid opencode.ai auth cookie was found."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "未找到有效的 opencode.ai 登录 Cookie。"}}
+      }
+    },
+    "openCode.cookiePlaceholder": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Paste Netscape Cookie content or a local file path"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "粘贴 Netscape Cookie 内容或本机文件路径"}}
+      }
+    },
+    "openCode.cookieSave": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Save and Refresh"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "保存并刷新"}}
+      }
+    },
+    "openCode.cookieSaveFailed": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Could not save Cookie: %@"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "无法保存 Cookie：%@"}}
+      }
+    },
+    "openCode.cookieSource": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Cookie source:"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Cookie 来源："}}
+      }
+    },
+    "openCode.cookieSourceKeychain": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Keychain"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Keychain"}}
+      }
+    },
+    "openCode.cookieSourceNotConfigured": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Not configured"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "未配置"}}
+      }
+    },
+    "openCode.cookieTitle": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "OpenCode Cookie"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode Cookie"}}
+      }
+    },
+    "openCode.empty": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Add an OpenCode Cookie below to load Go and Zen data."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "请在下方添加 OpenCode Cookie 以加载 Go 和 Zen 数据。"}}
+      }
+    },
+    "openCode.errorDecoding": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Could not parse the OpenCode response."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "无法解析 OpenCode 响应。"}}
+      }
+    },
+    "openCode.errorHttp": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "OpenCode returned an error (%d)."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode 返回错误（%d）。"}}
+      }
+    },
+    "openCode.errorInvalidCookie": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "The saved OpenCode Cookie is invalid."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "已保存的 OpenCode Cookie 无效。"}}
+      }
+    },
+    "openCode.errorKeychain": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Keychain error: %@"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Keychain 错误：%@"}}
+      }
+    },
+    "openCode.errorNoNetwork": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Cannot connect to OpenCode. Check your network."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "无法连接 OpenCode，请检查网络。"}}
+      }
+    },
+    "openCode.errorServer": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "OpenCode is temporarily unavailable (%d)."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode 暂时不可用（%d）。"}}
+      }
+    },
+    "openCode.errorTimeout": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "The OpenCode request timed out."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode 请求超时。"}}
+      }
+    },
+    "openCode.errorUnauthorized": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "The OpenCode Cookie is expired or unauthorized."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode Cookie 已过期或无权限。"}}
+      }
+    },
+    "openCode.goTitle": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "OpenCode Go"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode Go"}}
+      }
+    },
+    "openCode.lastUpdated": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Last updated: %@"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "最后更新：%@"}}
+      }
+    },
+    "openCode.loading": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Loading OpenCode data…"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "正在加载 OpenCode 数据…"}}
+      }
+    },
+    "openCode.noData": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Unavailable"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "暂无数据"}}
+      }
+    },
+    "openCode.noSubscription": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Not subscribed"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "未订阅"}}
+      }
+    },
+    "openCode.noSubscriptionDetail": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "No active OpenCode Go subscription was found. The red bar indicates that no subscription is available."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "未找到有效的 OpenCode Go 订阅。红色进度条表示当前没有可用订阅。"}}
+      }
+    },
+    "openCode.notConfigured": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Not configured"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "未配置"}}
+      }
+    },
+    "openCode.progress": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "%d%% used · %d%% remaining"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "已用 %d%% · 剩余 %d%%"}}
+      }
+    },
+    "openCode.subscribed": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Subscribed"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "已订阅"}}
+      }
+    },
+    "openCode.title": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "OpenCode"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode"}}
+      }
+    },
+    "openCode.trendGo": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Go usage windows"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Go 用量窗口"}}
+      }
+    },
+    "openCode.trendGoSummary": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Go monthly usage change: %@ percentage points"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Go 月度用量变化：%@ 个百分点"}}
+      }
+    },
+    "openCode.trendInsufficient": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Not enough history yet"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "历史数据不足"}}
+      }
+    },
+    "openCode.trendTitle": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "OpenCode Trends"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode 趋势"}}
+      }
+    },
+    "openCode.trendWaiting": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Waiting for two samples to draw a line"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "等待至少两个样本后绘制折线"}}
+      }
+    },
+    "openCode.trendZen": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Zen balance"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Zen 余额"}}
+      }
+    },
+    "openCode.trendZenSummary": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Balance change: %@"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "余额变化：%@"}}
+      }
+    },
+    "openCode.usageUnavailable": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Subscription found, but no usage window is currently available."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "已找到订阅，但当前没有可用的用量窗口。"}}
+      }
+    },
+    "openCode.windowMonthly": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Monthly window"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "月度窗口"}}
+      }
+    },
+    "openCode.windowRolling": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "5-hour window"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "5 小时窗口"}}
+      }
+    },
+    "openCode.windowWeekly": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Weekly window"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "每周窗口"}}
+      }
+    },
+    "openCode.zenDescription": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Pay-as-you-go Zen balance"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "按量付费的 Zen 余额"}}
+      }
+    },
+    "openCode.zenTitle": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "OpenCode Zen"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode Zen"}}
+      }
+    },
+    "tab.openCode": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "OpenCode"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode"}}
+      }
     }
   },
   "version": "1.0"

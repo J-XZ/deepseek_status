@@ -7,9 +7,10 @@ enum MenuBarVendor: Int, CaseIterable {
   case deepseek = 0
   case codex = 1
   case cursor = 2
+  case openCode = 3
 }
 
-/// 菜单栏数字布局：Cursor 的第一方/API 两组用量纵向排列，避免横向挤占空间。
+/// 菜单栏数字布局：Cursor 和 OpenCode 的多组用量纵向排列，避免横向挤占空间。
 enum MenuBarDisplayLayout {
   static let regularFontSize: CGFloat = 12
   static let cursorFontSize: CGFloat = 9
@@ -30,6 +31,7 @@ enum MenuBarIconLayout {
   static let deepSeekMaxDimension: CGFloat = 16
   static let codexMaxDimension: CGFloat = 13
   static let cursorMaxDimension: CGFloat = 13
+  static let openCodeMaxDimension: CGFloat = 13
 
   static func fittingSize(_ imageSize: NSSize, maxDimension: CGFloat) -> NSSize {
     guard imageSize.width > 0, imageSize.height > 0, maxDimension > 0 else {
@@ -212,6 +214,7 @@ struct MenuBarVendorVisibility {
   static let deepseekKey = "menuBar.showDeepSeek"
   static let codexKey = "menuBar.showCodex"
   static let cursorKey = "menuBar.showCursor"
+  static let openCodeKey = "menuBar.showOpenCode"
 
   let defaults: UserDefaults
 
@@ -231,6 +234,10 @@ struct MenuBarVendorVisibility {
     defaults.object(forKey: Self.cursorKey) as? Bool ?? true
   }
 
+  var showsOpenCode: Bool {
+    defaults.object(forKey: Self.openCodeKey) as? Bool ?? true
+  }
+
   func isVisible(_ vendor: MenuBarVendor) -> Bool {
     switch vendor {
     case .deepseek:
@@ -239,6 +246,8 @@ struct MenuBarVendorVisibility {
       return showsCodex
     case .cursor:
       return showsCursor
+    case .openCode:
+      return showsOpenCode
     }
   }
 
@@ -248,16 +257,20 @@ struct MenuBarVendorVisibility {
     switch vendor {
     case .deepseek:
       let newValue = !showsDeepSeek
-      guard newValue || showsCodex || showsCursor else { return false }
+      guard newValue || showsCodex || showsCursor || showsOpenCode else { return false }
       defaults.set(newValue, forKey: Self.deepseekKey)
     case .codex:
       let newValue = !showsCodex
-      guard newValue || showsDeepSeek || showsCursor else { return false }
+      guard newValue || showsDeepSeek || showsCursor || showsOpenCode else { return false }
       defaults.set(newValue, forKey: Self.codexKey)
     case .cursor:
       let newValue = !showsCursor
-      guard newValue || showsDeepSeek || showsCodex else { return false }
+      guard newValue || showsDeepSeek || showsCodex || showsOpenCode else { return false }
       defaults.set(newValue, forKey: Self.cursorKey)
+    case .openCode:
+      let newValue = !showsOpenCode
+      guard newValue || showsDeepSeek || showsCodex || showsCursor else { return false }
+      defaults.set(newValue, forKey: Self.openCodeKey)
     }
     return true
   }
@@ -275,6 +288,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let store = BalanceStore(statusStore: statusStore, loginItemStore: loginItemStore)
     let codexStore = CodexUsageStore()
     let cursorStore = CursorUsageStore()
+    let openCodeStore = OpenCodeUsageStore()
     let codexStatusStore = StatusPageStatusStore(
       client: StatusPageClient(
         baseURL: URL(string: "https://status.openai.com")!
@@ -292,6 +306,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     store.setEnabled(visibility.showsDeepSeek)
     codexStore.setEnabled(visibility.showsCodex)
     cursorStore.setEnabled(visibility.showsCursor)
+    openCodeStore.setEnabled(visibility.showsOpenCode)
     codexStatusStore.setEnabled(visibility.showsCodex)
     cursorStatusStore.setEnabled(visibility.showsCursor)
     statusItemController = StatusItemController(
@@ -300,6 +315,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       loginItemStore: loginItemStore,
       codexStore: codexStore,
       cursorStore: cursorStore,
+      openCodeStore: openCodeStore,
       codexStatusStore: codexStatusStore,
       cursorStatusStore: cursorStatusStore,
       visibility: visibility
@@ -317,6 +333,7 @@ final class StatusItemController: NSObject {
   private let loginItemStore: LoginItemStore
   private let codexStore: CodexUsageStore
   private let cursorStore: CursorUsageStore
+  private let openCodeStore: OpenCodeUsageStore
   private let codexStatusStore: StatusPageStatusStore
   private let cursorStatusStore: StatusPageStatusStore
 
@@ -337,6 +354,7 @@ final class StatusItemController: NSObject {
     loginItemStore: LoginItemStore,
     codexStore: CodexUsageStore,
     cursorStore: CursorUsageStore,
+    openCodeStore: OpenCodeUsageStore,
     codexStatusStore: StatusPageStatusStore,
     cursorStatusStore: StatusPageStatusStore,
     visibility: MenuBarVendorVisibility = MenuBarVendorVisibility()
@@ -346,6 +364,7 @@ final class StatusItemController: NSObject {
     self.loginItemStore = loginItemStore
     self.codexStore = codexStore
     self.cursorStore = cursorStore
+    self.openCodeStore = openCodeStore
     self.codexStatusStore = codexStatusStore
     self.cursorStatusStore = cursorStatusStore
     self.visibility = visibility
@@ -375,6 +394,18 @@ final class StatusItemController: NSObject {
   /// 因此按菜单栏当前外观手动着色：浅色菜单栏黑色、深色菜单栏白色。
   private func menuBarTintedIcon(named name: String, size: CGFloat, isDark: Bool) -> NSImage? {
     guard let icon = menuBarIcon(named: name, size: size) else { return nil }
+    return tintedImage(icon, color: isDark ? .white : .black)
+  }
+
+  private func menuBarTintedSystemIcon(
+    named name: String,
+    size: CGFloat,
+    isDark: Bool
+  ) -> NSImage? {
+    guard let icon = NSImage(systemSymbolName: name, accessibilityDescription: nil) else {
+      return nil
+    }
+    icon.size = MenuBarIconLayout.fittingSize(icon.size, maxDimension: size)
     return tintedImage(icon, color: isDark ? .white : .black)
   }
 
@@ -409,8 +440,8 @@ final class StatusItemController: NSObject {
     button.sendAction(on: [.leftMouseUp, .rightMouseUp])
   }
 
-  /// 菜单栏组合展示：`DeepSeek 图标 + 额度 | Codex 图标 + 剩余用量 | Cursor 图标 + 剩余用量`。
-  /// Cursor 的第一方/API 两组用量使用较小字体纵向排列。
+  /// 菜单栏组合展示：`DeepSeek 图标 + 额度 | Codex 图标 + 剩余用量 | Cursor 图标 + 两行用量 | OpenCode 图标 + 两行用量`。
+  /// Cursor 和 OpenCode 的多组用量使用较小字体纵向排列。
   /// 被隐藏的供应商不显示。内容视图使用系统标签颜色，图标按当前外观手动着色。
   private func updateTitle() {
     guard let button = statusItem.button else { return }
@@ -475,6 +506,21 @@ final class StatusItemController: NSObject {
         )
       )
     }
+    if visibility.showsOpenCode {
+      segments.append(
+        MenuBarStatusContentView.Segment(
+          icon: menuBarTintedSystemIcon(
+            named: "globe",
+            size: MenuBarIconLayout.openCodeMaxDimension,
+            isDark: isDark
+          ),
+          lines: openCodeStore.menuBarLines,
+          font: cursorFont,
+          lineHeight: MenuBarDisplayLayout.cursorLineHeight,
+          verticalInset: MenuBarDisplayLayout.cursorVerticalInset
+        )
+      )
+    }
 
     guard let contentView = menuBarContentView else { return }
     contentView.segments = segments
@@ -490,13 +536,19 @@ final class StatusItemController: NSObject {
     let cursorLabel = L10n.string(
       .a11yMenuBarCursor, language: store.language, cursorStore.menuBarText
     )
-    button.setAccessibilityLabel([deepseekLabel, codexLabel, cursorLabel]
+    let openCodeLabel = L10n.string(
+      .a11yMenuBarOpenCode,
+      language: store.language,
+      openCodeStore.menuBarLines.joined(separator: ", ")
+    )
+    button.setAccessibilityLabel([deepseekLabel, codexLabel, cursorLabel, openCodeLabel]
       .enumerated()
       .filter { index, _ in
         switch index {
         case 0: return visibility.showsDeepSeek
         case 1: return visibility.showsCodex
-        default: return visibility.showsCursor
+        case 2: return visibility.showsCursor
+        default: return visibility.showsOpenCode
         }
       }
       .map(\.element)
@@ -512,6 +564,7 @@ final class StatusItemController: NSObject {
       loginItemStore: loginItemStore,
       codexStore: codexStore,
       cursorStore: cursorStore,
+      openCodeStore: openCodeStore,
       codexStatusStore: codexStatusStore,
       cursorStatusStore: cursorStatusStore,
       visibility: visibility,
@@ -673,6 +726,7 @@ final class StatusItemController: NSObject {
       await store.refreshAll()
       await codexStore.refreshIfNeeded(maximumAge: 0)
       await cursorStore.refreshIfNeeded(maximumAge: 0)
+      await openCodeStore.refreshIfNeeded(maximumAge: 0)
       await statusStore.refreshIfNeeded(maximumAge: 0)
       await codexStatusStore.refreshIfNeeded(maximumAge: 0)
       await cursorStatusStore.refreshIfNeeded(maximumAge: 0)
@@ -708,6 +762,8 @@ final class StatusItemController: NSObject {
     case .cursor:
       cursorStore.setEnabled(visibility.showsCursor)
       cursorStatusStore.setEnabled(visibility.showsCursor)
+    case .openCode:
+      openCodeStore.setEnabled(visibility.showsOpenCode)
     }
     updateTitle()
     showContextMenu()
@@ -737,6 +793,13 @@ final class StatusItemController: NSObject {
         }
       }
       .store(in: &cancellables)
+    openCodeStore.objectWillChange
+      .sink { [weak self] _ in
+        Task { @MainActor in
+          self?.updateTitle()
+        }
+      }
+      .store(in: &cancellables)
   }
 
   private func vendorTitleKey(_ vendor: MenuBarVendor) -> L10nKey {
@@ -747,6 +810,8 @@ final class StatusItemController: NSObject {
       return .menuShowCodex
     case .cursor:
       return .menuShowCursor
+    case .openCode:
+      return .menuShowOpenCode
     }
   }
 }

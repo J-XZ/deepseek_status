@@ -26,6 +26,7 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
     XCTAssertTrue(visibility.showsDeepSeek)
     XCTAssertTrue(visibility.showsCodex)
     XCTAssertTrue(visibility.showsCursor)
+    XCTAssertTrue(visibility.showsOpenCode)
     XCTAssertTrue(visibility.isVisible(.deepseek))
     XCTAssertTrue(visibility.isVisible(.codex))
     XCTAssertTrue(visibility.isVisible(.cursor))
@@ -67,6 +68,7 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
 
   func testCannotHideLastVisibleVendor() {
     let visibility = visibility()
+    XCTAssertTrue(visibility.toggle(.openCode))
     XCTAssertTrue(visibility.toggle(.deepseek))
     XCTAssertTrue(visibility.toggle(.codex))
     // 只剩 Cursor 可见时不可再隐藏。
@@ -78,6 +80,7 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
 
   func testCannotHideLastVisibleVendorOtherOrder() {
     let visibility = visibility()
+    XCTAssertTrue(visibility.toggle(.openCode))
     XCTAssertTrue(visibility.toggle(.codex))
     XCTAssertTrue(visibility.toggle(.cursor))
     // 只剩 DeepSeek 可见时不可再隐藏。
@@ -100,6 +103,7 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
 
   func testToggleRejectsRejectedState() {
     let visibility = visibility()
+    XCTAssertTrue(visibility.toggle(.openCode))
     XCTAssertTrue(visibility.toggle(.deepseek))
     XCTAssertTrue(visibility.toggle(.codex))
     XCTAssertFalse(visibility.toggle(.cursor))

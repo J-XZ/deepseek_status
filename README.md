@@ -2,7 +2,7 @@
 
 [中文] | [English](README_EN.md)
 
-纯 Swift 原生 macOS 菜单栏应用，实时显示 DeepSeek API 剩余余额，记录最近 3 天的余额变化趋势，并展示 DeepSeek 官方服务状态。常驻系统顶部菜单栏，不显示 Dock 图标。唯一第三方依赖为 Google LevelDB（Git submodule，见下文）。
+纯 Swift 原生 macOS 菜单栏应用，实时显示 DeepSeek API 剩余余额、OpenCode Zen 余额与 OpenCode Go 用量，记录最近 3 天的变化趋势，并展示 DeepSeek 官方服务状态。常驻系统顶部菜单栏，不显示 Dock 图标。唯一第三方依赖为 Google LevelDB（Git submodule，见下文）。
 
 ## 界面截图
 
@@ -29,6 +29,10 @@
 - 请求失败时保留上一次成功余额；认证失败或 Keychain 无法确认时清空旧账号显示，避免残留
 - 最近 3 天余额趋势图（Apple Swift Charts，10 分钟时间桶采样，本地 LevelDB 存储）
 - 趋势图支持鼠标点击/拖动选择样本，显示本地时间、各项余额与前一样本变化
+- OpenCode 页面：支持粘贴完整 Netscape Cookie 文件内容或本机绝对路径，查询 Zen 余额与 Go 订阅用量
+- OpenCode Go 未订阅时使用红色提示进度条；已订阅时展示 5 小时、每周和月度用量窗口，并按理想进度自动显示蓝色、绿色或橘色
+- OpenCode 菜单栏使用两行显示 Go 月度剩余百分比和 Zen 余额；无 Go 订阅时第一行显示 `--`
+- OpenCode 趋势图：无 Go 订阅时只显示独立 Zen 余额图；有订阅时将 Go 各窗口与 Zen 放在同一张双 Y 轴图中，并用图例区分
 - DeepSeek 官方服务状态卡片：整体状态、API Service、Web Chat Service、事故与计划维护
 - 登录时启动（Launch at Login，基于 `SMAppService.mainApp`）
 - 简体中文 / English 一键切换，立即生效，无需重启
@@ -41,6 +45,8 @@
 3. 点击菜单栏图标，在「设置 / Settings」的 API Key 区域输入 DeepSeek API Key 并保存。推荐保存到 macOS Keychain，这样从 Finder 双击启动时也能正常读取。
 4. 保存密钥后，应用会自动获取余额和官方服务状态。点击菜单栏项目可以查看总余额、充值余额、赠送余额、更新时间和最近 3 天趋势；点击底部「刷新」可立即更新。
 5. 在设置区可以切换中英文、开启登录时启动，以及清除本机保存的历史数据。
+6. 切换到「OpenCode」页面，在 Cookie 区域粘贴完整 Netscape Cookie 文件内容，或粘贴该文件的本机绝对路径，然后点击「保存并刷新」。应用只提取 OpenCode 登录所需的 Cookie 并保存到 macOS Keychain。
+7. OpenCode 页面会分别展示 Zen 余额和 Go 订阅状态。没有 Go 订阅时显示红色未订阅提示；有订阅时显示 5 小时、每周、月度用量及重置时间。历史趋势同样只保存在本机。
 
 如果下载的是未签名 Release，首次启动时 macOS 可能提示无法验证开发者：在 Finder 中按住 Control 点击 App，选择「打开」，再确认一次即可。不要为了运行单个 App 而关闭系统级 Gatekeeper。
 
@@ -63,6 +69,15 @@
 - 弹出页面提供「清除本地历史」按钮（带确认对话框），只清除当前账号对应的历史，不影响 API Key 与当前余额；清除后当前余额中真实存在的币种仍保留在币种选择器中。
 - 币种选择器只显示当前余额响应与当前账号历史中真实存在的币种（CNY、USD 仅在真实存在时优先排序），不显示虚假选项。
 - 趋势图按币种分别展示总余额、充值余额、赠送余额，支持浅色/深色模式。
+
+## OpenCode 用量与趋势
+
+- Cookie 输入支持两种形式：完整 Netscape Cookie 文件内容，或本机绝对路径（支持 `~` 开头）。应用只保留 `auth` / `__Host-auth` 登录 Cookie 到 Keychain，不保存完整 Cookie 文件内容，也不把 Cookie 写入趋势历史。
+- OpenCode Zen 使用美元余额；OpenCode Go 使用独立的订阅用量窗口。Go 用量以已使用百分比展示，接口返回的重置时间会显示在对应窗口旁。
+- Go 的 5 小时、每周、月度窗口分别保留；进度条会根据实际进度与理想时间进度的差异着色：没有理想用量信息或差异在 10 个百分点以内为蓝色，实际落后超过 10 个百分点为绿色，实际超前超过 10 个百分点为橘色。
+- Go 未订阅时，Go 卡片明确显示未订阅，红色进度条只用于提示没有订阅；趋势区域隐藏 Go 图，只保留 Zen 独立图，并且不显示单曲线图例。
+- Go 已订阅时，趋势区域将 5 小时、每周、月度 Go 曲线和 Zen 余额曲线放在同一张图中：左侧 Y 轴为 Go 已用百分比，右侧 Y 轴为 Zen 美元余额，底部图例标识每条曲线。
+- OpenCode 趋势使用最近 72 小时的 10 分钟本地样本；Go 与 Zen 共用时间轴，缺少数据时不会生成虚假样本。清除本地历史不会删除保存的 Cookie。
 
 ## DeepSeek 官方服务状态
 
@@ -104,7 +119,8 @@
 1. 语言：一键切换按钮
 2. 登录时启动：开关 + 状态说明 + 需要批准时的「打开登录项设置」按钮
 3. API Key：保留原有 Keychain 配置
-4. 本地历史：保留「清除本地历史」按钮
+4. OpenCode Cookie：粘贴 Netscape Cookie 内容或本机路径，并保存到独立的 Keychain 项
+5. 本地历史：保留「清除本地历史」按钮
 
 窗口使用 ScrollView，宽度约 500 点，常见 MacBook 屏幕可以完整显示。
 
@@ -210,8 +226,8 @@ Release 构建：
 推送版本标签即可自动发布：
 
 ```bash
-git tag v2.0.5
-git push origin v2.0.5
+git tag v2.1.0
+git push origin v2.1.0
 ```
 
 `.github/workflows/release.yml` 会在 macOS runner 上初始化 LevelDB submodule、运行单元测试并把全部产物发布到对应的 GitHub Release。签名是可选的：
