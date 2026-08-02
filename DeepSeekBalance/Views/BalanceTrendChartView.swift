@@ -34,10 +34,8 @@ struct BalanceTrendChartView: View {
     switch metric {
     case .total:
       return StrokeStyle(lineWidth: 2.25)
-    case .toppedUp:
-      return StrokeStyle(lineWidth: 1.75, dash: [7, 4])
-    case .granted:
-      return StrokeStyle(lineWidth: 1.75, dash: [4, 3])
+    case .toppedUp, .granted:
+      return StrokeStyle(lineWidth: 2)
     }
   }
 
@@ -134,8 +132,8 @@ struct BalanceTrendChartView: View {
   private var legend: some View {
     HStack(spacing: 14) {
       legendItem(label: L10n.string(.legendTotal, language: language), color: .blue, dash: [])
-      legendItem(label: L10n.string(.legendToppedUp, language: language), color: .green, dash: [7, 4])
-      legendItem(label: L10n.string(.legendGranted, language: language), color: .orange, dash: [4, 3])
+      legendItem(label: L10n.string(.legendToppedUp, language: language), color: .green, dash: [])
+      legendItem(label: L10n.string(.legendGranted, language: language), color: .orange, dash: [])
       Spacer()
     }
     .font(AppTypography.caption)
