@@ -29,7 +29,7 @@
 - 请求失败时保留上一次成功余额；认证失败或 Keychain 无法确认时清空旧账号显示，避免残留
 - 所有供应商趋势卡片统一使用「用量趋势」标题，并在第二行显示「近72小时用量变化」；图表使用 Apple Swift Charts，10 分钟时间桶采样，本地存储
 - 趋势图支持鼠标点击/拖动选择样本，显示本地时间、各项余额与前一样本变化
-- OpenCode 页面：支持粘贴完整 Netscape Cookie 文件内容或本机绝对路径，查询 Zen 余额与 Go 订阅用量
+- OpenCode 用量页面：支持粘贴完整 Netscape Cookie 文件内容或本机绝对路径，查询 Zen 余额与 Go 订阅用量
 - OpenCode Go 未订阅时使用红色提示进度条；已订阅时展示 5 小时、每周和月度用量窗口，并按理想进度自动显示蓝色、绿色或橘色
 - OpenCode 菜单栏使用两行显示 Go 月度剩余百分比和 Zen 余额；无 Go 订阅时第一行显示 `--`
 - OpenCode 趋势图：无 Go 订阅时只显示独立 Zen 余额图；有订阅时将 Go 各窗口与 Zen 放在同一张双 Y 轴图中，并用图例区分
@@ -45,8 +45,8 @@
 3. 点击菜单栏图标，在「设置 / Settings」的 API Key 区域输入 DeepSeek API Key 并保存。推荐保存到 macOS Keychain，这样从 Finder 双击启动时也能正常读取。
 4. 保存密钥后，应用会自动获取余额和官方服务状态。点击菜单栏项目可以查看总余额、充值余额、赠送余额、更新时间和最近 3 天趋势；点击底部「刷新」可立即更新。
 5. 在设置区可以切换中英文、开启登录时启动，以及清除本机保存的历史数据。
-6. 切换到「OpenCode」页面，在 Cookie 区域粘贴完整 Netscape Cookie 文件内容，或粘贴该文件的本机绝对路径，然后点击「保存并刷新」。应用只提取 OpenCode 登录所需的 Cookie 并保存到 macOS Keychain。
-7. OpenCode 页面会分别展示 Zen 余额和 Go 订阅状态。没有 Go 订阅时显示红色未订阅提示；有订阅时显示 5 小时、每周、月度用量及重置时间。历史趋势同样只保存在本机。
+6. 切换到「OpenCode 用量」页面，在 Cookie 区域粘贴完整 Netscape Cookie 文件内容，或粘贴该文件的本机绝对路径，然后点击「保存并刷新」。应用只提取 OpenCode 登录所需的 Cookie 并保存到 macOS Keychain。
+7. OpenCode 用量页面会分别展示 Zen 余额和 Go 订阅状态。没有 Go 订阅时显示红色未订阅提示；有订阅时显示 5 小时、每周、月度用量及重置时间。历史趋势同样只保存在本机。
 
 如果下载的是未签名 Release，首次启动时 macOS 可能提示无法验证开发者：在 Finder 中按住 Control 点击 App，选择「打开」，再确认一次即可。不要为了运行单个 App 而关闭系统级 Gatekeeper。
 
@@ -226,8 +226,8 @@ Release 构建：
 推送版本标签即可自动发布：
 
 ```bash
-git tag v2.1.1
-git push origin v2.1.1
+git tag v2.1.2
+git push origin v2.1.2
 ```
 
 `.github/workflows/release.yml` 会在 macOS runner 上初始化 LevelDB submodule、运行单元测试并把全部产物发布到对应的 GitHub Release。签名是可选的：

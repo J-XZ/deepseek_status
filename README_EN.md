@@ -29,7 +29,7 @@ The menu bar shows the monochrome icon and current balance:
 - Keeps the last successful balance after request failures; authentication failure or an unreadable Keychain clears stale account data instead of showing it
 - All provider trend cards use the consistent `Usage Trend` title and `Usage change over the last 72 hours:` second line; charts use Apple Swift Charts, 10-minute time buckets, and local storage
 - Trend chart supports click/drag selection with local time, each balance figure, and the delta from the previous sample
-- OpenCode page: paste a complete Netscape Cookie file or a local absolute path to load Zen balance and Go subscription usage
+- OpenCode Usage page: paste a complete Netscape Cookie file or a local absolute path to load Zen balance and Go subscription usage
 - OpenCode Go shows a red not-subscribed indicator when no subscription exists; an active subscription shows 5-hour, weekly, and monthly windows with blue, green, or orange progress colors based on ideal-progress deviation
 - OpenCode uses a two-line menu bar layout for Go monthly remaining percentage and Zen balance; the first line is `--` when Go is not subscribed
 - OpenCode trends show only an independent Zen chart without a legend when Go is not subscribed; with Go active, Go windows and Zen share one dual-axis chart with a legend
@@ -45,8 +45,8 @@ The menu bar shows the monochrome icon and current balance:
 3. Click the menu bar icon, enter your DeepSeek API key in the API Key section under Settings, and save it. Saving it to the macOS Keychain is recommended because it also works when the app is launched from Finder.
 4. After the key is saved, the app fetches your balance and the official service status. Click the menu bar item to see total, topped-up, and granted balances, the last update time, and the 3-day trend. Use the bottom Refresh button for an immediate update.
 5. Settings lets you switch between Chinese and English, enable Launch at Login, and clear local history.
-6. Select the OpenCode page. In the Cookie section, paste the complete Netscape Cookie file content or the file's local absolute path, then click Save and Refresh. Only the OpenCode authentication Cookie is extracted and stored in the macOS Keychain.
-7. The OpenCode page shows Zen balance and Go subscription status. Without Go, it shows an explicit red not-subscribed indicator; with Go, it shows 5-hour, weekly, and monthly usage windows and reset times. OpenCode history is stored locally only.
+6. Select the OpenCode Usage page. In the Cookie section, paste the complete Netscape Cookie file content or the file's local absolute path, then click Save and Refresh. Only the OpenCode authentication Cookie is extracted and stored in the macOS Keychain.
+7. The OpenCode Usage page shows Zen balance and Go subscription status. Without Go, it shows an explicit red not-subscribed indicator; with Go, it shows 5-hour, weekly, and monthly usage windows and reset times. OpenCode history is stored locally only.
 
 If you downloaded an unsigned release, macOS may say that it cannot verify the developer on first launch. In Finder, Control-click the app, choose Open, and confirm once. Do not disable Gatekeeper globally just to run this app.
 
@@ -226,8 +226,8 @@ Full pipeline (clean + Debug + Release + tests + analyze):
 Push a version tag to publish automatically:
 
 ```bash
-git tag v2.1.1
-git push origin v2.1.1
+git tag v2.1.2
+git push origin v2.1.2
 ```
 
 `.github/workflows/release.yml` initializes the LevelDB submodule on a macOS runner, runs the unit tests, and publishes every artifact to the matching GitHub Release. Signing is optional:

@@ -61,4 +61,33 @@ final class L10nTests: XCTestCase {
       "DeepSeek API 余额"
     )
   }
+
+  func testProviderTitlesUseTheSameUsageWording() {
+    let englishTitles = [
+      L10n.string(.tabDeepSeek, language: .english),
+      L10n.string(.codexTitle, language: .english),
+      L10n.string(.cursorTitle, language: .english),
+      L10n.string(.openCodeTitle, language: .english),
+    ]
+    XCTAssertEqual(
+      englishTitles,
+      ["DeepSeek Usage", "Codex Usage", "Cursor Usage", "OpenCode Usage"]
+    )
+
+    let chineseTitles = [
+      L10n.string(.tabDeepSeek, language: .simplifiedChinese),
+      L10n.string(.codexTitle, language: .simplifiedChinese),
+      L10n.string(.cursorTitle, language: .simplifiedChinese),
+      L10n.string(.openCodeTitle, language: .simplifiedChinese),
+    ]
+    XCTAssertEqual(
+      chineseTitles,
+      ["DeepSeek 用量", "Codex 用量", "Cursor 用量", "OpenCode 用量"]
+    )
+
+    XCTAssertEqual(
+      L10n.string(.openCodeNoSubscriptionDetail, language: .english),
+      "No active OpenCode Go subscription was found. The red progress bar indicates that no subscription is available."
+    )
+  }
 }

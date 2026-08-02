@@ -3078,13 +3078,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codex remaining usage trend chart"
+            "value": "Codex usage trend chart"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codex 剩余用量趋势图"
+            "value": "Codex 用量趋势图"
           }
         }
       }
@@ -3094,13 +3094,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cursor first-party and API remaining usage trend chart"
+            "value": "Cursor usage trend chart"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cursor 第一方与 API 剩余用量趋势图"
+            "value": "Cursor 用量趋势图"
           }
         }
       }
@@ -3273,8 +3273,8 @@
     },
     "a11y.openCodeGoLegend": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "OpenCode Go usage windows and Zen balance trend"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode Go 用量窗口与 Zen 余额趋势"}}
+        "en": {"stringUnit": {"state": "translated", "value": "OpenCode Go and Zen usage trend chart"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode Go 与 Zen 用量趋势图"}}
       }
     },
     "a11y.openCodeIcon": {
@@ -3285,8 +3285,8 @@
     },
     "a11y.openCodeZenLegend": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "OpenCode Zen balance trend"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode Zen 余额趋势"}}
+        "en": {"stringUnit": {"state": "translated", "value": "OpenCode Zen usage trend chart"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode Zen 用量趋势图"}}
       }
     },
     "menu.showOpenCode": {
@@ -3375,8 +3375,8 @@
     },
     "openCode.empty": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Add an OpenCode Cookie below to load Go and Zen data."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "请在下方添加 OpenCode Cookie 以加载 Go 和 Zen 数据。"}}
+        "en": {"stringUnit": {"state": "translated", "value": "Add an OpenCode Cookie below to load OpenCode Go and Zen data."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "请在下方添加 OpenCode Cookie 以加载 OpenCode Go 和 Zen 数据。"}}
       }
     },
     "openCode.errorDecoding": {
@@ -3459,7 +3459,7 @@
     },
     "openCode.noSubscriptionDetail": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "No active OpenCode Go subscription was found. The red bar indicates that no subscription is available."}},
+        "en": {"stringUnit": {"state": "translated", "value": "No active OpenCode Go subscription was found. The red progress bar indicates that no subscription is available."}},
         "zh-Hans": {"stringUnit": {"state": "translated", "value": "未找到有效的 OpenCode Go 订阅。红色进度条表示当前没有可用订阅。"}}
       }
     },
@@ -3483,8 +3483,8 @@
     },
     "openCode.title": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "OpenCode"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode"}}
+        "en": {"stringUnit": {"state": "translated", "value": "OpenCode Usage"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode 用量"}}
       }
     },
     "openCode.trendGo": {
@@ -3567,8 +3567,8 @@
     },
     "tab.openCode": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "OpenCode"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode"}}
+        "en": {"stringUnit": {"state": "translated", "value": "OpenCode Usage"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode 用量"}}
       }
     }
   },

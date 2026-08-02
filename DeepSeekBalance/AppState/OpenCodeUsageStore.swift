@@ -286,7 +286,7 @@ final class OpenCodeUsageStore: ObservableObject {
     case .loading:
       return "…"
     case .notConfigured:
-      return "OpenCode"
+      return "—"
     default:
       return "—"
     }
