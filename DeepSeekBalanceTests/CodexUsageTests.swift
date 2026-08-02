@@ -510,6 +510,31 @@ final class CodexUsageTests: XCTestCase {
     // 差距值依赖真实时间，只断言剩余百分比主体。
     XCTAssertTrue(store.menuBarText.hasPrefix("93%"))
   }
+
+  func testAuthProviderPersistsAccessTokenWhenRefreshTokenOmitted() async throws {
+    let directory = FileManager.default.temporaryDirectory
+      .appendingPathComponent(UUID().uuidString, isDirectory: true)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let authFile = directory.appendingPathComponent("auth.json")
+    try Data(TestFixtures.codexAuthJSON.utf8).write(to: authFile)
+
+    MockURLProtocol.requestHandler = { request in
+      XCTAssertEqual(request.url?.path.contains("oauth/token"), true)
+      return (
+        TestFixtures.codexHTTPResponse(statusCode: 200),
+        Data(#"{"access_token":"rotated-access"}"#.utf8)
+      )
+    }
+    let provider = CodexAuthProvider(authFileURL: authFile, session: MockURLProtocol.makeSession())
+    let newToken = try await provider.refreshAccessToken(refreshToken: "rt_abc")
+    XCTAssertEqual(newToken, "rotated-access")
+
+    let saved = try JSONSerialization.jsonObject(with: Data(contentsOf: authFile)) as? [String: Any]
+    let tokens = saved?["tokens"] as? [String: Any]
+    XCTAssertEqual(tokens?["access_token"] as? String, "rotated-access")
+    XCTAssertEqual(tokens?["refresh_token"] as? String, "rt_abc")
+  }
 }
 
 /// 线程安全请求计数器，供异步测试闭包与断言共享。

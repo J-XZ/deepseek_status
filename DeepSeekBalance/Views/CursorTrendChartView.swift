@@ -67,11 +67,17 @@ struct CursorTrendChartView: View {
     Chart {
       ForEach(points) { point in
         LineMark(
-          x: .value("时间", point.bucketStart),
-          y: .value("剩余", point.percent),
-          series: .value("通道", point.seriesName(language: language))
+          x: .value(L10n.string(.chartTime, language: language), point.bucketStart),
+          y: .value(L10n.string(.chartRemaining, language: language), point.percent),
+          series: .value(
+            L10n.string(.chartChannel, language: language),
+            "\(point.seriesName(language: language))/\(point.segment)"
+          )
         )
-        .foregroundStyle(by: .value("通道", point.seriesName(language: language)))
+        .foregroundStyle(by: .value(
+          L10n.string(.chartChannel, language: language),
+          point.seriesName(language: language)
+        ))
         .lineStyle(StrokeStyle(lineWidth: 2))
       }
     }
@@ -109,7 +115,7 @@ struct CursorTrendChartView: View {
     }
     .chartLegend(.visible)
     .frame(height: 160)
-    .accessibilityLabel(L10n.string(.a11yLegend, language: language))
+    .accessibilityLabel(L10n.string(.a11yCursorLegend, language: language))
   }
 
   private func axisLabel(for date: Date) -> String {

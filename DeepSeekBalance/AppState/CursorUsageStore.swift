@@ -243,15 +243,18 @@ final class CursorUsageStore: ObservableObject {
         status = .notConfigured
       }
       lastDisplayError = .cursorAuthInvalid
-    case .server:
+    case .server(let code):
       status = .serverError
-      lastDisplayError = .server(0)
+      lastDisplayError = .server(code)
     case .httpError(let code):
       status = .serverError
       lastDisplayError = .http(code)
-    case .noNetwork, .timedOut:
+    case .noNetwork:
       status = .networkError
       lastDisplayError = .noNetwork
+    case .timedOut:
+      status = .networkError
+      lastDisplayError = .timeout
     case .decodingFailed:
       status = .decodingError
       lastDisplayError = .decoding

@@ -153,7 +153,8 @@ enum ComponentStatus: String, Equatable, Sendable {
       return .degradedPerformance
     case "partial_outage":
       return .partialOutage
-    case "major_outage", "outage":
+    case "major_outage", "outage", "critical":
+      // Flashcat 的 critical 在组件层映射为 major_outage；整体严重度另计为 4。
       return .majorOutage
     case "under_maintenance", "maintenance":
       return .underMaintenance

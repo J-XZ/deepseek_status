@@ -160,6 +160,14 @@ final class CodexUsageStore: ObservableObject {
     } catch CodexUsageClient.APIError.cancelled {
       status = previousStatus
       return
+    } catch is CancellationError {
+      status = previousStatus
+      return
+    } catch CodexAuthError.noNetwork {
+      status = .networkError
+      lastDisplayError = .noNetwork
+    } catch CodexAuthError.refreshFailed {
+      applyAuthFailure(previousStatus: previousStatus)
     } catch let error as CodexUsageClient.APIError {
       applyClientError(error)
     } catch {
@@ -240,15 +248,18 @@ final class CodexUsageStore: ObservableObject {
         status = .notConfigured
       }
       lastDisplayError = .codexAuthInvalid
-    case .server:
+    case .server(let code):
       status = .serverError
-      lastDisplayError = .server(0)
+      lastDisplayError = .server(code)
     case .httpError(let code):
       status = .serverError
       lastDisplayError = .http(code)
-    case .noNetwork, .timedOut:
+    case .noNetwork:
       status = .networkError
       lastDisplayError = .noNetwork
+    case .timedOut:
+      status = .networkError
+      lastDisplayError = .timeout
     case .decodingFailed:
       status = .decodingError
       lastDisplayError = .decoding

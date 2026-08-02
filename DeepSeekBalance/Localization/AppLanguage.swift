@@ -20,7 +20,7 @@ enum AppLanguage: String, CaseIterable, Sendable {
     }
   }
 
-  /// 首次启动：系统首选中文则中文，否则默认 English。
+  /// 首次启动：仅看系统首选语言（列表第一项）；中文系用简体，其余默认 English。
   static func initial(
     defaults: UserDefaults = .standard,
     systemLanguages: [String] = Locale.preferredLanguages
@@ -30,13 +30,10 @@ enum AppLanguage: String, CaseIterable, Sendable {
     {
       return saved
     }
-    for language in systemLanguages {
-      let prefix = language.prefix(2).lowercased()
+    if let primary = systemLanguages.first {
+      let prefix = primary.prefix(2).lowercased()
       if prefix == "zh" {
         return .simplifiedChinese
-      }
-      if prefix == "en" {
-        return .english
       }
     }
     return .english

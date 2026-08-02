@@ -8,6 +8,7 @@ enum LoginItemStatus: Equatable, Sendable {
   case notRegistered
   case requiresApproval
   case notFound
+  case unknownStatus
   case error(String)
 }
 
@@ -32,7 +33,7 @@ final class SMAppLoginItemManager: LoginItemManaging {
     case .notFound:
       return .notFound
     @unknown default:
-      return .error("unknown status")
+      return .unknownStatus
     }
   }
 
@@ -113,6 +114,7 @@ final class LoginItemStore: ObservableObject {
   func syncFromSystem() async {
     guard !isUpdating else { return }
     status = await manager.currentStatus()
+    lastError = nil
   }
 
   func setEnabled(_ enabled: Bool) async {

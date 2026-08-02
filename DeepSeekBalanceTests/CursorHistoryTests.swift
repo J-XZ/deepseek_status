@@ -259,6 +259,9 @@ final class CursorHistoryTests: XCTestCase {
     let firstParty = points.filter { $0.channel == .firstParty }
     // 第二段（gap>20 分钟后）分段号递增。
     XCTAssertEqual(Set(firstParty.map(\.segment)), [0, 1])
+    // 各分段各自成线：同通道不同分段不得共用 series 标识。
+    let seriesKeys = Set(firstParty.map { "\($0.channel.displayKey.rawValue)/\($0.segment)" })
+    XCTAssertEqual(seriesKeys, ["cursor.trendFirstParty/0", "cursor.trendFirstParty/1"])
   }
 
   func testSegmentsDropsIsolatedSegments() {

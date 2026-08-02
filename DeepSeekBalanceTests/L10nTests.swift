@@ -40,5 +40,25 @@ final class L10nTests: XCTestCase {
     XCTAssertEqual(L10n.string(.componentMajorOutage, language: .english), "Major outage")
     XCTAssertEqual(L10n.string(.incidentInvestigating, language: .english), "Investigating")
     XCTAssertEqual(L10n.string(.impactCritical, language: .english), "Critical")
+    XCTAssertEqual(
+      L10n.string(.errorServer, language: .english, 503),
+      "Service temporarily unavailable (503)"
+    )
+    XCTAssertEqual(
+      L10n.string(.errorServer, language: .simplifiedChinese, 503),
+      "服务暂时不可用（503）"
+    )
+    XCTAssertEqual(
+      L10n.string(.codexTrendSummary, language: .english, "+5%"),
+      "72 h change in remaining usage: +5%"
+    )
+    XCTAssertEqual(
+      L10n.string(.codexCreditsBalance, language: .english),
+      "Balance"
+    )
+    XCTAssertEqual(
+      L10n.string(.appTitle, language: .simplifiedChinese),
+      "DeepSeek API 余额"
+    )
   }
 }

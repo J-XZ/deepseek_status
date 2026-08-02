@@ -106,9 +106,11 @@ struct CodexAuthProvider: CodexAuthProviding {
       (data, response) = try await session.data(for: request)
     } catch let error as URLError {
       if error.code == .cancelled {
-        throw CodexAuthError.refreshFailed
+        throw CancellationError()
       }
       throw CodexAuthError.noNetwork
+    } catch is CancellationError {
+      throw CancellationError()
     } catch {
       throw CodexAuthError.noNetwork
     }
@@ -130,10 +132,8 @@ struct CodexAuthProvider: CodexAuthProviding {
     else {
       throw CodexAuthError.refreshFailed
     }
-    // 尽力写回本地 auth.json，失败不影响本次使用。
-    if let refreshToken = token.refreshToken {
-      try? saveTokens(accessToken: accessToken, refreshToken: refreshToken)
-    }
+    // 尽力写回本地 auth.json：即使响应未带回新的 refresh_token，也要持久化 access_token。
+    try? saveTokens(accessToken: accessToken, refreshToken: token.refreshToken ?? refreshToken)
     return accessToken
   }
 

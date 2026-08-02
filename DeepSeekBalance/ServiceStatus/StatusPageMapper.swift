@@ -6,7 +6,7 @@ enum StatusPageMapper {
   static func map(_ response: StatusPageSummaryResponse) -> DeepSeekServiceStatus {
     // 整体状态：Atlassian 用 indicator 字段，取值与 OverallIndicator 一致。
     let indicatorRaw = response.status.status?.indicator
-    let overall = OverallIndicator.from(raw: indicatorRaw)
+    let reportedOverall = OverallIndicator.from(raw: indicatorRaw)
     let overallDescription = response.status.status?.description ?? ""
 
     // 组件：group 分组组件跳过（其下子组件已有独立状态）。
@@ -61,23 +61,16 @@ enum StatusPageMapper {
 
     let sawIncidents = !incidents.isEmpty
 
-    // 组件最差状态：低于 overall indicator 时以整体状态为准（如整体 major）。
+    // 取整体 indicator 与组件最差状态中更严重的一方（含 severity 1 的 degraded）。
     let worstComponentSeverity = mappedComponents
       .map { DeepSeekStatusMapper.severity($0.status) }
       .max() ?? 0
-
-    let effectiveOverall: OverallIndicator
-    if overall != .unknown {
-      effectiveOverall = overall
-    } else if worstComponentSeverity == 3 {
-      effectiveOverall = .major
-    } else if worstComponentSeverity == 2 {
-      effectiveOverall = .minor
-    } else if sawIncidents {
-      effectiveOverall = .unknown
-    } else {
-      effectiveOverall = .none
-    }
+    let fromComponents = indicator(fromComponentSeverity: worstComponentSeverity)
+    let effectiveOverall = mergeOverall(
+      reported: reportedOverall,
+      fromComponents: fromComponents,
+      sawIncidents: sawIncidents
+    )
 
     return DeepSeekServiceStatus(
       overall: effectiveOverall,
@@ -89,6 +82,49 @@ enum StatusPageMapper {
       incidents: incidents,
       scheduledMaintenances: []
     )
+  }
+
+  /// 组件严重度 → 整体指示：1/2 → minor，3 → major。
+  private static func indicator(fromComponentSeverity severity: Int) -> OverallIndicator {
+    switch severity {
+    case 3:
+      return .major
+    case 1, 2:
+      return .minor
+    default:
+      return .none
+    }
+  }
+
+  private static func rank(_ indicator: OverallIndicator) -> Int {
+    switch indicator {
+    case .unknown:
+      return -1
+    case .none:
+      return 0
+    case .maintenance:
+      return 1
+    case .minor:
+      return 2
+    case .major:
+      return 3
+    case .critical:
+      return 4
+    }
+  }
+
+  private static func mergeOverall(
+    reported: OverallIndicator,
+    fromComponents: OverallIndicator,
+    sawIncidents: Bool
+  ) -> OverallIndicator {
+    if reported == .unknown && fromComponents == .none {
+      return sawIncidents ? .unknown : .none
+    }
+    if reported == .unknown {
+      return fromComponents
+    }
+    return rank(fromComponents) > rank(reported) ? fromComponents : reported
   }
 
   /// Atlassian 时间戳是 ISO8601（如 2026-08-01T09:30:00.000Z），解析失败返回 nil。

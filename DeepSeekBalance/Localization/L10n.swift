@@ -56,6 +56,7 @@ enum L10nKey: String, CaseIterable, Sendable {
   case settingsTitle = "settings.title"
   case settingsLanguage = "settings.language"
   case languageSwitchButton = "settings.languageSwitch"
+  case settingsLanguageSwitchHelp = "settings.languageSwitchHelp"
   case settingsAppearance = "settings.appearance"
   case appearanceLight = "appearance.light"
   case appearanceDark = "appearance.dark"
@@ -65,6 +66,8 @@ enum L10nKey: String, CaseIterable, Sendable {
   case loginRequiresApproval = "login.requiresApproval"
   case loginNotFound = "login.notFound"
   case loginError = "login.error"
+  case loginErrorDetail = "login.errorDetail"
+  case loginUnknownStatus = "login.unknownStatus"
   case loginOpenSettings = "login.openSettings"
   case settingsLocalHistory = "settings.localHistory"
 
@@ -139,12 +142,23 @@ enum L10nKey: String, CaseIterable, Sendable {
   case a11yDeepSeekIcon = "a11y.deepseekIcon"
   case a11yMenuBar = "a11y.menuBar"
   case a11yLegend = "a11y.legend"
+  case a11yCodexLegend = "a11y.codexLegend"
+  case a11yCursorLegend = "a11y.cursorLegend"
+  case a11yProviderPicker = "a11y.providerPicker"
   case a11yCurrencyPicker = "a11y.currencyPicker"
 
   // 图例
   case legendTotal = "legend.total"
   case legendToppedUp = "legend.toppedUp"
   case legendGranted = "legend.granted"
+
+  // 图表轴/序列标签
+  case chartTime = "chart.time"
+  case chartAmount = "chart.amount"
+  case chartRemaining = "chart.remaining"
+  case chartSegment = "chart.segment"
+  case chartChannel = "chart.channel"
+  case chartSelectedTime = "chart.selectedTime"
 
   // 其他
   case appTitle = "app.title"

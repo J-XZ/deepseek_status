@@ -27,64 +27,66 @@ struct SettingsView: View {
         .font(AppTypography.title)
 
       settingsGroup {
-          HStack {
-            Text(L10n.string(.settingsLanguage, language: language))
-            Spacer()
-            Button(language == .simplifiedChinese ? "English" : "中文") {
-              store.setLanguage(language == .simplifiedChinese ? .english : .simplifiedChinese)
-            }
-            .controlSize(.small)
-            .help("Switch language / 切换语言")
-          }
-
-          HStack {
-            Text(L10n.string(.settingsAppearance, language: language))
-            Spacer()
-            Picker("", selection: appearanceBinding) {
-              Text(L10n.string(.appearanceLight, language: language))
-                .tag(AppAppearance.light)
-              Text(L10n.string(.appearanceDark, language: language))
-                .tag(AppAppearance.dark)
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .frame(width: 150)
-          }
-
-          VStack(alignment: .leading, spacing: 6) {
+          VStack(alignment: .leading, spacing: 12) {
             HStack {
-              Text(L10n.string(.settingsLaunchAtLogin, language: language))
+              Text(L10n.string(.settingsLanguage, language: language))
               Spacer()
-              Toggle("", isOn: loginBinding)
-                .labelsHidden()
-                .toggleStyle(.switch)
-                .controlSize(.small)
-                .disabled(loginItemStore.isUpdating)
+              Button(L10n.string(.languageSwitchButton, language: language)) {
+                store.setLanguage(language == .simplifiedChinese ? .english : .simplifiedChinese)
+              }
+              .controlSize(.small)
+              .help(L10n.string(.settingsLanguageSwitchHelp, language: language))
             }
-            Text(loginStatusText)
-              .font(AppTypography.caption)
-              .foregroundStyle(.secondary)
-            if let error = loginItemStore.lastError {
-              Text(error)
+
+            HStack {
+              Text(L10n.string(.settingsAppearance, language: language))
+              Spacer()
+              Picker("", selection: appearanceBinding) {
+                Text(L10n.string(.appearanceLight, language: language))
+                  .tag(AppAppearance.light)
+                Text(L10n.string(.appearanceDark, language: language))
+                  .tag(AppAppearance.dark)
+              }
+              .pickerStyle(.segmented)
+              .labelsHidden()
+              .frame(width: 150)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+              HStack {
+                Text(L10n.string(.settingsLaunchAtLogin, language: language))
+                Spacer()
+                Toggle("", isOn: loginBinding)
+                  .labelsHidden()
+                  .toggleStyle(.switch)
+                  .controlSize(.small)
+                  .disabled(loginItemStore.isUpdating)
+              }
+              Text(loginStatusText)
                 .font(AppTypography.caption)
-                .foregroundStyle(.red)
-                .textSelection(.enabled)
+                .foregroundStyle(.secondary)
+              if let error = loginItemStore.lastError {
+                Text(error)
+                  .font(AppTypography.caption)
+                  .foregroundStyle(.red)
+                  .textSelection(.enabled)
+              }
+              if loginItemStore.status == .requiresApproval {
+                Button(L10n.string(.loginOpenSettings, language: language)) {
+                  loginItemStore.openSystemSettings()
+                }
+                .controlSize(.small)
+              }
             }
-            if loginItemStore.status == .requiresApproval {
-              Button(L10n.string(.loginOpenSettings, language: language)) {
-                loginItemStore.openSystemSettings()
+
+            HStack {
+              Text(L10n.string(.settingsLocalHistory, language: language))
+              Spacer()
+              Button(L10n.string(.trendClearHistory, language: language)) {
+                showClearHistoryConfirmation = true
               }
               .controlSize(.small)
             }
-          }
-
-          HStack {
-            Text(L10n.string(.settingsLocalHistory, language: language))
-            Spacer()
-            Button(L10n.string(.trendClearHistory, language: language)) {
-              showClearHistoryConfirmation = true
-            }
-            .controlSize(.small)
           }
       }
       .font(AppTypography.body)
@@ -146,8 +148,10 @@ struct SettingsView: View {
       return L10n.string(.loginRequiresApproval, language: language)
     case .notFound:
       return L10n.string(.loginNotFound, language: language)
+    case .unknownStatus:
+      return L10n.string(.loginUnknownStatus, language: language)
     case .error(let message):
-      return L10n.string(.loginError, language: language) + "：" + message
+      return L10n.string(.loginErrorDetail, language: language, message)
     }
   }
 }

@@ -332,7 +332,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "DeepSeek API Balance"
+            "value": "DeepSeek API 余额"
           }
         }
       }
@@ -678,13 +678,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "DeepSeek service temporarily unavailable (%d)"
+            "value": "Service temporarily unavailable (%d)"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "DeepSeek 服务暂时不可用（%d）"
+            "value": "服务暂时不可用（%d）"
           }
         }
       }
@@ -924,7 +924,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "已发布报告"
+            "value": "事后分析"
           }
         }
       }
@@ -1004,7 +1004,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "主要服务异常"
+            "value": "重大服务异常"
           }
         }
       }
@@ -1020,7 +1020,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "部分服务异常"
+            "value": "轻微服务异常"
           }
         }
       }
@@ -1404,7 +1404,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "未解决事故"
+            "value": "未解决事件"
           }
         }
       }
@@ -1532,7 +1532,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "可能已过期"
+            "value": "状态可能不是最新"
           }
         }
       }
@@ -1910,13 +1910,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Recording starts after the first successful balance fetch, with one 10-minute bucket per sample."
+            "value": "Recording starts after the first successful fetch, keeping one sample per 10-minute bucket."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "应用会从首次成功获取余额后开始记录，每 10 分钟保留一个时间桶。"
+            "value": "应用会从首次成功获取数据后开始记录，每 10 分钟保留一个采样。"
           }
         }
       }
@@ -2198,13 +2198,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Expected usage at this point in the refresh cycle"
+            "value": "Expected usage at this point in the usage window"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "当前刷新周期应消耗的位置"
+            "value": "当前用量周期的预期消耗位置"
           }
         }
       }
@@ -2252,7 +2252,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "已超出用量限制"
+            "value": "已达到用量上限"
           }
         }
       }
@@ -2342,13 +2342,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Balance: %@"
+            "value": "Balance"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "余额：%@"
+            "value": "余额"
           }
         }
       }
@@ -2412,7 +2412,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "请先在本机运行 codex 登录，或放置 ~/.codex/auth.json"
+            "value": "请先在本机运行 codex login，或放置 ~/.codex/auth.json"
           }
         }
       }
@@ -2422,13 +2422,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codex session expired. Sign in again with codex"
+            "value": "Codex session expired. Run codex login again."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codex 登录已失效，请重新登录 codex"
+            "value": "Codex 登录已失效，请重新运行 codex login。"
           }
         }
       }
@@ -2454,13 +2454,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Remaining usage over 72 h: %@"
+            "value": "72 h change in remaining usage: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "近 72 小时剩余用量：%@"
+            "value": "近 72 小时剩余用量变化：%@"
           }
         }
       }
@@ -2534,13 +2534,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No 5-hour limit currently"
+            "value": "No 5-hour limit data available"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "当前无 5 小时限制"
+            "value": "暂无 5 小时用量限制信息"
           }
         }
       }
@@ -2684,7 +2684,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "当前计费周期应消耗的位置"
+            "value": "当前计费周期的预期用量位置"
           }
         }
       }
@@ -2716,7 +2716,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "已超出用量限制"
+            "value": "已达到用量上限"
           }
         }
       }
@@ -2742,13 +2742,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Free plan, no usage limits"
+            "value": "No usage-limit information available"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "免费计划，无用量限制"
+            "value": "暂无用量限制信息"
           }
         }
       }
@@ -2796,7 +2796,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "总花费"
+            "value": "总支出"
           }
         }
       }
@@ -2806,13 +2806,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Included"
+            "value": "Included spend"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "包含额度"
+            "value": "套餐内费用"
           }
         }
       }
@@ -2822,13 +2822,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bonus"
+            "value": "Bonus spend"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "额外额度"
+            "value": "赠送额度费用"
           }
         }
       }
@@ -2966,13 +2966,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Remaining usage over 72 h: %@"
+            "value": "72 h change in remaining usage: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "近 72 小时剩余用量：%@"
+            "value": "近 72 小时剩余用量变化：%@"
           }
         }
       }
@@ -2998,7 +2998,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "First-party"
+            "value": "First-party models"
           }
         },
         "zh-Hans": {
@@ -3069,6 +3069,198 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cursor 用量：%@"
+          }
+        }
+      }
+    },
+    "a11y.codexLegend": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codex remaining usage trend chart"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codex 剩余用量趋势图"
+          }
+        }
+      }
+    },
+    "a11y.cursorLegend": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cursor first-party and API remaining usage trend chart"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cursor 第一方与 API 剩余用量趋势图"
+          }
+        }
+      }
+    },
+    "a11y.providerPicker": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usage provider"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用量服务"
+          }
+        }
+      }
+    },
+    "settings.languageSwitchHelp": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch language"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "切换语言"
+          }
+        }
+      }
+    },
+    "chart.time": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "时间"
+          }
+        }
+      }
+    },
+    "chart.amount": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Amount"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "金额"
+          }
+        }
+      }
+    },
+    "chart.remaining": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remaining"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "剩余"
+          }
+        }
+      }
+    },
+    "chart.segment": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Segment"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分段"
+          }
+        }
+      }
+    },
+    "chart.channel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Channel"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通道"
+          }
+        }
+      }
+    },
+    "chart.selectedTime": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selected time"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选中时间"
+          }
+        }
+      }
+    },
+    "login.errorDetail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Login item operation failed: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "登录项操作失败：%@"
+          }
+        }
+      }
+    },
+    "login.unknownStatus": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unknown login item status"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未知的登录项状态"
           }
         }
       }

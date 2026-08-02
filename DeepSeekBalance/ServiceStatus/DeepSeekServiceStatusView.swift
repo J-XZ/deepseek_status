@@ -31,6 +31,7 @@ struct DeepSeekServiceStatusView<Store: ServiceStatusStoring>: View {
         Button(L10n.string(.serviceRefresh, language: language)) {
           Task { await store.refresh() }
         }
+        .disabled(store.loadState == .loading)
         Button(L10n.string(.serviceOpenPage, language: language)) {
           store.openOfficialStatusPage()
         }
@@ -75,8 +76,19 @@ struct DeepSeekServiceStatusView<Store: ServiceStatusStoring>: View {
   }
 
   private var overallBadge: some View {
-    let indicator = store.status?.overall ?? .unknown
-    let text = overallText(indicator)
+    let indicator: OverallIndicator
+    let text: String
+    switch store.loadState {
+    case .loading:
+      indicator = .unknown
+      text = L10n.string(.serviceLoading, language: language)
+    case .idle where store.status == nil:
+      indicator = .unknown
+      text = L10n.string(.serviceLoading, language: language)
+    default:
+      indicator = store.status?.overall ?? .unknown
+      text = overallText(indicator)
+    }
     return Text(text)
       .font(AppTypography.caption.weight(.medium))
       .padding(.horizontal, 8)
@@ -155,6 +167,8 @@ struct DeepSeekServiceStatusView<Store: ServiceStatusStoring>: View {
   {
     if !components.isEmpty {
       VStack(alignment: .leading, spacing: 3) {
+        Text(title)
+          .font(AppTypography.caption.weight(.semibold))
         ForEach(components) { component in
           HStack(spacing: 6) {
             Circle()
@@ -163,11 +177,12 @@ struct DeepSeekServiceStatusView<Store: ServiceStatusStoring>: View {
             Text(component.name)
               .font(AppTypography.caption)
               .foregroundStyle(.primary)
-              .lineLimit(1)
-            Spacer()
+              .lineLimit(2)
+            Spacer(minLength: 8)
             Text(componentStatusText(component.status))
               .font(AppTypography.caption)
               .foregroundStyle(.secondary)
+              .layoutPriority(1)
           }
         }
       }
@@ -263,7 +278,7 @@ struct DeepSeekServiceStatusView<Store: ServiceStatusStoring>: View {
     case .none:
       return .green
     case .minor, .maintenance:
-      return .yellow
+      return .orange
     case .major:
       return .orange
     case .critical:
@@ -295,7 +310,7 @@ struct DeepSeekServiceStatusView<Store: ServiceStatusStoring>: View {
     case .operational:
       return .green
     case .degradedPerformance, .underMaintenance:
-      return .yellow
+      return .orange
     case .partialOutage:
       return .orange
     case .majorOutage:

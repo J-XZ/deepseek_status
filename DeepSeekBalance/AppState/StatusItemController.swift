@@ -195,7 +195,6 @@ final class StatusItemController: NSObject {
     guard let button = statusItem.button else { return }
 
     button.imagePosition = .noImage
-    button.toolTip = L10n.string(.appTitle, language: store.language)
     updateTitle()
 
     button.target = self
@@ -211,25 +210,44 @@ final class StatusItemController: NSObject {
 
     let font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .semibold)
     button.font = font
+    button.toolTip = L10n.string(.appTitle, language: store.language)
 
     let isDark = (button.window?.effectiveAppearance ?? NSApp.effectiveAppearance)
       .bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
 
     var parts: [NSAttributedString] = []
-    if visibility.showsDeepSeek, let icon = menuBarTintedIcon(
-      named: "DeepSeekIcon", size: 14, isDark: isDark
-    ) {
-      parts.append(iconText(icon: icon, text: store.menuBarText, font: font))
+    if visibility.showsDeepSeek {
+      parts.append(
+        menuBarPart(
+          iconName: "DeepSeekIcon",
+          iconSize: 14,
+          text: store.menuBarText,
+          font: font,
+          isDark: isDark
+        )
+      )
     }
-    if visibility.showsCodex, let icon = menuBarTintedIcon(
-      named: "CodexIcon", size: 13, isDark: isDark
-    ) {
-      parts.append(iconText(icon: icon, text: codexStore.menuBarText, font: font))
+    if visibility.showsCodex {
+      parts.append(
+        menuBarPart(
+          iconName: "CodexIcon",
+          iconSize: 13,
+          text: codexStore.menuBarText,
+          font: font,
+          isDark: isDark
+        )
+      )
     }
-    if visibility.showsCursor, let icon = menuBarTintedIcon(
-      named: "CursorIcon", size: 13, isDark: isDark
-    ) {
-      parts.append(iconText(icon: icon, text: cursorStore.menuBarText, font: font))
+    if visibility.showsCursor {
+      parts.append(
+        menuBarPart(
+          iconName: "CursorIcon",
+          iconSize: 13,
+          text: cursorStore.menuBarText,
+          font: font,
+          isDark: isDark
+        )
+      )
     }
 
     let attributed = NSMutableAttributedString()
@@ -261,6 +279,20 @@ final class StatusItemController: NSObject {
       }
       .map(\.element)
       .joined(separator: " | "))
+  }
+
+  /// 图标可选：资源缺失时仍展示文字，避免整段供应商信息消失。
+  private func menuBarPart(
+    iconName: String,
+    iconSize: CGFloat,
+    text: String,
+    font: NSFont,
+    isDark: Bool
+  ) -> NSAttributedString {
+    if let icon = menuBarTintedIcon(named: iconName, size: iconSize, isDark: isDark) {
+      return iconText(icon: icon, text: text, font: font)
+    }
+    return NSAttributedString(string: text, attributes: [.font: font])
   }
 
   private func iconText(icon: NSImage, text: String, font: NSFont) -> NSAttributedString {
@@ -428,6 +460,9 @@ final class StatusItemController: NSObject {
       await store.refreshAll()
       await codexStore.refreshIfNeeded(maximumAge: 0)
       await cursorStore.refreshIfNeeded(maximumAge: 0)
+      await statusStore.refreshIfNeeded(maximumAge: 0)
+      await codexStatusStore.refreshIfNeeded(maximumAge: 0)
+      await cursorStatusStore.refreshIfNeeded(maximumAge: 0)
     }
   }
 
