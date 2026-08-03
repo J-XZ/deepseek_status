@@ -35,7 +35,7 @@ The menu bar shows the monochrome icon and current balance:
 - OpenCode trends show only an independent Zen chart without a legend when Go is not subscribed; with Go active, Go windows and Zen share one dual-axis chart with a legend
 - DeepSeek official service status card: overall status, API Service, Web Chat Service, incidents, and scheduled maintenance
 - Launch at Login using Apple's native `SMAppService.mainApp`
-- One-click Simplified Chinese / English switching, applied instantly without restart
+- The first launch defaults to Simplified Chinese; one-click Simplified Chinese / English switching is applied instantly without restart, and the choice is persisted
 - Built with Swift Concurrency (`async/await` + `URLSession`), AppKit `NSStatusItem` + SwiftUI `NSPopover`, Security.framework, CryptoKit, Charts, and ServiceManagement
 
 ## Basic Usage
@@ -59,6 +59,8 @@ If you downloaded an unsigned release, macOS may say that it cannot verify the d
 ## Usage Trend
 
 - All provider trend cards use the same `Usage Trend` title and `Usage change over the last 14 days:` description. DeepSeek has no public balance-history API, so the app records each successful balance fetch locally.
+- The top-right of each trend chart estimates exhaustion time from actual consumption: it prefers the last 1 hour, then falls back to the last 24 hours, 72 hours, and all history when the shorter window has no consumption; no estimate is shown when no usable consumption exists.
+- DeepSeek estimates balance exhaustion; Codex and Cursor estimate weekly-quota exhaustion; OpenCode shows 5-hour and weekly Go estimates when subscribed (no monthly estimate), and only the Zen balance estimate without a Go subscription.
 - History is stored in **10-minute UTC buckets**: one record per currency per bucket, with newer refreshes overwriting older ones; negative Unix timestamps use strict floor.
 - Balance and provider usage queries run immediately on launch and every 30 seconds; multiple successes within 30 seconds share one 10-minute bucket.
 - History starts from the first successful sample; no data is produced while the app is not running; sleep gaps appear as broken lines (gaps over 20 minutes are not interpolated).
@@ -106,7 +108,7 @@ System approval note: auto-signed Debug builds run from Xcode may not register a
 ## One-Click Language Switching
 
 - Supported languages: Simplified Chinese (`zh-Hans`) and English (`en`).
-- First launch picks the system preferred language when it is Chinese or English; any other system language defaults to English. The user's choice is persisted in `UserDefaults` (language only — API keys stay in the Keychain).
+- First launch defaults to Simplified Chinese. The user's language choice is persisted in `UserDefaults` (language only — API keys stay in the Keychain).
 - Both the header and the Settings section have a one-click button: the Chinese UI shows `English`; the English UI shows `中文`. One click switches instantly, no restart required.
 - All text (menu bar, status badges, errors, trends, service status, login item status, date/number formats) is rendered on demand from semantic data via L10n in the current language; the state layer never stores translated strings.
 - Already-visible errors re-render in the new language immediately without re-requesting.
@@ -226,8 +228,8 @@ Full pipeline (clean + Debug + Release + tests + analyze):
 Push a version tag to publish automatically:
 
 ```bash
-git tag v2.1.7
-git push origin v2.1.7
+git tag v2.1.8
+git push origin v2.1.8
 ```
 
 `.github/workflows/release.yml` initializes the LevelDB submodule on a macOS runner, runs the unit tests, and publishes every artifact to the matching GitHub Release. Signing is optional:

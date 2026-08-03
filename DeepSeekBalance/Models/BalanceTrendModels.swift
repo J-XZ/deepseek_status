@@ -13,6 +13,73 @@ enum UsageHistoryWindow {
   static let seconds = TimeInterval(hours * 3600)
 }
 
+/// 用于估算额度耗尽时间的剩余量样本。
+/// `remaining` 可以是金额，也可以是剩余百分比；估算器只依赖它的下降速度。
+struct UsageExhaustionPoint: Equatable, Sendable {
+  let date: Date
+  let remaining: Double
+}
+
+/// 根据历史消耗速度估算剩余额度耗尽时间。
+/// 优先使用最近 1 小时，若该窗口没有实际消耗，则依次扩大到 24 小时、72 小时和全部历史。
+enum UsageExhaustionEstimator {
+  static let recentWindows: [TimeInterval] = [
+    60 * 60,
+    24 * 60 * 60,
+    72 * 60 * 60,
+  ]
+
+  static func estimate(
+    points: [UsageExhaustionPoint],
+    now: Date
+  ) -> TimeInterval? {
+    let validPoints = points
+      .filter { $0.date <= now && $0.remaining.isFinite && $0.remaining >= 0 }
+      .sorted { $0.date < $1.date }
+    guard let current = validPoints.last, current.remaining > 0 else { return nil }
+
+    for window in recentWindows {
+      let lowerBound = now.addingTimeInterval(-window)
+      let windowPoints = validPoints.filter { $0.date >= lowerBound }
+      if let rate = consumptionRate(points: windowPoints) {
+        return current.remaining / rate
+      }
+    }
+
+    guard let rate = consumptionRate(points: validPoints) else { return nil }
+    return current.remaining / rate
+  }
+
+  /// 用正向下降量之和计算平均消耗速度，避免充值或窗口重置被误认为用量。
+  private static func consumptionRate(points: [UsageExhaustionPoint]) -> Double? {
+    guard points.count >= 2, let first = points.first, let last = points.last else {
+      return nil
+    }
+    let elapsed = last.date.timeIntervalSince(first.date)
+    guard elapsed > 0 else { return nil }
+
+    let consumed = zip(points, points.dropFirst()).reduce(0.0) { total, pair in
+      total + max(0, pair.0.remaining - pair.1.remaining)
+    }
+    guard consumed > 0 else { return nil }
+    return consumed / elapsed
+  }
+
+  /// 将秒数格式化为简洁的本地化天、小时或分钟文本。
+  static func formattedDuration(_ seconds: TimeInterval, language: AppLanguage) -> String {
+    let minutes = max(1, Int(ceil(seconds / 60)))
+    if minutes >= 24 * 60 {
+      let days = minutes / (24 * 60)
+      return language == .simplifiedChinese ? "\(days)天" : "\(days) days"
+    }
+    if minutes >= 60 {
+      let hours = minutes / 60
+      return language == .simplifiedChinese ? "\(hours)小时" : "\(hours) hours"
+    }
+    return language == .simplifiedChinese ? "\(minutes)分钟" : "\(minutes) minutes"
+  }
+}
+
 /// 图表坐标点。仅在此处允许把 `Decimal` 转换为 `Double`。
 struct TrendPoint: Identifiable, Equatable, Sendable {
   enum Metric: String, CaseIterable, Sendable {

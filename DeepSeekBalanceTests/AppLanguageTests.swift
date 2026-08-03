@@ -32,27 +32,27 @@ final class AppLanguageTests: XCTestCase {
     )
   }
 
-  func testInitialEnglishSystemChoosesEnglish() {
+  func testInitialEnglishSystemStillDefaultsToChinese() {
     let suite = makeDefaults()
     XCTAssertEqual(
       AppLanguage.initial(defaults: suite, systemLanguages: ["en-US", "zh-Hans"]),
-      .english
+      .simplifiedChinese
     )
   }
 
-  func testOtherSystemLanguagesDefaultToEnglish() {
+  func testOtherSystemLanguagesStillDefaultToChinese() {
     let suite = makeDefaults()
     XCTAssertEqual(
       AppLanguage.initial(defaults: suite, systemLanguages: ["fr-FR", "ja-JP"]),
-      .english
+      .simplifiedChinese
     )
   }
 
-  func testPrimaryUnsupportedLanguageDoesNotFallBackToSecondaryChinese() {
+  func testPrimaryUnsupportedLanguageStillDefaultsToChinese() {
     let suite = makeDefaults()
     XCTAssertEqual(
       AppLanguage.initial(defaults: suite, systemLanguages: ["fr-FR", "zh-Hans"]),
-      .english
+      .simplifiedChinese
     )
   }
 

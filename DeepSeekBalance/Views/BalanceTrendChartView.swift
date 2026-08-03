@@ -41,10 +41,36 @@ struct BalanceTrendChartView: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
+      exhaustionEstimate
       chartView
       legend
       if let selectedSample {
         selectionDetail(selectedSample)
+      }
+    }
+  }
+
+  private var exhaustionEstimate: some View {
+    HStack {
+      Spacer(minLength: 0)
+      if let seconds = UsageExhaustionEstimator.estimate(
+        points: BalanceTrendProcessor.points(for: samples, currency: currency)
+          .filter { $0.metric == .total }
+          .map { UsageExhaustionPoint(date: $0.date, remaining: $0.value) },
+        now: now
+      ) {
+        Text(
+          L10n.string(
+            .trendEstimateBalance,
+            language: language,
+            UsageExhaustionEstimator.formattedDuration(seconds, language: language)
+          )
+        )
+        .font(AppTypography.caption)
+        .foregroundStyle(.secondary)
+        .multilineTextAlignment(.trailing)
+        .lineLimit(1)
+        .minimumScaleFactor(0.75)
       }
     }
   }

@@ -88,8 +88,82 @@ struct OpenCodeTrendChartView: View {
     return values.isEmpty ? nil : values.joined(separator: " · ")
   }
 
+  private var exhaustionEstimate: some View {
+    HStack {
+      Spacer(minLength: 0)
+      let estimates = showGoTrend ? goExhaustionEstimates : zenExhaustionEstimates
+      if !estimates.isEmpty {
+        Text(estimates.joined(separator: language == .simplifiedChinese ? "，" : ", "))
+          .font(AppTypography.caption)
+          .foregroundStyle(.secondary)
+          .multilineTextAlignment(.trailing)
+          .lineLimit(2)
+          .minimumScaleFactor(0.75)
+      }
+    }
+  }
+
+  private var goExhaustionEstimates: [String] {
+    [
+      exhaustionText(
+        points: samples.compactMap { sample in
+          guard let used = sample.goRollingUsedPercent else { return nil }
+          return UsageExhaustionPoint(
+            date: sample.bucketStart,
+            remaining: Double(max(0, 100 - used))
+          )
+        },
+        key: .trendEstimateFiveHour
+      ),
+      exhaustionText(
+        points: samples.compactMap { sample in
+          guard let used = sample.goWeeklyUsedPercent else { return nil }
+          return UsageExhaustionPoint(
+            date: sample.bucketStart,
+            remaining: Double(max(0, 100 - used))
+          )
+        },
+        key: .trendEstimateWeeklyBalance
+      ),
+    ].compactMap { $0 }
+  }
+
+  private var zenExhaustionEstimates: [String] {
+    guard let seconds = UsageExhaustionEstimator.estimate(
+      points: samples.compactMap { sample in
+        guard let balance = sample.zenBalanceUSD else { return nil }
+        return UsageExhaustionPoint(date: sample.bucketStart, remaining: balance)
+      },
+      now: now
+    ) else {
+      return []
+    }
+    return [
+      L10n.string(
+        .trendEstimateBalance,
+        language: language,
+        UsageExhaustionEstimator.formattedDuration(seconds, language: language)
+      )
+    ]
+  }
+
+  private func exhaustionText(
+    points: [UsageExhaustionPoint],
+    key: L10nKey
+  ) -> String? {
+    guard let seconds = UsageExhaustionEstimator.estimate(points: points, now: now) else {
+      return nil
+    }
+    return L10n.string(
+      key,
+      language: language,
+      UsageExhaustionEstimator.formattedDuration(seconds, language: language)
+    )
+  }
+
   var body: some View {
     VStack(alignment: .leading, spacing: 14) {
+      exhaustionEstimate
       if showGoTrend {
         goAndZenSection
       } else {

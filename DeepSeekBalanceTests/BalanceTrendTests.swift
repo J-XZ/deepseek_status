@@ -179,4 +179,82 @@ final class BalanceTrendTests: XCTestCase {
       "-3.0%"
     )
   }
+
+  private func exhaustionPoint(_ offset: TimeInterval, remaining: Double) -> UsageExhaustionPoint {
+    UsageExhaustionPoint(date: t0.addingTimeInterval(offset), remaining: remaining)
+  }
+
+  func testExhaustionEstimatePrefersTheMostRecentHour() {
+    let points = [
+      exhaustionPoint(-3600, remaining: 100),
+      exhaustionPoint(0, remaining: 90),
+    ]
+    XCTAssertEqual(
+      UsageExhaustionEstimator.estimate(points: points, now: t0) ?? -1,
+      9 * 3600,
+      accuracy: 0.001
+    )
+  }
+
+  func testExhaustionEstimateFallsBackToTwentyFourHours() {
+    let points = [
+      exhaustionPoint(-20 * 3600, remaining: 100),
+      exhaustionPoint(-10 * 3600, remaining: 90),
+      exhaustionPoint(0, remaining: 90),
+    ]
+    XCTAssertEqual(
+      UsageExhaustionEstimator.estimate(points: points, now: t0) ?? -1,
+      180 * 3600,
+      accuracy: 0.001
+    )
+  }
+
+  func testExhaustionEstimateFallsBackToSeventyTwoHours() {
+    let points = [
+      exhaustionPoint(-48 * 3600, remaining: 100),
+      exhaustionPoint(-24 * 3600, remaining: 80),
+      exhaustionPoint(0, remaining: 80),
+    ]
+    XCTAssertEqual(
+      UsageExhaustionEstimator.estimate(points: points, now: t0) ?? -1,
+      8 * 24 * 3600,
+      accuracy: 0.001
+    )
+  }
+
+  func testExhaustionEstimateFallsBackToAllHistory() {
+    let points = [
+      exhaustionPoint(-5 * 24 * 3600, remaining: 100),
+      exhaustionPoint(-4 * 24 * 3600, remaining: 90),
+      exhaustionPoint(0, remaining: 90),
+    ]
+    XCTAssertEqual(
+      UsageExhaustionEstimator.estimate(points: points, now: t0) ?? -1,
+      45 * 24 * 3600,
+      accuracy: 0.001
+    )
+  }
+
+  func testExhaustionEstimateReturnsNilWithoutConsumption() {
+    let points = [
+      exhaustionPoint(-24 * 3600, remaining: 100),
+      exhaustionPoint(0, remaining: 100),
+    ]
+    XCTAssertNil(UsageExhaustionEstimator.estimate(points: points, now: t0))
+  }
+
+  func testExhaustionDurationUsesLocalizedLargestUsefulUnit() {
+    XCTAssertEqual(
+      UsageExhaustionEstimator.formattedDuration(2 * 24 * 3600, language: .simplifiedChinese),
+      "2天"
+    )
+    XCTAssertEqual(
+      UsageExhaustionEstimator.formattedDuration(3 * 3600, language: .english),
+      "3 hours"
+    )
+    XCTAssertEqual(
+      UsageExhaustionEstimator.formattedDuration(4 * 60, language: .simplifiedChinese),
+      "4分钟"
+    )
+  }
 }

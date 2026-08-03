@@ -1,6 +1,6 @@
 import Foundation
 
-/// 应用支持的语言。首次启动根据系统首选语言选择，用户选择后持久化。
+/// 应用支持的语言。首次启动默认使用简体中文，用户选择后持久化。
 enum AppLanguage: String, CaseIterable, Sendable {
   case simplifiedChinese = "zh-Hans"
   case english = "en"
@@ -20,7 +20,7 @@ enum AppLanguage: String, CaseIterable, Sendable {
     }
   }
 
-  /// 首次启动：仅看系统首选语言（列表第一项）；中文系用简体，其余默认 English。
+  /// 首次启动默认使用简体中文；已有用户选择始终优先。
   static func initial(
     defaults: UserDefaults = .standard,
     systemLanguages: [String] = Locale.preferredLanguages
@@ -30,13 +30,8 @@ enum AppLanguage: String, CaseIterable, Sendable {
     {
       return saved
     }
-    if let primary = systemLanguages.first {
-      let prefix = primary.prefix(2).lowercased()
-      if prefix == "zh" {
-        return .simplifiedChinese
-      }
-    }
-    return .english
+    _ = systemLanguages
+    return .simplifiedChinese
   }
 
   func save(defaults: UserDefaults = .standard) {

@@ -35,7 +35,7 @@
 - OpenCode 趋势图：无 Go 订阅时只显示独立 Zen 余额图；有订阅时将 Go 各窗口与 Zen 放在同一张双 Y 轴图中，并用图例区分
 - DeepSeek 官方服务状态卡片：整体状态、API Service、Web Chat Service、事故与计划维护
 - 登录时启动（Launch at Login，基于 `SMAppService.mainApp`）
-- 简体中文 / English 一键切换，立即生效，无需重启
+- 首次启动默认使用简体中文；仍可一键切换到 English，立即生效，无需重启，选择会被保存
 - 使用 Swift Concurrency（`async/await` + `URLSession`）、AppKit `NSStatusItem` + SwiftUI `NSPopover`、Security.framework、CryptoKit、Charts、ServiceManagement
 
 ## 基础使用
@@ -59,6 +59,8 @@
 ## 用量趋势
 
 - 各供应商趋势卡片都使用统一的「用量趋势」标题和「近14天用量变化」说明；DeepSeek 没有公开的历史余额 API，因此本应用在本地记录每次成功获取的余额样本。
+- 趋势图右上角会根据有效消耗速度估算额度耗尽时间：优先使用最近 1 小时，无消耗时依次回退到最近 24 小时、72 小时和全部历史；没有可用消耗数据时不显示估算。
+- DeepSeek 显示余额耗尽估算；Codex 与 Cursor 显示周额度耗尽估算；OpenCode 有 Go 订阅时显示 5h 与周额度估算（不估算月额度），无订阅时只显示 Zen 余额耗尽估算。
 - 历史以 **10 分钟 UTC 时间桶**保存：同一币种同一时间桶最多一条，桶内后一次成功刷新覆盖前一次；负 Unix 时间使用严格 floor。
 - 余额与供应商用量查询频率为启动立即查询 + 每 30 秒自动刷新；30 秒内的多次成功结果写入同一个 10 分钟桶。
 - 历史只能从应用首次成功采样后开始；应用未运行期间不会产生数据；电脑睡眠期间会出现数据缺口（超过 20 分钟的缺口会在图表中断开连线，不插值）。
@@ -106,7 +108,7 @@
 ## 中英文一键切换
 
 - 支持简体中文（`zh-Hans`）与 English（`en`）。
-- 首次启动根据系统首选语言选择；系统语言不是中文时默认 English；用户选择持久化在 `UserDefaults`（仅语言偏好，API Key 仍只存 Keychain）。
+- 首次启动默认使用简体中文；用户可切换到 English，选择持久化在 `UserDefaults`（仅语言偏好，API Key 仍只存 Keychain）。
 - 标题区与设置区各有一个一键切换按钮：中文界面显示 `English`，英文界面显示 `中文`，点击一次立即切换，无需重启。
 - 所有文本（菜单栏、状态徽章、错误、趋势、服务状态、登录项状态、日期/数字格式）由语义数据 + L10n 按当前语言即时渲染；状态层不保存翻译后的字符串。
 - 已显示的错误在切换语言后立即变化，不需要重新请求。
@@ -226,8 +228,8 @@ Release 构建：
 推送版本标签即可自动发布：
 
 ```bash
-git tag v2.1.7
-git push origin v2.1.7
+git tag v2.1.8
+git push origin v2.1.8
 ```
 
 `.github/workflows/release.yml` 会在 macOS runner 上初始化 LevelDB submodule、运行单元测试并把全部产物发布到对应的 GitHub Release。签名是可选的：

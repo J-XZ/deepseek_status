@@ -2001,6 +2001,70 @@
         }
       }
     },
+    "trend.estimateBalance": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated to exhaust balance in %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "估计在%@内耗尽额度"
+          }
+        }
+      }
+    },
+    "trend.estimateFiveHour": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated to exhaust 5-hour quota in %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "估计在%@内耗尽5h额度"
+          }
+        }
+      }
+    },
+    "trend.estimateWeekly": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated to exhaust weekly quota in %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "估计在%@内耗尽周额度"
+          }
+        }
+      }
+    },
+    "trend.estimateWeeklyBalance": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated to exhaust weekly balance in %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "估计在%@内耗尽周余额"
+          }
+        }
+      }
+    },
     "trend.title": {
       "localizations": {
         "en": {
