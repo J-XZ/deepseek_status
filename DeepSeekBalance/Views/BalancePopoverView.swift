@@ -90,7 +90,6 @@ struct BalancePopoverView: View {
   @State private var openCodeCookieInput = ""
   @State private var validationMessage: String?
   @State private var openCodeCookieValidationMessage: String?
-  @State private var showClearHistoryConfirmation = false
   @State private var selectedTab: UsageTab = .deepseek
   @State private var reportedPageHeights: [UsageTab: CGFloat] = [:]
   @Environment(\.controlActiveState) private var controlActiveState
@@ -466,15 +465,8 @@ struct BalancePopoverView: View {
 
   private var trendSection: some View {
     VStack(alignment: .leading, spacing: 8) {
-      HStack {
-        Text(L10n.string(.trendTitle, language: language))
-          .font(AppTypography.section)
-        Spacer()
-        Button(L10n.string(.trendClearHistory, language: language)) {
-          showClearHistoryConfirmation = true
-        }
-        .controlSize(.small)
-      }
+      Text(L10n.string(.trendTitle, language: language))
+        .font(AppTypography.section)
 
       usageTrendSummary(deepSeekUsageChangeValue)
 
@@ -521,18 +513,6 @@ struct BalancePopoverView: View {
           .textSelection(.enabled)
           .fixedSize(horizontal: false, vertical: true)
       }
-    }
-    .confirmationDialog(
-      L10n.string(.trendClearConfirmTitle, language: language),
-      isPresented: $showClearHistoryConfirmation,
-      titleVisibility: .visible
-    ) {
-      Button(L10n.string(.actionClear, language: language), role: .destructive) {
-        Task { await store.clearLocalHistory() }
-      }
-      Button(L10n.string(.actionCancel, language: language), role: .cancel) {}
-    } message: {
-      Text(L10n.string(.trendClearConfirmMessage, language: language))
     }
   }
 

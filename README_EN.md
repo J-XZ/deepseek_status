@@ -66,7 +66,7 @@ If you downloaded an unsigned release, macOS may say that it cannot verify the d
 - The X axis domain is explicitly `now - 14 days ... now`, with an injectable time source.
 - History is stored locally only and kept for up to 14 days; a startup prune runs on launch (using the injected clock), followed by throttled pruning (the throttle time is recorded only after a successful prune, so a failure can be retried).
 - Database location: `<Application Support>/com.jxz.deepseekbalance/BalanceHistory.leveldb`; upgrades also read the legacy `com.example.DeepSeekBalance` directory.
-- The popover offers a "Clear Local History" button (with confirmation) that removes only the current account's history; it does not affect the API key or current balance. Currencies that really exist in the current balance remain in the picker after clearing.
+- The Settings section offers a "Clear Local History" button (with confirmation) that removes only the current account's history; it does not affect the API key or current balance. Currencies that really exist in the current balance remain in the picker after clearing.
 - The currency picker only shows currencies that truly exist in the current balance response or in the current account's history (CNY and USD are prioritized only when they actually exist); no fake options are shown.
 - The chart shows total, topped-up, and granted balance per currency and supports light/dark mode.
 
@@ -226,8 +226,8 @@ Full pipeline (clean + Debug + Release + tests + analyze):
 Push a version tag to publish automatically:
 
 ```bash
-git tag v2.1.6
-git push origin v2.1.6
+git tag v2.1.7
+git push origin v2.1.7
 ```
 
 `.github/workflows/release.yml` initializes the LevelDB submodule on a macOS runner, runs the unit tests, and publishes every artifact to the matching GitHub Release. Signing is optional:

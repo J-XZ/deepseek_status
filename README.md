@@ -66,7 +66,7 @@
 - X 轴 domain 明确为 `now - 14 天 ... now`，时间来源可注入。
 - 历史只保存在本机，最多保留最近 14 天；应用启动时执行一次清理（使用注入时钟），之后按节流策略清理（只有清理成功后才会记录节流时间，失败后下次可重试）。
 - 数据库位置：`<Application Support>/com.jxz.deepseekbalance/BalanceHistory.leveldb`；升级时会兼容读取旧的 `com.example.DeepSeekBalance` 目录。
-- 弹出页面提供「清除本地历史」按钮（带确认对话框），只清除当前账号对应的历史，不影响 API Key 与当前余额；清除后当前余额中真实存在的币种仍保留在币种选择器中。
+- 设置区提供「清除本地历史」按钮（带确认对话框），只清除当前账号对应的历史，不影响 API Key 与当前余额；清除后当前余额中真实存在的币种仍保留在币种选择器中。
 - 币种选择器只显示当前余额响应与当前账号历史中真实存在的币种（CNY、USD 仅在真实存在时优先排序），不显示虚假选项。
 - 趋势图按币种分别展示总余额、充值余额、赠送余额，支持浅色/深色模式。
 
@@ -226,8 +226,8 @@ Release 构建：
 推送版本标签即可自动发布：
 
 ```bash
-git tag v2.1.6
-git push origin v2.1.6
+git tag v2.1.7
+git push origin v2.1.7
 ```
 
 `.github/workflows/release.yml` 会在 macOS runner 上初始化 LevelDB submodule、运行单元测试并把全部产物发布到对应的 GitHub Release。签名是可选的：
