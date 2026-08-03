@@ -564,6 +564,32 @@ final class DeepSeekStatusStoreTests: XCTestCase {
     let count = await client.fetchCount
     XCTAssertEqual(count, 2)
   }
+
+  func testAutoRefreshRunsAtConfiguredInterval() async throws {
+    let client = ScriptedStatusClient(
+      results: [.success(try summary()), .success(try summary())]
+    )
+    let store = DeepSeekStatusStore(
+      client: client,
+      clock: clock,
+      refreshInterval: 0.1,
+      startupRefresh: false
+    )
+    await store.refresh()
+    clock.advance(by: 0.2)
+
+    let deadline = Date().addingTimeInterval(2)
+    var didRefresh = false
+    while Date() < deadline {
+      if await client.fetchCount >= 2 {
+        didRefresh = true
+        break
+      }
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
+    XCTAssertTrue(didRefresh, "自动刷新未在配置间隔内触发")
+    XCTAssertEqual(store.loadState, .loaded)
+  }
 }
 
 // MARK: - Atlassian Statuspage（Codex / Cursor 服务状态）

@@ -25,7 +25,7 @@ The menu bar shows the monochrome icon and current balance:
 - Clicking the menu bar item opens a popover with total balance, topped-up balance, granted balance, and last update time
 - Status badges: Available / Insufficient balance / Not configured / Request failed / Keychain error
 - Save your API key to the macOS Keychain from the UI, or clear it and fall back to the environment variable
-- Refresh on launch, every 5 minutes, and when the popover opens after more than 60 seconds
+- Refresh on launch, every 30 seconds, and when the popover opens after more than 60 seconds
 - Keeps the last successful balance after request failures; authentication failure or an unreadable Keychain clears stale account data instead of showing it
 - All provider trend cards use the consistent `Usage Trend` title and `Usage change over the last 14 days:` second line; charts use Apple Swift Charts, 10-minute time buckets, and local storage
 - Trend chart supports click/drag selection with local time, each balance figure, and the delta from the previous sample
@@ -60,7 +60,7 @@ If you downloaded an unsigned release, macOS may say that it cannot verify the d
 
 - All provider trend cards use the same `Usage Trend` title and `Usage change over the last 14 days:` description. DeepSeek has no public balance-history API, so the app records each successful balance fetch locally.
 - History is stored in **10-minute UTC buckets**: one record per currency per bucket, with newer refreshes overwriting older ones; negative Unix timestamps use strict floor.
-- The balance query cadence is unchanged (immediate refresh on launch + every 5 minutes); multiple successes within 5 minutes share one 10-minute bucket.
+- Balance and provider usage queries run immediately on launch and every 30 seconds; multiple successes within 30 seconds share one 10-minute bucket.
 - History starts from the first successful sample; no data is produced while the app is not running; sleep gaps appear as broken lines (gaps over 20 minutes are not interpolated).
 - The trend chart uses `LineMark` only for continuous data and does not draw small point markers that add visual noise. Gaps over 20 minutes break the line, and the full 14-day window (up to ~2,016 ten-minute buckets) stays smooth.
 - The X axis domain is explicitly `now - 14 days ... now`, with an injectable time source.
@@ -84,7 +84,7 @@ If you downloaded an unsigned release, macOS may say that it cannot verify the d
 - Data source: DeepSeek's official status page public JSON only: `https://status.deepseek.com/api/status-page/6410630422455/summary/active` (the official status page is hosted by Flashcat; its public `page_id` from the page HTML is `6410630422455`; the standard Statuspage path `/api/v2/summary.json` returns 404 on this domain and is not used)
 - Official status page: `https://status.deepseek.com/`
 - Status requests need no API key and send no `Authorization` header; the status networking layer is fully independent from the balance layer, so one failing does not affect the other.
-- Status is fetched immediately on launch, refreshed every 5 minutes, refreshed when the popover opens after a cache age over 60 seconds, refreshed after wake/didBecomeActive by cache age, refreshable via a dedicated "Refresh Service Status" button, and the bottom "Refresh" button refreshes balance and status concurrently without overwriting each other's errors.
+- Status is fetched immediately on launch and every 30 seconds, refreshed when the popover opens after a cache age over 60 seconds, refreshed after wake/didBecomeActive by cache age, refreshable via a dedicated "Refresh Service Status" button, and the bottom "Refresh" button refreshes balance and status concurrently without overwriting each other's errors.
 - Overall indicator supports `none / minor / major / critical / maintenance / unknown`; component status, incident phase, and impact support all common Statuspage values, with unknown values falling back to `unknown` instead of failing decoding.
 - Components are recognized by normalized name and prioritized as API Service and Web Chat Service (no dependency on fixed component IDs); other official components appear under "Other components"; component groups are not duplicated.
 - The semantics strictly distinguish "DeepSeek service disruption" from "official status unavailable": only official `major_outage` / `critical` counts as a severe disruption; status timeouts or network failures only mean the official status is temporarily unavailable.
@@ -226,8 +226,8 @@ Full pipeline (clean + Debug + Release + tests + analyze):
 Push a version tag to publish automatically:
 
 ```bash
-git tag v2.1.5
-git push origin v2.1.5
+git tag v2.1.6
+git push origin v2.1.6
 ```
 
 `.github/workflows/release.yml` initializes the LevelDB submodule on a macOS runner, runs the unit tests, and publishes every artifact to the matching GitHub Release. Signing is optional:

@@ -73,7 +73,7 @@ final class BalanceStore: ObservableObject {
     environment: [String: String] = ProcessInfo.processInfo.environment,
     clock: any DateProviding = SystemClock(),
     historyService: BalanceHistoryService? = nil,
-    autoRefreshInterval: TimeInterval? = 300,
+    autoRefreshInterval: TimeInterval? = DataRefreshPolicy.autoRefreshInterval,
     startupRefresh: Bool = true,
     startupPrune: Bool = true,
     language: AppLanguage = AppLanguage.initial(),
@@ -155,7 +155,7 @@ final class BalanceStore: ObservableObject {
       while !Task.isCancelled {
         try? await Task.sleep(for: .seconds(interval))
         guard !Task.isCancelled else { break }
-        await self?.refreshIfNeeded(maximumAge: 60)
+        await self?.refreshIfNeeded(maximumAge: interval)
       }
     }
   }

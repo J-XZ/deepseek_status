@@ -42,10 +42,10 @@ final class CodexUsageStore: ObservableObject {
     client: any CodexUsageFetching = CodexUsageClient(),
     authProvider: any CodexAuthProviding = CodexAuthProvider(),
     clock: any DateProviding = SystemClock(),
-    refreshInterval: TimeInterval = 300,
+    refreshInterval: TimeInterval = DataRefreshPolicy.autoRefreshInterval,
     startupRefresh: Bool = true,
     startupPrune: Bool = true,
-    autoRefreshInterval: TimeInterval? = 300,
+    autoRefreshInterval: TimeInterval? = DataRefreshPolicy.autoRefreshInterval,
     historyService: CodexHistoryService? = nil
   ) {
     self.client = client
@@ -109,7 +109,7 @@ final class CodexUsageStore: ObservableObject {
       while !Task.isCancelled {
         try? await Task.sleep(for: .seconds(interval))
         guard !Task.isCancelled else { break }
-        await self?.refreshIfNeeded(maximumAge: 60)
+        await self?.refreshIfNeeded(maximumAge: interval)
       }
     }
   }

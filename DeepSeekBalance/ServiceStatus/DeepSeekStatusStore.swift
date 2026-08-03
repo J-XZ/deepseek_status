@@ -17,6 +17,7 @@ final class DeepSeekStatusStore: ServiceStatusStoring {
   let refreshInterval: TimeInterval
 
   private var refreshTask: Task<Void, Never>?
+  private var autoRefreshTask: Task<Void, Never>?
   private var isFetching = false
 
   let officialStatusPageURL = URL(string: "https://status.deepseek.com/")!
@@ -24,18 +25,24 @@ final class DeepSeekStatusStore: ServiceStatusStoring {
   init(
     client: any DeepSeekStatusFetching = DeepSeekStatusClient(),
     clock: any DateProviding = SystemClock(),
-    refreshInterval: TimeInterval = 300,
+    refreshInterval: TimeInterval = DataRefreshPolicy.autoRefreshInterval,
     startupRefresh: Bool = true
   ) {
     self.client = client
     self.clock = clock
     self.refreshInterval = refreshInterval
+    startAutoRefreshIfNeeded()
 
     if startupRefresh, isEnabled {
       refreshTask = Task { [weak self] in
         await self?.refresh()
       }
     }
+  }
+
+  deinit {
+    refreshTask?.cancel()
+    autoRefreshTask?.cancel()
   }
 
   // MARK: - 启用/停用
@@ -50,9 +57,25 @@ final class DeepSeekStatusStore: ServiceStatusStoring {
       refreshTask = Task { [weak self] in
         await self?.refresh()
       }
+      startAutoRefreshIfNeeded()
     } else {
       refreshTask?.cancel()
       refreshTask = nil
+      autoRefreshTask?.cancel()
+      autoRefreshTask = nil
+    }
+  }
+
+  private func startAutoRefreshIfNeeded() {
+    autoRefreshTask?.cancel()
+    guard isEnabled, refreshInterval > 0 else { return }
+    let interval = refreshInterval
+    autoRefreshTask = Task { [weak self] in
+      while !Task.isCancelled {
+        try? await Task.sleep(for: .seconds(interval))
+        guard !Task.isCancelled else { break }
+        await self?.refreshIfNeeded(maximumAge: interval)
+      }
     }
   }
 

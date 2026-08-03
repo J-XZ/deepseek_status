@@ -248,8 +248,8 @@ final class StoreStateCoordinationTests: XCTestCase {
     try? await Task.sleep(nanoseconds: 200_000_000)
     XCTAssertEqual(MockURLProtocol.recordedRequestCount, 1)
 
-    // 超过 60 秒新鲜度窗口后，自动循环触发第二次刷新。
-    mutableClock.advance(by: 120)
+    // 超过配置的 0.1 秒刷新间隔后，自动循环触发第二次刷新。
+    mutableClock.advance(by: 0.1)
     await waitForRecordedRequests(2)
     XCTAssertEqual(store.status, .loaded)
   }
@@ -261,8 +261,8 @@ final class StoreStateCoordinationTests: XCTestCase {
     let store = makeStore(autoRefreshInterval: 0.05)
 
     await waitForRecordedRequests(1)
-    // 时间只前进 30 秒：自动循环多次触发但都应跳过。
-    mutableClock.advance(by: 30)
+    // 时间只前进 0.02 秒：自动循环多次触发但都应跳过。
+    mutableClock.advance(by: 0.02)
     try? await Task.sleep(nanoseconds: 400_000_000)
     XCTAssertEqual(MockURLProtocol.recordedRequestCount, 1)
     XCTAssertEqual(store.status, .loaded)

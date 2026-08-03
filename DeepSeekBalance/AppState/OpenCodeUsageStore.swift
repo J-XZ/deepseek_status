@@ -114,10 +114,10 @@ final class OpenCodeUsageStore: ObservableObject {
     client: any OpenCodeUsageFetching = OpenCodeUsageClient(),
     cookieStore: any OpenCodeCookieStoring = KeychainOpenCodeCookieStore(),
     clock: any DateProviding = SystemClock(),
-    refreshInterval: TimeInterval = 300,
+    refreshInterval: TimeInterval = DataRefreshPolicy.autoRefreshInterval,
     startupRefresh: Bool = true,
     startupPrune: Bool = true,
-    autoRefreshInterval: TimeInterval? = 300,
+    autoRefreshInterval: TimeInterval? = DataRefreshPolicy.autoRefreshInterval,
     historyService: OpenCodeHistoryService? = nil
   ) {
     self.client = client
@@ -175,7 +175,7 @@ final class OpenCodeUsageStore: ObservableObject {
       while !Task.isCancelled {
         try? await Task.sleep(for: .seconds(interval))
         guard !Task.isCancelled else { break }
-        await self?.refreshIfNeeded(maximumAge: 60)
+        await self?.refreshIfNeeded(maximumAge: interval)
       }
     }
   }

@@ -1,6 +1,11 @@
 import CoreGraphics
 import Foundation
 
+/// Shared cadence for background provider and service-status requests.
+enum DataRefreshPolicy {
+  static let autoRefreshInterval: TimeInterval = 30
+}
+
 /// All provider histories and trend charts share the same local retention window.
 enum UsageHistoryWindow {
   static let days = 14
