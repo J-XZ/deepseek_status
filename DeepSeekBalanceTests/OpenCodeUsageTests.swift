@@ -188,4 +188,58 @@ final class OpenCodeUsageTests: XCTestCase {
     XCTAssertEqual(MockURLProtocol.recordedRequestCount, 3)
   }
 
+  private func historySample(at offset: TimeInterval, balance: Double) -> OpenCodeUsageSample {
+    let now = Date(timeIntervalSince1970: 1_750_000_000)
+    let date = now.addingTimeInterval(offset)
+    return OpenCodeUsageSample(
+      credentialID: "cred",
+      bucketStart: date,
+      observedAt: date,
+      goRollingUsedPercent: nil,
+      goWeeklyUsedPercent: nil,
+      goMonthlyUsedPercent: nil,
+      zenBalanceUSD: balance
+    )
+  }
+
+  func testUnsubscribedZenEstimateFallsBackToTwentyFourHours() {
+    let now = Date(timeIntervalSince1970: 1_750_000_000)
+    let samples = [
+      historySample(at: -20 * 3600, balance: 6),
+      historySample(at: -10 * 3600, balance: 5),
+      historySample(at: 0, balance: 5),
+    ]
+
+    XCTAssertEqual(
+      OpenCodeTrendProcessor.zenExhaustionEstimate(samples: samples, now: now) ?? -1,
+      100 * 3600,
+      accuracy: 0.001
+    )
+  }
+
+  func testUnsubscribedZenEstimateFallsBackToAllHistory() {
+    let now = Date(timeIntervalSince1970: 1_750_000_000)
+    let samples = [
+      historySample(at: -5 * 24 * 3600, balance: 6),
+      historySample(at: -4 * 24 * 3600, balance: 5),
+      historySample(at: 0, balance: 5),
+    ]
+
+    XCTAssertEqual(
+      OpenCodeTrendProcessor.zenExhaustionEstimate(samples: samples, now: now) ?? -1,
+      25 * 24 * 3600,
+      accuracy: 0.001
+    )
+  }
+
+  func testUnsubscribedZenEstimateIsNilWhenAllHistoryHasNoConsumption() {
+    let now = Date(timeIntervalSince1970: 1_750_000_000)
+    let samples = [
+      historySample(at: -24 * 3600, balance: 5),
+      historySample(at: 0, balance: 5),
+    ]
+
+    XCTAssertNil(OpenCodeTrendProcessor.zenExhaustionEstimate(samples: samples, now: now))
+  }
+
 }

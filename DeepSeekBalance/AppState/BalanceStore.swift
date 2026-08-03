@@ -56,6 +56,7 @@ final class BalanceStore: ObservableObject {
   let keychainStore: any APIKeyStoring
   let historyService: BalanceHistoryService
   let clock: any DateProviding
+  let languageDefaults: UserDefaults
   let statusStore: DeepSeekStatusStore?
   let loginItemStore: LoginItemStore?
 
@@ -77,6 +78,7 @@ final class BalanceStore: ObservableObject {
     startupRefresh: Bool = true,
     startupPrune: Bool = true,
     language: AppLanguage = AppLanguage.initial(),
+    languageDefaults: UserDefaults = .standard,
     appearance: AppAppearance = AppAppearance.initial(),
     statusStore: DeepSeekStatusStore? = nil,
     loginItemStore: LoginItemStore? = nil
@@ -87,6 +89,7 @@ final class BalanceStore: ObservableObject {
     self.clock = clock
     self.historyService = historyService ?? Self.makeDefaultHistoryService(clock: clock)
     self.language = language
+    self.languageDefaults = languageDefaults
     self.appearance = appearance
     self.statusStore = statusStore
     self.loginItemStore = loginItemStore
@@ -165,7 +168,7 @@ final class BalanceStore: ObservableObject {
   func setLanguage(_ newLanguage: AppLanguage) {
     guard language != newLanguage else { return }
     language = newLanguage
-    newLanguage.save()
+    newLanguage.save(defaults: languageDefaults)
   }
 
   // MARK: - 外观切换

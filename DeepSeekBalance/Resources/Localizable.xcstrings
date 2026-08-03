@@ -2017,6 +2017,22 @@
         }
       }
     },
+    "trend.estimateUnavailable": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Balance exhaustion estimate unavailable: not enough usage data"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂时无法估算额度耗尽时间：暂无足够用量数据"
+          }
+        }
+      }
+    },
     "trend.estimateFiveHour": {
       "localizations": {
         "en": {

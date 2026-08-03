@@ -65,6 +65,32 @@ final class AppLanguageTests: XCTestCase {
     )
   }
 
+  func testLegacyEnglishDefaultMigratesToChinese() {
+    let suite = makeDefaults()
+    suite.set(AppLanguage.english.rawValue, forKey: AppLanguage.userDefaultsKey)
+
+    XCTAssertEqual(
+      AppLanguage.initial(defaults: suite, systemLanguages: ["en-US"]),
+      .simplifiedChinese
+    )
+    XCTAssertEqual(
+      suite.string(forKey: AppLanguage.userDefaultsKey),
+      AppLanguage.simplifiedChinese.rawValue
+    )
+  }
+
+  func testExplicitEnglishChoiceIsNotMigrated() {
+    let suite = makeDefaults()
+    XCTAssertEqual(AppLanguage.initial(defaults: suite), .simplifiedChinese)
+    AppLanguage.english.save(defaults: suite)
+
+    XCTAssertEqual(
+      AppLanguage.initial(defaults: suite, systemLanguages: ["zh-Hans"]),
+      .english
+    )
+    XCTAssertTrue(suite.bool(forKey: AppLanguage.explicitChoiceKey))
+  }
+
   func testUserChoicePersists() {
     let suite = makeDefaults()
     AppLanguage.english.save(defaults: suite)
@@ -79,16 +105,24 @@ final class AppLanguageTests: XCTestCase {
 final class BalanceStoreLanguageTests: XCTestCase {
   private var clock = FixedClock(date: Date(timeIntervalSince1970: 1_752_000_000))
   private var history = InMemoryBalanceHistoryStore()
+  private var languageDefaults: UserDefaults!
+  private var languageDefaultsSuiteName: String!
 
   override func setUp() {
     super.setUp()
     MockURLProtocol.reset()
     history = InMemoryBalanceHistoryStore()
     clock = FixedClock(date: Date(timeIntervalSince1970: 1_752_000_000))
+    languageDefaultsSuiteName = ["BalanceStoreLanguageTests", UUID().uuidString].joined(separator: "-")
+    languageDefaults = UserDefaults(suiteName: languageDefaultsSuiteName)!
+    languageDefaults.removePersistentDomain(forName: languageDefaultsSuiteName)
   }
 
   override func tearDown() {
     MockURLProtocol.reset()
+    languageDefaults.removePersistentDomain(forName: languageDefaultsSuiteName)
+    languageDefaults = nil
+    languageDefaultsSuiteName = nil
     super.tearDown()
   }
 
@@ -106,7 +140,8 @@ final class BalanceStoreLanguageTests: XCTestCase {
       autoRefreshInterval: nil,
       startupRefresh: false,
       startupPrune: false,
-      language: language
+      language: language,
+      languageDefaults: languageDefaults
     )
   }
 
@@ -132,7 +167,8 @@ final class BalanceStoreLanguageTests: XCTestCase {
       autoRefreshInterval: nil,
       startupRefresh: false,
       startupPrune: false,
-      language: .simplifiedChinese
+      language: .simplifiedChinese,
+      languageDefaults: languageDefaults
     )
     await store.refresh()
     XCTAssertEqual(store.statusTitle, "Keychain 错误")
@@ -152,7 +188,8 @@ final class BalanceStoreLanguageTests: XCTestCase {
       autoRefreshInterval: nil,
       startupRefresh: false,
       startupPrune: false,
-      language: .simplifiedChinese
+      language: .simplifiedChinese,
+      languageDefaults: languageDefaults
     )
     await store.refresh()
     XCTAssertEqual(store.lastDisplayError, .keychain("无法读取已保存的 API Key"))

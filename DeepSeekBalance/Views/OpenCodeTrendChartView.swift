@@ -129,14 +129,11 @@ struct OpenCodeTrendChartView: View {
   }
 
   private var zenExhaustionEstimates: [String] {
-    guard let seconds = UsageExhaustionEstimator.estimate(
-      points: samples.compactMap { sample in
-        guard let balance = sample.zenBalanceUSD else { return nil }
-        return UsageExhaustionPoint(date: sample.bucketStart, remaining: balance)
-      },
-      now: now
-    ) else {
-      return []
+    guard let seconds = OpenCodeTrendProcessor.zenExhaustionEstimate(samples: samples, now: now) else {
+      guard samples.contains(where: { $0.zenBalanceUSD?.isFinite == true }) else {
+        return []
+      }
+      return [L10n.string(.trendEstimateUnavailable, language: language)]
     }
     return [
       L10n.string(
@@ -441,5 +438,30 @@ struct OpenCodeTrendChartView: View {
     let date: Date
     let value: Double
     let seriesTitle: String
+  }
+}
+
+/// OpenCode 趋势的纯数据计算，确保未订阅时 Zen 估算与图表使用同一批去重样本。
+enum OpenCodeTrendProcessor {
+  static func zenExhaustionEstimate(
+    samples: [OpenCodeUsageSample],
+    now: Date
+  ) -> TimeInterval? {
+    var newestByBucket: [Int64: OpenCodeUsageSample] = [:]
+    for sample in samples where sample.zenBalanceUSD?.isFinite == true {
+      let bucket = Int64(sample.bucketStart.timeIntervalSince1970)
+      if let existing = newestByBucket[bucket], existing.observedAt >= sample.observedAt {
+        continue
+      }
+      newestByBucket[bucket] = sample
+    }
+
+    let points = newestByBucket.values
+      .sorted { $0.bucketStart < $1.bucketStart }
+      .compactMap { sample -> UsageExhaustionPoint? in
+        guard let balance = sample.zenBalanceUSD else { return nil }
+        return UsageExhaustionPoint(date: sample.bucketStart, remaining: balance)
+      }
+    return UsageExhaustionEstimator.estimate(points: points, now: now)
   }
 }
