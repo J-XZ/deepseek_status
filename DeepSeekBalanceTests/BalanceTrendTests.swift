@@ -34,7 +34,7 @@ final class BalanceTrendTests: XCTestCase {
     XCTAssertEqual(BalanceTrendProcessor.double(from: Decimal(string: "10.50")!), 10.5)
   }
 
-  func testSeventyTwoHourDeltaNegative() {
+  func testFourteenDayDeltaNegative() {
     let samples = [
       sample(at: t0, total: "110.00"),
       sample(at: t0.addingTimeInterval(3600), total: "100.00"),
@@ -42,11 +42,11 @@ final class BalanceTrendTests: XCTestCase {
     let summary = BalanceTrendProcessor.summary(samples: samples, currency: "CNY")
     XCTAssertEqual(
       summary.text(language: .simplifiedChinese),
-      "近72小时用量变化：-¥10.00（-9.1%）"
+      "近14天用量变化：-¥10.00（-9.1%）"
     )
   }
 
-  func testSeventyTwoHourDeltaPositive() {
+  func testFourteenDayDeltaPositive() {
     let samples = [
       sample(at: t0, total: "100.00"),
       sample(at: t0.addingTimeInterval(3600), total: "110.00"),
@@ -54,7 +54,7 @@ final class BalanceTrendTests: XCTestCase {
     let summary = BalanceTrendProcessor.summary(samples: samples, currency: "CNY")
     XCTAssertEqual(
       summary.text(language: .simplifiedChinese),
-      "近72小时用量变化：+¥10.00（+10.0%）"
+      "近14天用量变化：+¥10.00（+10.0%）"
     )
   }
 
@@ -63,7 +63,7 @@ final class BalanceTrendTests: XCTestCase {
     let summary = BalanceTrendProcessor.summary(samples: samples, currency: "CNY")
     XCTAssertEqual(
       summary.text(language: .simplifiedChinese),
-      "近72小时用量变化：样本不足"
+      "近14天用量变化：样本不足"
     )
   }
 
@@ -80,7 +80,7 @@ final class BalanceTrendTests: XCTestCase {
     }
     XCTAssertEqual(
       summary.text(language: .simplifiedChinese),
-      "近72小时用量变化：+¥10.00"
+      "近14天用量变化：+¥10.00"
     )
   }
 

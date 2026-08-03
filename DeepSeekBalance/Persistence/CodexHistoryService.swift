@@ -30,7 +30,10 @@ struct CodexHistoryService: Sendable {
     try await store.upsert(samples: [sample], credentialID: sample.credentialID)
   }
 
-  func recentSamples(credentialID: String, hours: Int = 72) async throws -> [CodexUsageSample] {
+  func recentSamples(
+    credentialID: String,
+    hours: Int = UsageHistoryWindow.hours
+  ) async throws -> [CodexUsageSample] {
     let now = clock.now()
     return try await store.fetch(
       credentialID: credentialID,
@@ -48,7 +51,7 @@ struct CodexHistoryService: Sendable {
     let now = clock.now()
     guard await pruneGate.shouldBegin(now: now, interval: interval) else { return }
     do {
-      try await store.prune(before: now.addingTimeInterval(-72 * 3600))
+      try await store.prune(before: now.addingTimeInterval(-UsageHistoryWindow.seconds))
       await pruneGate.finish(success: true, at: now)
     } catch {
       await pruneGate.finish(success: false, at: now)

@@ -66,7 +66,7 @@ enum OpenCodeDisplayError: Equatable, Sendable {
   }
 }
 
-/// OpenCode 页面状态与 72 小时本地趋势协调器。
+/// OpenCode 页面状态与 14 天本地趋势协调器。
 @MainActor
 final class OpenCodeUsageStore: ObservableObject {
   enum Status: Equatable {
@@ -138,7 +138,7 @@ final class OpenCodeUsageStore: ObservableObject {
       let history = self.historyService
       let clock = self.clock
       startupPruneTask = Task(priority: .utility) { [weak self] in
-        try? await history.pruneAll(before: clock.now().addingTimeInterval(-72 * 3600))
+        try? await history.pruneAll(before: clock.now().addingTimeInterval(-UsageHistoryWindow.seconds))
         try? await self?.historyService.pruneThrottled()
       }
     }

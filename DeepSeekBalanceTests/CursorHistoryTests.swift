@@ -94,7 +94,7 @@ final class CursorHistoryTests: XCTestCase {
     let old = service.makeSample(
       remainingPercent: 50,
       credentialID: CursorUsageStore.credentialID,
-      at: clock.now().addingTimeInterval(-100 * 3600)
+      at: clock.now().addingTimeInterval(-(UsageHistoryWindow.seconds + 1))
     )
     try await service.save(sample: old)
 

@@ -1,6 +1,13 @@
 import CoreGraphics
 import Foundation
 
+/// All provider histories and trend charts share the same local retention window.
+enum UsageHistoryWindow {
+  static let days = 14
+  static let hours = days * 24
+  static let seconds = TimeInterval(hours * 3600)
+}
+
 /// 图表坐标点。仅在此处允许把 `Decimal` 转换为 `Double`。
 struct TrendPoint: Identifiable, Equatable, Sendable {
   enum Metric: String, CaseIterable, Sendable {
@@ -23,7 +30,7 @@ struct TrendPoint: Identifiable, Equatable, Sendable {
   let value: Double
 }
 
-/// 最近 72 小时趋势摘要。
+/// 最近 14 天趋势摘要。
 struct TrendSummary: Equatable, Sendable {
   enum Kind: Equatable, Sendable {
     case insufficientSamples
@@ -33,7 +40,7 @@ struct TrendSummary: Equatable, Sendable {
   let kind: Kind
   let currency: String
 
-  /// 只返回摘要中的变化值，统一的“近 72 小时用量变化”前缀由趋势卡片渲染。
+  /// 只返回摘要中的变化值，统一的“近 14 天用量变化”前缀由趋势卡片渲染。
   func usageChangeValue(language: AppLanguage) -> String? {
     switch kind {
     case .insufficientSamples:
@@ -87,7 +94,7 @@ enum BalanceTrendProcessor {
 
   /// 相邻样本间隔超过 20 分钟视为数据缺口。
   static let gapThreshold: TimeInterval = 20 * 60
-  static let chartWindowHours: TimeInterval = 72
+  static let chartWindowHours: TimeInterval = TimeInterval(UsageHistoryWindow.hours)
 
   static func decimal(from string: String) -> Decimal? {
     Decimal(string: string, locale: Locale(identifier: "en_US_POSIX"))
@@ -161,7 +168,7 @@ enum BalanceTrendProcessor {
     return result
   }
 
-  /// 明确 X 轴 domain：`now - 72 小时 ... now`。
+  /// 明确 X 轴 domain：`now - 14 天 ... now`。
   static func chartDomain(now: Date) -> ClosedRange<Date> {
     now.addingTimeInterval(-chartWindowHours * 3600)...now
   }

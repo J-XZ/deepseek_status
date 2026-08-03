@@ -1814,13 +1814,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "This removes locally saved samples from the last 3 days. It does not affect your API key or current balance."
+            "value": "This removes locally saved samples from the last 14 days. It does not affect your API key or current balance."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "将删除本机保存的最近 3 天历史样本。不影响 API Key 与当前余额。"
+            "value": "将删除本机保存的最近 14 天历史样本。不影响 API Key 与当前余额。"
           }
         }
       }
@@ -1942,13 +1942,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "History is stored locally only and kept for up to 3 days."
+            "value": "History is stored locally only and kept for up to 14 days."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "历史仅保存在本机，最多保留 3 天。"
+            "value": "历史仅保存在本机，最多保留 14 天。"
           }
         }
       }
@@ -1974,13 +1974,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Usage change over the last 72 hours: %@"
+            "value": "Usage change over the last 14 days: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "近72小时用量变化：%@"
+            "value": "近14天用量变化：%@"
           }
         }
       }
@@ -1990,13 +1990,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Usage change over the last 72 hours: not enough samples"
+            "value": "Usage change over the last 14 days: not enough samples"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "近72小时用量变化：样本不足"
+            "value": "近14天用量变化：样本不足"
           }
         }
       }
@@ -2438,13 +2438,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Usage change over the last 72 hours: not enough samples"
+            "value": "Usage change over the last 14 days: not enough samples"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "近72小时用量变化：样本不足"
+            "value": "近14天用量变化：样本不足"
           }
         }
       }
@@ -2454,13 +2454,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Usage change over the last 72 hours: %@"
+            "value": "Usage change over the last 14 days: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "近72小时用量变化：%@"
+            "value": "近14天用量变化：%@"
           }
         }
       }
@@ -2966,13 +2966,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Usage change over the last 72 hours: %@"
+            "value": "Usage change over the last 14 days: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "近72小时用量变化：%@"
+            "value": "近14天用量变化：%@"
           }
         }
       }
@@ -2982,13 +2982,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Usage change over the last 72 hours: not enough samples"
+            "value": "Usage change over the last 14 days: not enough samples"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "近72小时用量变化：样本不足"
+            "value": "近14天用量变化：样本不足"
           }
         }
       }
@@ -3495,14 +3495,14 @@
     },
     "openCode.trendGoSummary": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Usage change over the last 72 hours: %@"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "近72小时用量变化：%@"}}
+        "en": {"stringUnit": {"state": "translated", "value": "Usage change over the last 14 days: %@"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "近14天用量变化：%@"}}
       }
     },
     "openCode.trendInsufficient": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Usage change over the last 72 hours: not enough samples"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "近72小时用量变化：样本不足"}}
+        "en": {"stringUnit": {"state": "translated", "value": "Usage change over the last 14 days: not enough samples"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "近14天用量变化：样本不足"}}
       }
     },
     "openCode.trendTitle": {
@@ -3525,8 +3525,8 @@
     },
     "openCode.trendZenSummary": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Usage change over the last 72 hours: %@"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "近72小时用量变化：%@"}}
+        "en": {"stringUnit": {"state": "translated", "value": "Usage change over the last 14 days: %@"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "近14天用量变化：%@"}}
       }
     },
     "openCode.usageUnavailable": {

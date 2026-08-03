@@ -1,7 +1,7 @@
 import Charts
 import SwiftUI
 
-/// Codex 用量趋势折线图：最近 3 天剩余百分比（Apple Swift Charts）。
+/// Codex 用量趋势折线图：最近 14 天剩余百分比（Apple Swift Charts）。
 /// 缺口超过 20 分钟会断开连线。
 struct CodexTrendChartView: View {
   let samples: [CodexUsageSample]
@@ -90,7 +90,7 @@ struct CodexTrendChartView: View {
 enum CodexTrendProcessor {
   /// 相邻样本间隔超过 20 分钟视为数据缺口。
   static let gapThreshold: TimeInterval = 20 * 60
-  static let chartWindowHours: TimeInterval = 72
+  static let chartWindowHours: TimeInterval = TimeInterval(UsageHistoryWindow.hours)
 
   /// 把历史样本转为连续折线段：按时间升序、同桶保留最新 observedAt、
   /// 相邻间隔超过 gapThreshold 时断开。

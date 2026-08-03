@@ -27,7 +27,7 @@ struct CursorTrendPoint: Identifiable {
     L10n.string(channel.displayKey, language: language)
   }
 }
-/// Cursor 用量趋势折线图：最近 3 天剩余百分比，第一方模型与 API 通道各一条线
+/// Cursor 用量趋势折线图：最近 14 天剩余百分比，第一方模型与 API 通道各一条线
 /// （Apple Swift Charts）。缺口超过 20 分钟会断开连线。
 struct CursorTrendChartView: View {
   let samples: [CursorUsageSample]
@@ -126,7 +126,7 @@ struct CursorTrendChartView: View {
 enum CursorTrendProcessor {
   /// 相邻样本间隔超过 20 分钟视为数据缺口。
   static let gapThreshold: TimeInterval = 20 * 60
-  static let chartWindowHours: TimeInterval = 72
+  static let chartWindowHours: TimeInterval = TimeInterval(UsageHistoryWindow.hours)
 
   /// 把历史样本转为图数据点：第一方模型线来自 remainingPercent，
   /// API 通道线来自 apiRemainingPercent（旧记录无该字段则跳过）。

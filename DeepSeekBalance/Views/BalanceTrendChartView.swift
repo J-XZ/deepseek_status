@@ -1,7 +1,7 @@
 import Charts
 import SwiftUI
 
-/// 最近 3 天余额趋势图（Apple Swift Charts）。
+/// 最近 14 天余额趋势图（Apple Swift Charts）。
 /// 存储按 UTC 排序，X 轴按本地时间显示；缺口超过 20 分钟会断开连线。
 struct BalanceTrendChartView: View {
   let samples: [BalanceSample]

@@ -80,7 +80,10 @@ final class BalanceHistoryServiceTests: XCTestCase {
     let service = BalanceHistoryService(store: store, clock: clock)
     let samples = service.makeSamples(from: try response(), credentialID: "cred", at: t0)
     try await service.save(samples: samples)
-    let recent = try await service.recentSamples(credentialID: "cred", hours: 72)
+    let recent = try await service.recentSamples(
+      credentialID: "cred",
+      hours: UsageHistoryWindow.hours
+    )
     XCTAssertEqual(recent.count, 2)
     XCTAssertEqual(Set(recent.map(\.currency)), Set(["CNY", "USD"]))
   }
@@ -112,7 +115,10 @@ final class BalanceHistoryServiceTests: XCTestCase {
     let samples = service.makeSamples(from: try response(), credentialID: "cred", at: t0)
     try await service.save(samples: samples)
     try await service.clear(credentialID: "cred")
-    let recent = try await service.recentSamples(credentialID: "cred", hours: 72)
+    let recent = try await service.recentSamples(
+      credentialID: "cred",
+      hours: UsageHistoryWindow.hours
+    )
     XCTAssertTrue(recent.isEmpty)
   }
 }

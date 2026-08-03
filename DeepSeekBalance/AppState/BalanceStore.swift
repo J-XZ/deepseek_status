@@ -111,7 +111,7 @@ final class BalanceStore: ObservableObject {
       let history = self.historyService
       let clock = self.clock
       startupPruneTask = Task(priority: .utility) { [weak self] in
-        try? await history.pruneAll(before: clock.now().addingTimeInterval(-72 * 3600))
+        try? await history.pruneAll(before: clock.now().addingTimeInterval(-UsageHistoryWindow.seconds))
         try? await self?.historyService.pruneThrottled()
       }
     }
@@ -440,7 +440,7 @@ final class BalanceStore: ObservableObject {
 
   // MARK: - 历史持久化
 
-  /// 成功刷新后按顺序执行：写入当前桶 → 重新读取 72 小时历史 → 更新图表 → 节流清理。
+  /// 成功刷新后按顺序执行：写入当前桶 → 重新读取 14 天历史 → 更新图表 → 节流清理。
   private func persistHistory(
     response: BalanceResponse,
     credentialID: String,

@@ -69,7 +69,7 @@ final class CursorUsageStore: ObservableObject {
       let history = self.historyService
       let clock = self.clock
       startupPruneTask = Task(priority: .utility) { [weak self] in
-        try? await history.pruneAll(before: clock.now().addingTimeInterval(-72 * 3600))
+        try? await history.pruneAll(before: clock.now().addingTimeInterval(-UsageHistoryWindow.seconds))
         try? await self?.historyService.pruneThrottled()
       }
     }
@@ -180,7 +180,7 @@ final class CursorUsageStore: ObservableObject {
     }
   }
 
-  /// 记录本次剩余百分比到历史，并重新加载 72 小时样本供折线图使用。
+  /// 记录本次剩余百分比到历史，并重新加载 14 天样本供折线图使用。
   /// 历史存储失败不影响用量展示（静默丢弃）。
   private func persistHistory(
     remainingPercent: Int?,

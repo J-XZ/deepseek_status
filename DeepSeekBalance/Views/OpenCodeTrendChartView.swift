@@ -17,7 +17,7 @@ struct OpenCodeTrendChartView: View {
   }
 
   private var xDomain: ClosedRange<Date> {
-    now.addingTimeInterval(-72 * 3600)...now
+    now.addingTimeInterval(-UsageHistoryWindow.seconds)...now
   }
 
   private var goSeries: [LineSeries] {

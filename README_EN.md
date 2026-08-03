@@ -2,11 +2,11 @@
 
 [中文](README.md) | [English]
 
-A pure-Swift native macOS menu bar app that shows your DeepSeek API balance, OpenCode Zen balance, and OpenCode Go usage in real time, records 3-day trends, and displays DeepSeek's official service status. It lives in the system menu bar with no Dock icon. The only third-party dependency is Google LevelDB (a Git submodule, see below).
+A pure-Swift native macOS menu bar app that shows your DeepSeek API balance, OpenCode Zen balance, and OpenCode Go usage in real time, records 14-day trends, and displays DeepSeek's official service status. It lives in the system menu bar with no Dock icon. The only third-party dependency is Google LevelDB (a Git submodule, see below).
 
 ## Screenshots
 
-The popover shows your balance, official service status, and 3-day trend:
+The popover shows your balance, official service status, and 14-day trend:
 
 <p align="center">
   <img src="docs/screenshots/deepseek-balance-popover.png" alt="DeepSeekBalance popover" width="500">
@@ -27,7 +27,7 @@ The menu bar shows the monochrome icon and current balance:
 - Save your API key to the macOS Keychain from the UI, or clear it and fall back to the environment variable
 - Refresh on launch, every 5 minutes, and when the popover opens after more than 60 seconds
 - Keeps the last successful balance after request failures; authentication failure or an unreadable Keychain clears stale account data instead of showing it
-- All provider trend cards use the consistent `Usage Trend` title and `Usage change over the last 72 hours:` second line; charts use Apple Swift Charts, 10-minute time buckets, and local storage
+- All provider trend cards use the consistent `Usage Trend` title and `Usage change over the last 14 days:` second line; charts use Apple Swift Charts, 10-minute time buckets, and local storage
 - Trend chart supports click/drag selection with local time, each balance figure, and the delta from the previous sample
 - OpenCode Usage page: paste a complete Netscape Cookie file or a local absolute path to load Zen balance and Go subscription usage
 - OpenCode Go shows a red not-subscribed indicator when no subscription exists; an active subscription shows 5-hour, weekly, and monthly windows with blue, green, or orange progress colors based on ideal-progress deviation
@@ -43,7 +43,7 @@ The menu bar shows the monochrome icon and current balance:
 1. Open [Releases](https://github.com/J-XZ/deepseek_status/releases) and download the latest version. The `.dmg` is recommended: open it and drag `DeepSeekBalance.app` into `Applications`. You can also use the `.pkg` installer or unzip the `.zip` and move the app to `Applications`.
 2. Launch the app from `Applications`. It has no Dock window; look for the DeepSeek icon in the menu bar at the top-right of the screen.
 3. Click the menu bar icon, enter your DeepSeek API key in the API Key section under Settings, and save it. Saving it to the macOS Keychain is recommended because it also works when the app is launched from Finder.
-4. After the key is saved, the app fetches your balance and the official service status. Click the menu bar item to see total, topped-up, and granted balances, the last update time, and the 3-day trend. Use the bottom Refresh button for an immediate update.
+4. After the key is saved, the app fetches your balance and the official service status. Click the menu bar item to see total, topped-up, and granted balances, the last update time, and the 14-day trend. Use the bottom Refresh button for an immediate update.
 5. Settings lets you switch between Chinese and English, enable Launch at Login, and clear local history.
 6. Select the OpenCode Usage page. In the Cookie section, paste the complete Netscape Cookie file content or the file's local absolute path, then click Save and Refresh. Only the OpenCode authentication Cookie is extracted and stored in the macOS Keychain.
 7. The OpenCode Usage page shows Zen balance and Go subscription status. Without Go, it shows an explicit red not-subscribed indicator; with Go, it shows 5-hour, weekly, and monthly usage windows and reset times. OpenCode history is stored locally only.
@@ -58,13 +58,13 @@ If you downloaded an unsigned release, macOS may say that it cannot verify the d
 
 ## Usage Trend
 
-- All provider trend cards use the same `Usage Trend` title and `Usage change over the last 72 hours:` description. DeepSeek has no public balance-history API, so the app records each successful balance fetch locally.
+- All provider trend cards use the same `Usage Trend` title and `Usage change over the last 14 days:` description. DeepSeek has no public balance-history API, so the app records each successful balance fetch locally.
 - History is stored in **10-minute UTC buckets**: one record per currency per bucket, with newer refreshes overwriting older ones; negative Unix timestamps use strict floor.
 - The balance query cadence is unchanged (immediate refresh on launch + every 5 minutes); multiple successes within 5 minutes share one 10-minute bucket.
 - History starts from the first successful sample; no data is produced while the app is not running; sleep gaps appear as broken lines (gaps over 20 minutes are not interpolated).
-- The trend chart uses `LineMark` only for continuous data and does not draw small point markers that add visual noise. Gaps over 20 minutes break the line, and the full 72-hour window (up to ~432 ten-minute buckets) stays smooth.
-- The X axis domain is explicitly `now - 72 hours ... now`, with an injectable time source.
-- History is stored locally only and kept for up to 72 hours; a startup prune runs on launch (using the injected clock), followed by throttled pruning (the throttle time is recorded only after a successful prune, so a failure can be retried).
+- The trend chart uses `LineMark` only for continuous data and does not draw small point markers that add visual noise. Gaps over 20 minutes break the line, and the full 14-day window (up to ~2,016 ten-minute buckets) stays smooth.
+- The X axis domain is explicitly `now - 14 days ... now`, with an injectable time source.
+- History is stored locally only and kept for up to 14 days; a startup prune runs on launch (using the injected clock), followed by throttled pruning (the throttle time is recorded only after a successful prune, so a failure can be retried).
 - Database location: `<Application Support>/com.jxz.deepseekbalance/BalanceHistory.leveldb`; upgrades also read the legacy `com.example.DeepSeekBalance` directory.
 - The popover offers a "Clear Local History" button (with confirmation) that removes only the current account's history; it does not affect the API key or current balance. Currencies that really exist in the current balance remain in the picker after clearing.
 - The currency picker only shows currencies that truly exist in the current balance response or in the current account's history (CNY and USD are prioritized only when they actually exist); no fake options are shown.
@@ -77,7 +77,7 @@ If you downloaded an unsigned release, macOS may say that it cannot verify the d
 - Go keeps separate 5-hour, weekly, and monthly windows. Progress bars are blue when ideal usage data is unavailable or the difference is within 10 percentage points, green when actual usage is more than 10 points behind ideal progress, and orange when it is more than 10 points ahead.
 - When Go is not subscribed, the Go card explicitly says so and uses one red indicator bar; the trend area hides Go entirely and keeps only an independent Zen chart without a single-series legend.
 - When Go is subscribed, the trend area combines the 5-hour, weekly, and monthly Go curves with the Zen balance curve in one chart: the left Y axis is Go used percentage, the right Y axis is Zen USD balance, and the bottom legend identifies each curve.
-- OpenCode trends use local 10-minute samples for the most recent 72 hours. Go and Zen share one time axis, and missing samples never create synthetic data. Clearing local history does not delete the saved Cookie.
+- OpenCode trends use local 10-minute samples for the most recent 14 days. Go and Zen share one time axis, and missing samples never create synthetic data. Clearing local history does not delete the saved Cookie.
 
 ## DeepSeek Official Service Status
 
@@ -226,8 +226,8 @@ Full pipeline (clean + Debug + Release + tests + analyze):
 Push a version tag to publish automatically:
 
 ```bash
-git tag v2.1.4
-git push origin v2.1.4
+git tag v2.1.5
+git push origin v2.1.5
 ```
 
 `.github/workflows/release.yml` initializes the LevelDB submodule on a macOS runner, runs the unit tests, and publishes every artifact to the matching GitHub Release. Signing is optional:

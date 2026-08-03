@@ -5,7 +5,9 @@ import XCTest
 
 final class TrendChartModelTests: XCTestCase {
   private let t0 = Date(timeIntervalSince1970: 1_752_000_000)
-  private let now = Date(timeIntervalSince1970: 1_752_000_000 + 72 * 3600)
+  private let now = Date(
+    timeIntervalSince1970: 1_752_000_000 + UsageHistoryWindow.seconds
+  )
 
   private func sample(
     at bucket: Date,
@@ -107,18 +109,18 @@ final class TrendChartModelTests: XCTestCase {
     XCTAssertEqual(toppedUpSegments.count, 1)
   }
 
-  func testXDomainIsRecentSeventyTwoHours() {
+  func testXDomainIsRecentFourteenDays() {
     let model = BalanceTrendProcessor.chartModel(
       samples: [sample(at: t0)],
       currency: "CNY",
       now: now
     )
-    XCTAssertEqual(model.xDomain.lowerBound, now.addingTimeInterval(-72 * 3600))
+    XCTAssertEqual(model.xDomain.lowerBound, now.addingTimeInterval(-UsageHistoryWindow.seconds))
     XCTAssertEqual(model.xDomain.upperBound, now)
   }
 
   func testManySamplesProduceOnlyLines() {
-    let samples = (0..<432).map { index in
+    let samples = (0..<(UsageHistoryWindow.hours * 6)).map { index in
       sample(at: t0.addingTimeInterval(TimeInterval(index) * 600))
     }
     let model = BalanceTrendProcessor.chartModel(
@@ -127,7 +129,9 @@ final class TrendChartModelTests: XCTestCase {
       now: now
     )
     XCTAssertEqual(model.segments.count, 3)
-    XCTAssertTrue(model.segments.allSatisfy { $0.points.count == 432 })
+    XCTAssertTrue(
+      model.segments.allSatisfy { $0.points.count == UsageHistoryWindow.hours * 6 }
+    )
   }
 
   func testNearestSampleSelection() {
