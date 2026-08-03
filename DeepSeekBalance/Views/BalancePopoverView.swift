@@ -92,6 +92,7 @@ struct BalancePopoverView: View {
   @State private var openCodeCookieValidationMessage: String?
   @State private var showClearHistoryConfirmation = false
   @State private var selectedTab: UsageTab = .deepseek
+  @State private var reportedPageHeights: [UsageTab: CGFloat] = [:]
   @Environment(\.controlActiveState) private var controlActiveState
 
   private var language: AppLanguage {
@@ -109,10 +110,11 @@ struct BalancePopoverView: View {
       .padding(14)
     }
     // 在 ScrollView 外测量所有可见供应商页，避免当前页的滚动约束反过来
-    // 把其它页面的自然高度压缩成固定值。
+    // 把其它页面的自然高度压缩成固定值。测量层只参与布局，不再绘制隐藏
+    // 的趋势图和卡片，减少供应商状态更新时的重复渲染。
     .overlay(alignment: .topLeading) {
       pageHeightMeasurements
-        .opacity(0)
+        .hidden()
         .allowsHitTesting(false)
         .accessibilityHidden(true)
     }
@@ -139,7 +141,8 @@ struct BalancePopoverView: View {
       Task { await cursorStatusStore.refreshIfNeeded() }
     }
     .onPreferenceChange(VendorPageHeightPreferenceKey.self) { pageHeights in
-      guard !pageHeights.isEmpty else { return }
+      guard !pageHeights.isEmpty, pageHeights != reportedPageHeights else { return }
+      reportedPageHeights = pageHeights
       onPageHeightsChange(pageHeights)
     }
   }

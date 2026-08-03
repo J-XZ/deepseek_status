@@ -582,6 +582,7 @@ final class StatusItemController: NSObject {
   }
 
   private func updatePopoverSize(for pageHeights: [UsageTab: CGFloat]) {
+    guard pageHeights != vendorPageHeights else { return }
     vendorPageHeights = pageHeights
     guard let button = statusItem.button else { return }
     applyPopoverSize(for: button)
