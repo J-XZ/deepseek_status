@@ -171,6 +171,26 @@ final class PopoverSizingTests: XCTestCase {
     )
   }
 
+  func testTallestPageUsesTheAvailableScreenHeightBeforeScrolling() {
+    XCTAssertEqual(
+      PopoverSizing.constrainedHeight(
+        pageHeights: [820, 1_160, 940],
+        visibleFrameHeight: 1_440
+      ),
+      1_160
+    )
+  }
+
+  func testTallestPageIsCappedOnlyWhenItExceedsTheVisibleScreen() {
+    XCTAssertEqual(
+      PopoverSizing.constrainedHeight(
+        pageHeights: [820, 1_160, 940],
+        visibleFrameHeight: 1_000
+      ),
+      968
+    )
+  }
+
   func testTargetHeightIsCappedByTheScreenVisibleFrame() {
     XCTAssertEqual(
       PopoverSizing.constrainedHeight(

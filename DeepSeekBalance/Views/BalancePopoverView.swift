@@ -92,8 +92,6 @@ struct BalancePopoverView: View {
   @State private var openCodeCookieValidationMessage: String?
   @State private var selectedTab: UsageTab = .deepseek
   @State private var reportedPageHeights: [UsageTab: CGFloat] = [:]
-  @State private var pageHeightMeasurementQueue: [UsageTab] = []
-  @State private var measuredPage: UsageTab?
   @Environment(\.controlActiveState) private var controlActiveState
 
   private var language: AppLanguage {
@@ -105,45 +103,22 @@ struct BalancePopoverView: View {
     UsageTab.allCases.filter { visibility.isVisible($0.vendor) }
   }
 
-  /// 只有影响页面自然高度的状态才触发重新测量，避免每次刷新进度状态时
-  /// 同时重新构造所有供应商页面。
-  private var pageHeightSignature: String {
-    var parts: [String] = []
-    parts.append(visibleTabs.map(\.rawValue).joined(separator: ","))
-    parts.append(language.rawValue)
-    parts.append(String(describing: store.status))
-    parts.append(String(store.balance?.balanceInfos.count ?? 0))
-    parts.append(String(store.availableCurrencies.count))
-    parts.append(String(store.historySamples.count))
-    parts.append(String(describing: statusStore.loadState))
-    parts.append(String(statusStore.status != nil))
-    parts.append(String(describing: codexStore.status))
-    parts.append(String(codexStore.usage != nil))
-    parts.append(String(codexStore.usage?.additionalRateLimits?.count ?? 0))
-    parts.append(String(codexStore.historySamples.count))
-    parts.append(String(describing: cursorStore.status))
-    parts.append(String(cursorStore.usage != nil))
-    parts.append(String(cursorStore.historySamples.count))
-    parts.append(String(describing: openCodeStore.status))
-    parts.append(String(openCodeStore.snapshot != nil))
-    parts.append(String(openCodeStore.snapshot?.goSubscription?.windows.count ?? 0))
-    parts.append(String(openCodeStore.historySamples.count))
-    parts.append(String(openCodeStore.lastDisplayError != nil))
-    parts.append(String(describing: codexStatusStore.loadState))
-    parts.append(String(codexStatusStore.status != nil))
-    parts.append(String(describing: cursorStatusStore.loadState))
-    parts.append(String(cursorStatusStore.status != nil))
-    return parts.joined(separator: "|")
-  }
-
   var body: some View {
     ScrollView {
       contentStack(for: selectedTab)
       .padding(14)
+      .background {
+        GeometryReader { proxy in
+          Color.clear.preference(
+            key: VendorPageHeightPreferenceKey.self,
+            value: [selectedTab: proxy.size.height]
+          )
+        }
+      }
     }
-    // 在 ScrollView 外测量所有可见供应商页，避免当前页的滚动约束反过来
-    // 把其它页面的自然高度压缩成固定值。测量层只参与布局，不再绘制隐藏
-    // 的趋势图和卡片，减少供应商状态更新时的重复渲染。
+    // 在 ScrollView 外持续测量所有可见供应商页，避免当前页的滚动约束反过来
+    // 把其它页面的自然高度压缩成固定值。测量层只参与布局，不显示隐藏内容；
+    // 异步趋势图完成加载后，仍可通过 GeometryReader 更新页面自然高度。
     .overlay(alignment: .topLeading) {
       pageHeightMeasurements
         .hidden()
@@ -164,29 +139,24 @@ struct BalancePopoverView: View {
     .background(windowBackground)
     .preferredColorScheme(store.appearance.colorScheme)
     .onAppear {
-      schedulePageHeightMeasurement()
       refreshStoresAfterFirstFrame()
     }
     .onPreferenceChange(VendorPageHeightPreferenceKey.self) { pageHeights in
-      guard let tab = measuredPage,
-        pageHeightMeasurementQueue.contains(tab),
-        let height = pageHeights[tab]
-      else {
-        return
+      guard !pageHeights.isEmpty else { return }
+
+      let visibleSet = Set(visibleTabs)
+      var updatedHeights = reportedPageHeights.filter { visibleSet.contains($0.key) }
+      var didChange = updatedHeights.count != reportedPageHeights.count
+      for (tab, height) in pageHeights where visibleSet.contains(tab) && height.isFinite && height > 0 {
+        if updatedHeights[tab] != height {
+          updatedHeights[tab] = height
+          didChange = true
+        }
       }
 
-      var updatedHeights = reportedPageHeights
-      if updatedHeights[tab] != height {
-        updatedHeights[tab] = height
-        reportedPageHeights = updatedHeights
-        onPageHeightsChange(updatedHeights)
-      }
-
-      pageHeightMeasurementQueue.removeAll { $0 == tab }
-      measuredPage = pageHeightMeasurementQueue.first
-    }
-    .onChange(of: pageHeightSignature) { _ in
-      schedulePageHeightMeasurement()
+      guard didChange else { return }
+      reportedPageHeights = updatedHeights
+      onPageHeightsChange(updatedHeights)
     }
   }
 
@@ -256,37 +226,26 @@ struct BalancePopoverView: View {
     .font(AppTypography.body)
   }
 
-  /// 以实际弹窗宽度逐页测量完整自然高度。一次只布局一个隐藏页面，
-  /// 避免打开菜单时同时构造所有供应商的卡片和趋势图。
-  @ViewBuilder
+  /// 以实际弹窗宽度持续测量所有可见页面的完整自然高度。
+  /// 保持所有页面在测量层中，使异步图表从 loading 状态变为完整图表后仍能更新高度。
   private var pageHeightMeasurements: some View {
-    if let tab = measuredPage {
-      contentStack(for: tab)
-        .padding(14)
-        .frame(width: PopoverSizing.width)
-        .fixedSize(horizontal: false, vertical: true)
-        .background {
-          GeometryReader { proxy in
-            Color.clear.preference(
-              key: VendorPageHeightPreferenceKey.self,
-              value: [tab: proxy.size.height]
-            )
+    VStack(spacing: 0) {
+      ForEach(visibleTabs) { tab in
+        contentStack(for: tab)
+          .padding(14)
+          .frame(width: PopoverSizing.width)
+          .fixedSize(horizontal: false, vertical: true)
+          .background {
+            GeometryReader { proxy in
+              Color.clear.preference(
+                key: VendorPageHeightPreferenceKey.self,
+                value: [tab: proxy.size.height]
+              )
+            }
           }
-        }
+      }
     }
-  }
-
-  private func schedulePageHeightMeasurement() {
-    let tabs = visibleTabs
-    pageHeightMeasurementQueue = tabs
-    measuredPage = tabs.first
-
-    let visibleSet = Set(tabs)
-    let filtered = reportedPageHeights.filter { visibleSet.contains($0.key) }
-    if filtered != reportedPageHeights {
-      reportedPageHeights = filtered
-      onPageHeightsChange(filtered)
-    }
+    .fixedSize(horizontal: false, vertical: true)
   }
 
   /// 让首帧先完成布局，再启动各供应商的网络刷新；网络请求本身并行，

@@ -126,7 +126,7 @@ The popover's Settings section contains:
 4. OpenCode Cookie: paste Netscape Cookie content or a local path and save it in a separate Keychain item
 5. Local History: the existing "Clear Local History" button
 
-The window uses a ScrollView at about 500 points wide and fits common MacBook screens.
+The window uses a ScrollView at about 500 points wide. Its height is the largest natural height among visible provider pages when the screen has room; on smaller screens it is capped by the visible screen height and keeps scrolling available.
 
 ## LevelDB Integration (Git Submodule)
 
@@ -230,8 +230,8 @@ Full pipeline (clean + Debug + Release + tests + analyze):
 Push a version tag to publish automatically:
 
 ```bash
-git tag v2.1.11
-git push origin v2.1.11
+git tag v2.1.12
+git push origin v2.1.12
 ```
 
 `.github/workflows/release.yml` initializes the LevelDB submodule on a macOS runner, runs the unit tests, and publishes every artifact to the matching GitHub Release. Signing is optional:

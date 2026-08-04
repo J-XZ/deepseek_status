@@ -126,7 +126,7 @@
 4. OpenCode Cookie：粘贴 Netscape Cookie 内容或本机路径，并保存到独立的 Keychain 项
 5. 本地历史：保留「清除本地历史」按钮
 
-窗口使用 ScrollView，宽度约 500 点，常见 MacBook 屏幕可以完整显示。
+窗口使用 ScrollView，宽度约 500 点；高度取所有可见供应商页面的最大自然高度。屏幕空间充足时完整展开，较小屏幕则按屏幕可见高度上限显示并保留滚动。
 
 ## LevelDB 集成（Git submodule）
 
@@ -230,8 +230,8 @@ Release 构建：
 推送版本标签即可自动发布：
 
 ```bash
-git tag v2.1.11
-git push origin v2.1.11
+git tag v2.1.12
+git push origin v2.1.12
 ```
 
 `.github/workflows/release.yml` 会在 macOS runner 上初始化 LevelDB submodule、运行单元测试并把全部产物发布到对应的 GitHub Release。签名是可选的：
