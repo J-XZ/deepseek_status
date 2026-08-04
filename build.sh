@@ -93,11 +93,15 @@ run_build() {
 
 run_tests() {
   echo "==> 运行本地单元测试 ..."
+  # 测试使用进程级共享的 URLProtocol mock；串行执行可避免不同测试类
+  # 同时覆盖 requestHandler，保证本地和 GitHub Actions 结果一致。
   xcodebuild \
     -project DeepSeekBalance.xcodeproj \
     -scheme "$SCHEME" \
     -destination "$DESTINATION" \
     -derivedDataPath "$DERIVED_DATA" \
+    -parallel-testing-enabled NO \
+    -maximum-parallel-testing-workers 1 \
     "${XCODEBUILD_SIGNING_ARGS[@]}" \
     test
 }

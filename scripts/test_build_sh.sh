@@ -65,6 +65,8 @@ grep -q -- "-configuration Debug" "$XCODE_LOG" && fail "--release 不应构建 D
 ./build.sh --test >/dev/null 2>&1
 grep -q -- "-configuration Debug" "$XCODE_LOG" || fail "--test 应构建 Debug"
 grep -q "test$" "$XCODE_LOG" || grep -q "^test$" "$XCODE_LOG" || grep -q " test$" "$XCODE_LOG" || grep -q "\btest\b" "$XCODE_LOG" || fail "--test 应运行测试"
+grep -q -- "-parallel-testing-enabled NO" "$XCODE_LOG" || fail "--test 应串行运行测试"
+grep -q -- "-maximum-parallel-testing-workers 1" "$XCODE_LOG" || fail "--test 应限制为一个测试 worker"
 
 # --clean 执行 clean build
 : >"$XCODE_LOG"
