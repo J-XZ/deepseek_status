@@ -3951,6 +3951,12 @@
         "zh-Hans": {"stringUnit": {"state": "translated", "value": "估计在%@内耗尽流量"}}
       }
     },
+    "vps.trendEstimateCycleEnd": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Estimated traffic remaining at cycle end: %@"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "预计计费周期结束时剩余流量：%@"}}
+      }
+    },
     "vps.trendEstimateUnavailable": {
       "localizations": {
         "en": {"stringUnit": {"state": "translated", "value": "Traffic exhaustion estimate unavailable: not enough usage data"}},

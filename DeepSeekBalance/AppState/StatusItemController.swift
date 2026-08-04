@@ -64,6 +64,21 @@ enum MenuBarUsageColor {
     return interpolated.withAlphaComponent(colorAlpha)
   }
 
+  /// Vultr traffic risk uses the same continuous white → yellow → red ramp as other
+  /// usage values, but its input is a runway risk score rather than an overage percent.
+  static func color(forTrafficRisk risk: Double?, isDark: Bool) -> NSColor? {
+    guard let risk, risk.isFinite else { return nil }
+    let normalized = min(max(CGFloat(risk), 0), 1)
+    let baseColor = isDark ? NSColor.white : NSColor.labelColor
+    let interpolated: NSColor
+    if normalized <= 0.5 {
+      interpolated = blend(baseColor, brightYellow, fraction: normalized * 2)
+    } else {
+      interpolated = blend(brightYellow, brightRed, fraction: (normalized - 0.5) * 2)
+    }
+    return interpolated.withAlphaComponent(colorAlpha)
+  }
+
   private static func blend(
     _ from: NSColor,
     _ to: NSColor,
@@ -655,7 +670,13 @@ final class StatusItemController: NSObject {
           font: cursorFont,
           lineHeight: MenuBarDisplayLayout.cursorLineHeight,
           verticalInset: MenuBarDisplayLayout.cursorVerticalInset,
-          lineColors: [nil, nil]
+          lineColors: [
+            MenuBarUsageColor.color(
+              forTrafficRisk: vpsStore.trafficForecast?.riskScore,
+              isDark: isDark
+            ),
+            nil
+          ]
         )
       )
     }

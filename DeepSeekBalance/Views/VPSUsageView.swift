@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// Vultr 标签页：显示实例剩余流量和账户剩余额度，不显示百分比。
@@ -10,6 +11,14 @@ struct VPSUsageView: View {
 
   private var amountForegroundStyle: Color {
     controlActiveState == .inactive ? .secondary : .primary
+  }
+
+  private var trafficForegroundStyle: Color {
+    let color = MenuBarUsageColor.color(
+      forTrafficRisk: store.trafficForecast?.riskScore,
+      isDark: appearance == .dark
+    ).map(Color.init(nsColor:)) ?? amountForegroundStyle
+    return controlActiveState == .inactive ? color.opacity(0.72) : color
   }
 
   var body: some View {
@@ -80,7 +89,8 @@ struct VPSUsageView: View {
 
       valueRow(
         title: L10n.string(.vpsRemainingTraffic, language: language),
-        value: formattedGB(snapshot.remainingBandwidthGB)
+        value: formattedGB(snapshot.remainingBandwidthGB),
+        foregroundStyle: trafficForegroundStyle
       )
       valueRow(
         title: L10n.string(.vpsRemainingCredit, language: language),
@@ -130,14 +140,18 @@ struct VPSUsageView: View {
     }
   }
 
-  private func valueRow(title: String, value: String) -> some View {
+  private func valueRow(
+    title: String,
+    value: String,
+    foregroundStyle: Color? = nil
+  ) -> some View {
     HStack {
       Text(title)
         .foregroundStyle(.secondary)
       Spacer()
       Text(value)
         .font(AppTypography.value)
-        .foregroundStyle(amountForegroundStyle)
+        .foregroundStyle(foregroundStyle ?? amountForegroundStyle)
     }
   }
 

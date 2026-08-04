@@ -155,6 +155,123 @@ final class VPSUsageTests: XCTestCase {
     XCTAssertEqual(try XCTUnwrap(seconds), 4 * 3600, accuracy: 0.0001)
   }
 
+  func testTrafficForecastMarksTrafficRedWhenItCannotReachCycleEnd() throws {
+    let now = Date(timeIntervalSince1970: 1_800_000_000)
+    let samples = [
+      VPSUsageSample(
+        credentialID: "cred",
+        bucketStart: now.addingTimeInterval(-2 * 86_400),
+        observedAt: now.addingTimeInterval(-2 * 86_400),
+        remainingBandwidthGB: 30,
+        remainingCreditUSD: 5
+      ),
+      VPSUsageSample(
+        credentialID: "cred",
+        bucketStart: now.addingTimeInterval(-86_400),
+        observedAt: now.addingTimeInterval(-86_400),
+        remainingBandwidthGB: 20,
+        remainingCreditUSD: 5
+      ),
+    ]
+
+    let forecast = try XCTUnwrap(
+      VPSTrafficForecastEstimator.estimate(
+        samples: samples,
+        currentRemainingGB: 10,
+        cycleEnd: now.addingTimeInterval(2 * 86_400),
+        now: now
+      )
+    )
+
+    XCTAssertEqual(try XCTUnwrap(forecast.dailyNetChangeGB), -10, accuracy: 0.0001)
+    XCTAssertEqual(
+      try XCTUnwrap(forecast.projectedRemainingAtCycleEndGB),
+      -10,
+      accuracy: 0.0001
+    )
+    XCTAssertEqual(try XCTUnwrap(forecast.exhaustionInterval), 86_400, accuracy: 0.0001)
+    XCTAssertEqual(try XCTUnwrap(forecast.riskScore), 0.75, accuracy: 0.0001)
+  }
+
+  func testTrafficForecastTreatsDailyGrantAsPartOfNetTrend() throws {
+    let now = Date(timeIntervalSince1970: 1_800_000_000)
+    let samples = [
+      VPSUsageSample(
+        credentialID: "cred",
+        bucketStart: now.addingTimeInterval(-2 * 86_400),
+        observedAt: now.addingTimeInterval(-2 * 86_400),
+        remainingBandwidthGB: 10,
+        remainingCreditUSD: 5
+      ),
+      VPSUsageSample(
+        credentialID: "cred",
+        bucketStart: now.addingTimeInterval(-86_400),
+        observedAt: now.addingTimeInterval(-86_400),
+        remainingBandwidthGB: 12,
+        remainingCreditUSD: 5
+      ),
+    ]
+
+    let forecast = try XCTUnwrap(
+      VPSTrafficForecastEstimator.estimate(
+        samples: samples,
+        currentRemainingGB: 14,
+        cycleEnd: now.addingTimeInterval(7 * 86_400),
+        now: now
+      )
+    )
+
+    XCTAssertEqual(try XCTUnwrap(forecast.dailyNetChangeGB), 2, accuracy: 0.0001)
+    XCTAssertEqual(
+      try XCTUnwrap(forecast.projectedRemainingAtCycleEndGB),
+      28,
+      accuracy: 0.0001
+    )
+    XCTAssertNil(forecast.exhaustionInterval)
+    XCTAssertEqual(try XCTUnwrap(forecast.riskScore), 0, accuracy: 0.0001)
+  }
+
+  func testTrafficForecastUsesSecondDerivativeForAcceleratingConsumption() throws {
+    let now = Date(timeIntervalSince1970: 1_800_000_000)
+    let samples = [
+      VPSUsageSample(
+        credentialID: "cred",
+        bucketStart: now.addingTimeInterval(-18 * 3600),
+        observedAt: now.addingTimeInterval(-18 * 3600),
+        remainingBandwidthGB: 10.9375,
+        remainingCreditUSD: 5
+      ),
+      VPSUsageSample(
+        credentialID: "cred",
+        bucketStart: now.addingTimeInterval(-12 * 3600),
+        observedAt: now.addingTimeInterval(-12 * 3600),
+        remainingBandwidthGB: 8.75,
+        remainingCreditUSD: 5
+      ),
+      VPSUsageSample(
+        credentialID: "cred",
+        bucketStart: now.addingTimeInterval(-6 * 3600),
+        observedAt: now.addingTimeInterval(-6 * 3600),
+        remainingBandwidthGB: 6.4375,
+        remainingCreditUSD: 5
+      ),
+    ]
+
+    let forecast = try XCTUnwrap(
+      VPSTrafficForecastEstimator.estimate(
+        samples: samples,
+        currentRemainingGB: 4,
+        cycleEnd: now.addingTimeInterval(12 * 3600),
+        now: now
+      )
+    )
+
+    XCTAssertEqual(forecast.dailyNetChangeGB ?? 0, -10, accuracy: 0.0001)
+    XCTAssertEqual(forecast.dailyAccelerationGB ?? 0, -2, accuracy: 0.0001)
+    XCTAssertEqual(forecast.projectedRemainingAtCycleEndGB ?? 0, -1.25, accuracy: 0.0001)
+    XCTAssertGreaterThan(forecast.riskScore ?? 0, 0.5)
+  }
+
   func testRemainingBandwidthNeverGoesBelowZero() {
     let snapshot = VPSUsageSnapshot(
       instanceID: "i-test",

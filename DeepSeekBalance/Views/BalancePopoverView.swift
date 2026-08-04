@@ -683,7 +683,10 @@ struct BalancePopoverView: View {
       let chart = VPSTrendChartView(
         samples: vpsStore.historySamples,
         language: language,
-        now: vpsStore.clock.now()
+        now: vpsStore.clock.now(),
+        currentRemainingGB: vpsStore.snapshot?.remainingBandwidthGB,
+        cycleStart: vpsStore.snapshot?.cycleStart,
+        cycleEnd: vpsStore.snapshot?.cycleEnd
       )
       usageTrendSummary(chart.usageChangeValue)
 

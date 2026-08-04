@@ -6,8 +6,27 @@ struct VPSTrendChartView: View {
   let samples: [VPSUsageSample]
   let language: AppLanguage
   let now: Date
+  let currentRemainingGB: Double?
+  let cycleStart: Date?
+  let cycleEnd: Date?
 
   @State private var selectedDate: Date?
+
+  init(
+    samples: [VPSUsageSample],
+    language: AppLanguage,
+    now: Date,
+    currentRemainingGB: Double? = nil,
+    cycleStart: Date? = nil,
+    cycleEnd: Date? = nil
+  ) {
+    self.samples = samples
+    self.language = language
+    self.now = now
+    self.currentRemainingGB = currentRemainingGB
+    self.cycleStart = cycleStart
+    self.cycleEnd = cycleEnd
+  }
 
   private var model: VPSUsageTrendProcessor.ChartModel {
     VPSUsageTrendProcessor.chartModel(samples: samples, now: now)
@@ -16,6 +35,17 @@ struct VPSTrendChartView: View {
   private var selectedSample: VPSUsageSample? {
     guard let selectedDate else { return nil }
     return VPSUsageTrendProcessor.nearestSample(to: selectedDate, samples: samples)
+  }
+
+  private var trafficForecast: VPSTrafficForecast? {
+    guard let cycleEnd else { return nil }
+    return VPSTrafficForecastEstimator.estimate(
+      samples: samples,
+      currentRemainingGB: currentRemainingGB,
+      cycleStart: cycleStart,
+      cycleEnd: cycleEnd,
+      now: now
+    )
   }
 
   var usageChangeValue: String? {
@@ -52,20 +82,24 @@ struct VPSTrendChartView: View {
   }
 
   private var exhaustionEstimateText: String {
-    let points = VPSUsageTrendProcessor.deduplicatedSamples(samples).map {
-      UsageExhaustionPoint(
-        date: $0.bucketStart,
-        remaining: max($0.remainingBandwidthGB, 0)
-      )
-    }
-    guard let seconds = UsageExhaustionEstimator.estimate(points: points, now: now) else {
+    guard let forecast = trafficForecast else {
       return L10n.string(.vpsTrendEstimateUnavailable, language: language)
     }
-    return L10n.string(
-      .vpsTrendEstimateTraffic,
-      language: language,
-      UsageExhaustionEstimator.formattedDuration(seconds, language: language)
-    )
+    if let seconds = forecast.exhaustionInterval {
+      return L10n.string(
+        .vpsTrendEstimateTraffic,
+        language: language,
+        UsageExhaustionEstimator.formattedDuration(seconds, language: language)
+      )
+    }
+    if let projected = forecast.projectedRemainingAtCycleEndGB {
+      return L10n.string(
+        .vpsTrendEstimateCycleEnd,
+        language: language,
+        formattedGB(max(projected, 0))
+      )
+    }
+    return L10n.string(.vpsTrendEstimateUnavailable, language: language)
   }
 
   private var trafficTitle: String {

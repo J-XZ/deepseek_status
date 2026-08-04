@@ -263,6 +263,7 @@ enum L10nKey: String, CaseIterable, Sendable {
   case vpsTrendTraffic = "vps.trendTraffic"
   case vpsTrendCredit = "vps.trendCredit"
   case vpsTrendEstimateTraffic = "vps.trendEstimateTraffic"
+  case vpsTrendEstimateCycleEnd = "vps.trendEstimateCycleEnd"
   case vpsTrendEstimateUnavailable = "vps.trendEstimateUnavailable"
   case vpsTrendWaiting = "vps.trendWaiting"
   case vpsConfigTitle = "vps.configTitle"

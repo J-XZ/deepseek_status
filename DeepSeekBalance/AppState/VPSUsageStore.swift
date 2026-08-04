@@ -139,6 +139,17 @@ final class VPSUsageStore: ObservableObject {
     return Self.remainingCycleDays(until: snapshot.cycleEnd, now: clock.now())
   }
 
+  var trafficForecast: VPSTrafficForecast? {
+    guard let snapshot else { return nil }
+    return VPSTrafficForecastEstimator.estimate(
+      samples: historySamples,
+      currentRemainingGB: snapshot.remainingBandwidthGB,
+      cycleStart: snapshot.cycleStart,
+      cycleEnd: snapshot.cycleEnd,
+      now: clock.now()
+    )
+  }
+
   func currentCycleRemainingText(language: AppLanguage) -> String? {
     guard let days = currentCycleRemainingDays else { return nil }
     return L10n.string(.vpsCycleRemaining, language: language, days)
