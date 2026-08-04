@@ -1,3 +1,4 @@
+import AppKit
 import XCTest
 
 @testable import DeepSeekBalance
@@ -209,6 +210,77 @@ final class PopoverSizingTests: XCTestCase {
       ),
       1
     )
+  }
+
+  func testShownPopoverNeverShrinksDuringAsyncMeasurement() {
+    XCTAssertEqual(
+      PopoverSizing.stableHeight(
+        targetHeight: 760,
+        currentHeight: 820,
+        isPopoverShown: true
+      ),
+      820
+    )
+    XCTAssertEqual(
+      PopoverSizing.stableHeight(
+        targetHeight: 900,
+        currentHeight: 820,
+        isPopoverShown: true
+      ),
+      900
+    )
+  }
+
+  func testClosedPopoverUsesLatestMeasuredHeight() {
+    XCTAssertEqual(
+      PopoverSizing.stableHeight(
+        targetHeight: 760,
+        currentHeight: 820,
+        isPopoverShown: false
+      ),
+      760
+    )
+  }
+
+  func testShownPopoverStillRespectsScreenLimit() {
+    XCTAssertEqual(
+      PopoverSizing.stableHeight(
+        targetHeight: 668,
+        currentHeight: 820,
+        isPopoverShown: true,
+        maximumHeight: 668
+      ),
+      668
+    )
+  }
+}
+
+final class MenuBarUsageColorTests: XCTestCase {
+  func testNoOverageKeepsSystemColor() {
+    XCTAssertNil(MenuBarUsageColor.color(for: nil, isDark: true))
+    XCTAssertNil(MenuBarUsageColor.color(for: 0, isDark: true))
+    XCTAssertNil(MenuBarUsageColor.color(for: -4, isDark: true))
+  }
+
+  func testOverageUsesAContinuousWhiteYellowRedGradient() throws {
+    let low = try rgba(XCTUnwrap(MenuBarUsageColor.color(for: 1, isDark: true)))
+    let yellow = try rgba(XCTUnwrap(MenuBarUsageColor.color(for: 10, isDark: true)))
+    let high = try rgba(XCTUnwrap(MenuBarUsageColor.color(for: 30, isDark: true)))
+
+    XCTAssertLessThan(low.alpha, 1)
+    XCTAssertGreaterThan(low.blue, yellow.blue)
+    XCTAssertGreaterThan(yellow.green, high.green)
+    XCTAssertGreaterThanOrEqual(high.red, yellow.red)
+  }
+
+  private func rgba(_ color: NSColor) throws -> (red: CGFloat, green: CGFloat, blue: CGFloat, alpha: CGFloat) {
+    let rgb = try XCTUnwrap(color.usingColorSpace(.deviceRGB))
+    var red: CGFloat = 0
+    var green: CGFloat = 0
+    var blue: CGFloat = 0
+    var alpha: CGFloat = 0
+    rgb.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+    return (red, green, blue, alpha)
   }
 }
 

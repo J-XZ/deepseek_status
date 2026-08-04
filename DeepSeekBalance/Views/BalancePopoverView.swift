@@ -148,8 +148,11 @@ struct BalancePopoverView: View {
       var updatedHeights = reportedPageHeights.filter { visibleSet.contains($0.key) }
       var didChange = updatedHeights.count != reportedPageHeights.count
       for (tab, height) in pageHeights where visibleSet.contains(tab) && height.isFinite && height > 0 {
-        if updatedHeights[tab] != height {
-          updatedHeights[tab] = height
+        // GeometryReader 可能在 SwiftUI 重排期间短暂报告一个较小值。
+        // 只保留本次打开期间观察到的最大自然高度，避免内容刚出现就把窗口缩小。
+        let stableHeight = max(updatedHeights[tab] ?? 0, height)
+        if updatedHeights[tab] != stableHeight {
+          updatedHeights[tab] = stableHeight
           didChange = true
         }
       }

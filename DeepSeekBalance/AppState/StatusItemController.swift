@@ -26,6 +26,42 @@ enum MenuBarDisplayLayout {
   }
 }
 
+enum MenuBarUsageColor {
+  /// +10 个百分点时过渡到黄色，+30 个百分点时过渡到红色，区间内连续插值。
+  /// 颜色使用适度透明度，避免在菜单栏上过于刺眼。
+  static let yellowPeakGap: CGFloat = 10
+  static let redPeakGap: CGFloat = 30
+  static let colorAlpha: CGFloat = 0.78
+
+  static func color(for gap: Int?, isDark: Bool) -> NSColor? {
+    guard let gap, gap > 0 else { return nil }
+
+    let normalized = min(max(CGFloat(gap) / redPeakGap, 0), 1)
+    let yellowPosition = yellowPeakGap / redPeakGap
+    let baseColor = isDark ? NSColor.white : NSColor.labelColor
+    let interpolated: NSColor
+    if normalized <= yellowPosition {
+      let fraction = normalized / yellowPosition
+      interpolated = blend(baseColor, .systemYellow, fraction: fraction)
+    } else {
+      let fraction = (normalized - yellowPosition) / (1 - yellowPosition)
+      interpolated = blend(.systemYellow, .systemRed, fraction: fraction)
+    }
+    return interpolated.withAlphaComponent(colorAlpha)
+  }
+
+  private static func blend(
+    _ from: NSColor,
+    _ to: NSColor,
+    fraction: CGFloat
+  ) -> NSColor {
+    from.blended(
+      withFraction: min(max(fraction, 0), 1),
+      of: to
+    ) ?? to
+  }
+}
+
 /// 菜单栏图标布局：按最大边缩放，保持 PDF 图标的原始宽高比。
 enum MenuBarIconLayout {
   static let deepSeekMaxDimension: CGFloat = 16
@@ -55,6 +91,7 @@ private final class MenuBarStatusContentView: NSView {
     let font: NSFont
     let lineHeight: CGFloat?
     let verticalInset: CGFloat
+    let lineColors: [NSColor?]
   }
 
   private let horizontalPadding: CGFloat = 4
@@ -117,7 +154,9 @@ private final class MenuBarStatusContentView: NSView {
       for (lineIndex, line) in lines.enumerated() {
         let attributes: [NSAttributedString.Key: Any] = [
           .font: segment.font,
-          .foregroundColor: textColor
+          .foregroundColor: segment.lineColors.indices.contains(lineIndex)
+            ? (segment.lineColors[lineIndex] ?? textColor)
+            : textColor
         ]
         let attributedLine = NSAttributedString(string: line, attributes: attributes)
         let lineSize = attributedLine.size()
@@ -206,6 +245,22 @@ enum PopoverSizing {
 
     let screenLimit = max(1, visibleFrameHeight - verticalSafetyMargin)
     return min(targetHeight, screenLimit)
+  }
+
+  /// 异步刷新期间只允许弹窗变大，不允许已显示的弹窗被低估后突然缩小。
+  /// 关闭后重新打开时仍会按最新页面高度重新计算，因此真实内容减少不会永久占用空间。
+  static func stableHeight(
+    targetHeight: CGFloat,
+    currentHeight: CGFloat,
+    isPopoverShown: Bool,
+    maximumHeight: CGFloat? = nil
+  ) -> CGFloat {
+    let boundedTarget = maximumHeight.map { min(targetHeight, max(1, $0)) } ?? targetHeight
+    guard isPopoverShown, currentHeight.isFinite, currentHeight > 0 else {
+      return boundedTarget
+    }
+    let boundedCurrent = maximumHeight.map { min(currentHeight, max(1, $0)) } ?? currentHeight
+    return max(boundedTarget, boundedCurrent)
   }
 }
 
@@ -467,6 +522,17 @@ final class StatusItemController: NSObject {
     let isDark = (button.window?.effectiveAppearance ?? NSApp.effectiveAppearance)
       .bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
 
+    let openCodeMonthlyGap: Int? = {
+      guard let subscription = openCodeStore.snapshot?.goSubscription,
+        let monthly = subscription.monthly
+      else {
+        return nil
+      }
+      let now = openCodeStore.clock.now()
+      return monthly.usageGapPercent(now: now)
+        ?? monthly.usageGapPercent(now: now, windowEnd: subscription.renewsAt)
+    }()
+
     var segments: [MenuBarStatusContentView.Segment] = []
     if visibility.showsDeepSeek {
       segments.append(
@@ -479,7 +545,8 @@ final class StatusItemController: NSObject {
           lines: [store.menuBarText],
           font: font,
           lineHeight: nil,
-          verticalInset: 0
+          verticalInset: 0,
+          lineColors: []
         )
       )
     }
@@ -494,7 +561,13 @@ final class StatusItemController: NSObject {
           lines: [codexStore.menuBarText],
           font: font,
           lineHeight: nil,
-          verticalInset: 0
+          verticalInset: 0,
+          lineColors: [
+            MenuBarUsageColor.color(
+              for: codexStore.usage?.usageGapPercent,
+              isDark: isDark
+            )
+          ]
         )
       )
     }
@@ -509,7 +582,17 @@ final class StatusItemController: NSObject {
           lines: MenuBarDisplayLayout.cursorLines(cursorStore.menuBarText),
           font: cursorFont,
           lineHeight: MenuBarDisplayLayout.cursorLineHeight,
-          verticalInset: MenuBarDisplayLayout.cursorVerticalInset
+          verticalInset: MenuBarDisplayLayout.cursorVerticalInset,
+          lineColors: [
+            MenuBarUsageColor.color(
+              for: cursorStore.usage?.usageGapPercent,
+              isDark: isDark
+            ),
+            MenuBarUsageColor.color(
+              for: cursorStore.usage?.apiUsageGapPercent,
+              isDark: isDark
+            )
+          ]
         )
       )
     }
@@ -524,7 +607,11 @@ final class StatusItemController: NSObject {
           lines: openCodeStore.menuBarLines,
           font: cursorFont,
           lineHeight: MenuBarDisplayLayout.cursorLineHeight,
-          verticalInset: MenuBarDisplayLayout.cursorVerticalInset
+          verticalInset: MenuBarDisplayLayout.cursorVerticalInset,
+          lineColors: [
+            MenuBarUsageColor.color(for: openCodeMonthlyGap, isDark: isDark),
+            nil
+          ]
         )
       )
     }
@@ -585,6 +672,7 @@ final class StatusItemController: NSObject {
       width: PopoverSizing.width,
       height: PopoverSizing.fallbackHeight
     )
+    popover.animates = false
     popover.behavior = .transient
   }
 
@@ -602,7 +690,15 @@ final class StatusItemController: NSObject {
       pageHeights: Array(vendorPageHeights.values),
       visibleFrameHeight: visibleFrameHeight
     )
-    let size = NSSize(width: PopoverSizing.width, height: height)
+    let stableHeight = PopoverSizing.stableHeight(
+      targetHeight: height,
+      currentHeight: popover.contentSize.height,
+      isPopoverShown: popover.isShown,
+      maximumHeight: visibleFrameHeight.map {
+        max(1, $0 - PopoverSizing.verticalSafetyMargin)
+      }
+    )
+    let size = NSSize(width: PopoverSizing.width, height: stableHeight)
     popover.contentSize = size
     popover.contentViewController?.preferredContentSize = size
   }
