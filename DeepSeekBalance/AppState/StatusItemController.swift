@@ -28,12 +28,20 @@ enum MenuBarDisplayLayout {
 }
 
 enum MenuBarUsageColor {
+  /// 低于理想用量超过 10 个百分点时过渡到绿色，-30 个百分点时完全变绿。
   /// +10 个百分点时过渡到黄色，+30 个百分点时过渡到红色，区间内连续插值。
   /// 使用偏白的高亮黄/红，并保持较高不透明度，确保菜单栏上清晰可读。
+  static let greenPeakGap: CGFloat = 30
   static let yellowPeakGap: CGFloat = 10
   static let redPeakGap: CGFloat = 30
   static let colorAlpha: CGFloat = 0.96
 
+  private static let brightGreen = NSColor(
+    calibratedRed: 0.55,
+    green: 1.0,
+    blue: 0.55,
+    alpha: 1.0
+  )
   private static let brightYellow = NSColor(
     calibratedRed: 1.0,
     green: 0.94,
@@ -48,11 +56,22 @@ enum MenuBarUsageColor {
   )
 
   static func color(for gap: Int?, isDark: Bool) -> NSColor? {
-    guard let gap, gap > 0 else { return nil }
-
-    let normalized = min(max(CGFloat(gap) / redPeakGap, 0), 1)
-    let yellowPosition = yellowPeakGap / redPeakGap
+    guard let gap else { return nil }
+    let gapValue = CGFloat(gap)
     let baseColor = isDark ? NSColor.white : NSColor.labelColor
+
+    if gapValue <= -greenPeakGap {
+      return brightGreen.withAlphaComponent(colorAlpha)
+    }
+    if gapValue < -yellowPeakGap {
+      let fraction = (abs(gapValue) - yellowPeakGap) / (greenPeakGap - yellowPeakGap)
+      return blend(baseColor, brightGreen, fraction: fraction)
+        .withAlphaComponent(colorAlpha)
+    }
+    guard gapValue > 0 else { return nil }
+
+    let normalized = min(max(gapValue / redPeakGap, 0), 1)
+    let yellowPosition = yellowPeakGap / redPeakGap
     let interpolated: NSColor
     if normalized <= yellowPosition {
       let fraction = normalized / yellowPosition

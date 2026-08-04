@@ -260,6 +260,25 @@ final class MenuBarUsageColorTests: XCTestCase {
     XCTAssertNil(MenuBarUsageColor.color(for: nil, isDark: true))
     XCTAssertNil(MenuBarUsageColor.color(for: 0, isDark: true))
     XCTAssertNil(MenuBarUsageColor.color(for: -4, isDark: true))
+    XCTAssertNil(MenuBarUsageColor.color(for: -10, isDark: true))
+  }
+
+  func testUnderUsageUsesContinuousGreenInterval() throws {
+    let near = try rgba(XCTUnwrap(MenuBarUsageColor.color(for: -11, isDark: true)))
+    let full = try rgba(XCTUnwrap(MenuBarUsageColor.color(for: -30, isDark: true)))
+    let clamped = try rgba(XCTUnwrap(MenuBarUsageColor.color(for: -31, isDark: true)))
+
+    XCTAssertGreaterThanOrEqual(near.alpha, 0.95)
+    XCTAssertGreaterThan(near.green, near.red)
+    XCTAssertGreaterThan(near.green, near.blue)
+    XCTAssertGreaterThan(near.red, full.red)
+    XCTAssertGreaterThan(near.blue, full.blue)
+    XCTAssertGreaterThan(full.green, 0.9)
+    XCTAssertLessThan(full.red, 0.65)
+    XCTAssertLessThan(full.blue, 0.65)
+    XCTAssertEqual(full.green, clamped.green, accuracy: 0.0001)
+    XCTAssertEqual(full.red, clamped.red, accuracy: 0.0001)
+    XCTAssertEqual(full.blue, clamped.blue, accuracy: 0.0001)
   }
 
   func testOverageUsesAContinuousBrightWhiteYellowRedGradient() throws {
