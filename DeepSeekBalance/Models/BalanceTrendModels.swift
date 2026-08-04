@@ -11,6 +11,10 @@ enum UsageHistoryWindow {
   static let days = 14
   static let hours = days * 24
   static let seconds = TimeInterval(hours * 3600)
+
+  static func chartDomain(now: Date) -> ClosedRange<Date> {
+    now.addingTimeInterval(-seconds)...now
+  }
 }
 
 /// 用于估算额度耗尽时间的剩余量样本。

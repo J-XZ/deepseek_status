@@ -8,6 +8,7 @@ enum MenuBarVendor: Int, CaseIterable {
   case codex = 1
   case cursor = 2
   case openCode = 3
+  case vps = 4
 }
 
 /// 菜单栏数字布局：Cursor 和 OpenCode 的多组用量纵向排列，避免横向挤占空间。
@@ -28,10 +29,23 @@ enum MenuBarDisplayLayout {
 
 enum MenuBarUsageColor {
   /// +10 个百分点时过渡到黄色，+30 个百分点时过渡到红色，区间内连续插值。
-  /// 颜色使用适度透明度，避免在菜单栏上过于刺眼。
+  /// 使用偏白的高亮黄/红，并保持较高不透明度，确保菜单栏上清晰可读。
   static let yellowPeakGap: CGFloat = 10
   static let redPeakGap: CGFloat = 30
-  static let colorAlpha: CGFloat = 0.78
+  static let colorAlpha: CGFloat = 0.96
+
+  private static let brightYellow = NSColor(
+    calibratedRed: 1.0,
+    green: 0.94,
+    blue: 0.58,
+    alpha: 1.0
+  )
+  private static let brightRed = NSColor(
+    calibratedRed: 1.0,
+    green: 0.64,
+    blue: 0.64,
+    alpha: 1.0
+  )
 
   static func color(for gap: Int?, isDark: Bool) -> NSColor? {
     guard let gap, gap > 0 else { return nil }
@@ -42,10 +56,10 @@ enum MenuBarUsageColor {
     let interpolated: NSColor
     if normalized <= yellowPosition {
       let fraction = normalized / yellowPosition
-      interpolated = blend(baseColor, .systemYellow, fraction: fraction)
+      interpolated = blend(baseColor, brightYellow, fraction: fraction)
     } else {
       let fraction = (normalized - yellowPosition) / (1 - yellowPosition)
-      interpolated = blend(.systemYellow, .systemRed, fraction: fraction)
+      interpolated = blend(brightYellow, brightRed, fraction: fraction)
     }
     return interpolated.withAlphaComponent(colorAlpha)
   }
@@ -68,6 +82,7 @@ enum MenuBarIconLayout {
   static let codexMaxDimension: CGFloat = 13
   static let cursorMaxDimension: CGFloat = 13
   static let openCodeMaxDimension: CGFloat = 13
+  static let vpsMaxDimension: CGFloat = 13
 
   static func fittingSize(_ imageSize: NSSize, maxDimension: CGFloat) -> NSSize {
     guard imageSize.width > 0, imageSize.height > 0, maxDimension > 0 else {
@@ -155,18 +170,10 @@ private final class MenuBarStatusContentView: NSView {
         let lineColor = segment.lineColors.indices.contains(lineIndex)
           ? segment.lineColors[lineIndex]
           : nil
-        var attributes: [NSAttributedString.Key: Any] = [
+        let attributes: [NSAttributedString.Key: Any] = [
           .font: segment.font,
           .foregroundColor: lineColor ?? textColor
         ]
-        if lineColor != nil {
-          // 彩色文字加轻微白色光晕，提升渐变色在菜单栏背景上的可读性。
-          let shadow = NSShadow()
-          shadow.shadowColor = NSColor.white.withAlphaComponent(0.62)
-          shadow.shadowBlurRadius = 1.2
-          shadow.shadowOffset = .zero
-          attributes[.shadow] = shadow
-        }
         let attributedLine = NSAttributedString(string: line, attributes: attributes)
         let lineSize = attributedLine.size()
         let lineCenterY = textBottom + textHeight
@@ -279,6 +286,7 @@ struct MenuBarVendorVisibility {
   static let codexKey = "menuBar.showCodex"
   static let cursorKey = "menuBar.showCursor"
   static let openCodeKey = "menuBar.showOpenCode"
+  static let vpsKey = "menuBar.showVPS"
 
   let defaults: UserDefaults
 
@@ -302,6 +310,10 @@ struct MenuBarVendorVisibility {
     defaults.object(forKey: Self.openCodeKey) as? Bool ?? true
   }
 
+  var showsVPS: Bool {
+    defaults.object(forKey: Self.vpsKey) as? Bool ?? true
+  }
+
   func isVisible(_ vendor: MenuBarVendor) -> Bool {
     switch vendor {
     case .deepseek:
@@ -312,6 +324,8 @@ struct MenuBarVendorVisibility {
       return showsCursor
     case .openCode:
       return showsOpenCode
+    case .vps:
+      return showsVPS
     }
   }
 
@@ -321,20 +335,26 @@ struct MenuBarVendorVisibility {
     switch vendor {
     case .deepseek:
       let newValue = !showsDeepSeek
-      guard newValue || showsCodex || showsCursor || showsOpenCode else { return false }
+      guard newValue || showsCodex || showsCursor || showsOpenCode || showsVPS else { return false }
       defaults.set(newValue, forKey: Self.deepseekKey)
     case .codex:
       let newValue = !showsCodex
-      guard newValue || showsDeepSeek || showsCursor || showsOpenCode else { return false }
+      guard newValue || showsDeepSeek || showsCursor || showsOpenCode || showsVPS else { return false }
       defaults.set(newValue, forKey: Self.codexKey)
     case .cursor:
       let newValue = !showsCursor
-      guard newValue || showsDeepSeek || showsCodex || showsOpenCode else { return false }
+      guard newValue || showsDeepSeek || showsCodex || showsOpenCode || showsVPS else { return false }
       defaults.set(newValue, forKey: Self.cursorKey)
     case .openCode:
       let newValue = !showsOpenCode
-      guard newValue || showsDeepSeek || showsCodex || showsCursor else { return false }
+      guard newValue || showsDeepSeek || showsCodex || showsCursor || showsVPS else { return false }
       defaults.set(newValue, forKey: Self.openCodeKey)
+    case .vps:
+      let newValue = !showsVPS
+      guard newValue || showsDeepSeek || showsCodex || showsCursor || showsOpenCode else {
+        return false
+      }
+      defaults.set(newValue, forKey: Self.vpsKey)
     }
     return true
   }
@@ -353,6 +373,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let codexStore = CodexUsageStore()
     let cursorStore = CursorUsageStore()
     let openCodeStore = OpenCodeUsageStore()
+    let vpsStore = VPSUsageStore()
     let codexStatusStore = StatusPageStatusStore(
       client: StatusPageClient(
         baseURL: URL(string: "https://status.openai.com")!
@@ -371,6 +392,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     codexStore.setEnabled(visibility.showsCodex)
     cursorStore.setEnabled(visibility.showsCursor)
     openCodeStore.setEnabled(visibility.showsOpenCode)
+    vpsStore.setEnabled(visibility.showsVPS)
     codexStatusStore.setEnabled(visibility.showsCodex)
     cursorStatusStore.setEnabled(visibility.showsCursor)
     statusItemController = StatusItemController(
@@ -380,6 +402,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       codexStore: codexStore,
       cursorStore: cursorStore,
       openCodeStore: openCodeStore,
+      vpsStore: vpsStore,
       codexStatusStore: codexStatusStore,
       cursorStatusStore: cursorStatusStore,
       visibility: visibility
@@ -398,6 +421,7 @@ final class StatusItemController: NSObject {
   private let codexStore: CodexUsageStore
   private let cursorStore: CursorUsageStore
   private let openCodeStore: OpenCodeUsageStore
+  private let vpsStore: VPSUsageStore
   private let codexStatusStore: StatusPageStatusStore
   private let cursorStatusStore: StatusPageStatusStore
 
@@ -420,6 +444,7 @@ final class StatusItemController: NSObject {
     codexStore: CodexUsageStore,
     cursorStore: CursorUsageStore,
     openCodeStore: OpenCodeUsageStore,
+    vpsStore: VPSUsageStore,
     codexStatusStore: StatusPageStatusStore,
     cursorStatusStore: StatusPageStatusStore,
     visibility: MenuBarVendorVisibility = MenuBarVendorVisibility()
@@ -430,6 +455,7 @@ final class StatusItemController: NSObject {
     self.codexStore = codexStore
     self.cursorStore = cursorStore
     self.openCodeStore = openCodeStore
+    self.vpsStore = vpsStore
     self.codexStatusStore = codexStatusStore
     self.cursorStatusStore = cursorStatusStore
     self.visibility = visibility
@@ -466,16 +492,10 @@ final class StatusItemController: NSObject {
     return tintedImage(icon, color: isDark ? .white : .black)
   }
 
-  private func menuBarTintedSystemIcon(
-    named name: String,
-    size: CGFloat,
-    isDark: Bool
-  ) -> NSImage? {
-    guard let icon = NSImage(systemSymbolName: name, accessibilityDescription: nil) else {
-      return nil
-    }
-    icon.size = MenuBarIconLayout.fittingSize(icon.size, maxDimension: size)
-    return tintedImage(icon, color: isDark ? .white : .black)
+  /// 品牌图标在菜单栏统一绘制为白色。
+  private func menuBarBrandIcon(named name: String, size: CGFloat) -> NSImage? {
+    guard let icon = menuBarIcon(named: name, size: size) else { return nil }
+    return tintedImage(icon, color: .white)
   }
 
   private func tintedImage(_ image: NSImage, color: NSColor) -> NSImage {
@@ -509,8 +529,7 @@ final class StatusItemController: NSObject {
     button.sendAction(on: [.leftMouseUp, .rightMouseUp])
   }
 
-  /// 菜单栏组合展示：`DeepSeek 图标 + 额度 | Codex 图标 + 剩余用量 | Cursor 图标 + 两行用量 | OpenCode 图标 + 两行用量`。
-  /// Cursor 和 OpenCode 的多组用量使用较小字体纵向排列。
+  /// 菜单栏组合展示：AI 供应商与 Vultr 的剩余用量；多组数值使用较小字体纵向排列。
   /// 被隐藏的供应商不显示。内容视图使用系统标签颜色，图标按当前外观手动着色。
   private func updateTitle() {
     titleUpdateTask?.cancel()
@@ -608,10 +627,9 @@ final class StatusItemController: NSObject {
     if visibility.showsOpenCode {
       segments.append(
         MenuBarStatusContentView.Segment(
-          icon: menuBarTintedSystemIcon(
-            named: "globe",
+          icon: menuBarBrandIcon(
+            named: "OpenCodeIcon",
             size: MenuBarIconLayout.openCodeMaxDimension,
-            isDark: isDark
           ),
           lines: openCodeStore.menuBarLines,
           font: cursorFont,
@@ -621,6 +639,21 @@ final class StatusItemController: NSObject {
             MenuBarUsageColor.color(for: openCodeMonthlyGap, isDark: isDark),
             nil
           ]
+        )
+      )
+    }
+    if visibility.showsVPS {
+      segments.append(
+        MenuBarStatusContentView.Segment(
+          icon: menuBarBrandIcon(
+            named: "VultrIcon",
+            size: MenuBarIconLayout.vpsMaxDimension,
+          ),
+          lines: vpsStore.menuBarLines(language: store.language),
+          font: cursorFont,
+          lineHeight: MenuBarDisplayLayout.cursorLineHeight,
+          verticalInset: MenuBarDisplayLayout.cursorVerticalInset,
+          lineColors: [nil, nil]
         )
       )
     }
@@ -644,14 +677,20 @@ final class StatusItemController: NSObject {
       language: store.language,
       openCodeStore.menuBarLines.joined(separator: ", ")
     )
-    button.setAccessibilityLabel([deepseekLabel, codexLabel, cursorLabel, openCodeLabel]
+    let vpsLabel = L10n.string(
+      .a11yMenuBarVPS,
+      language: store.language,
+      vpsStore.menuBarLines(language: store.language).joined(separator: ", ")
+    )
+    button.setAccessibilityLabel([deepseekLabel, codexLabel, cursorLabel, openCodeLabel, vpsLabel]
       .enumerated()
       .filter { index, _ in
         switch index {
         case 0: return visibility.showsDeepSeek
         case 1: return visibility.showsCodex
         case 2: return visibility.showsCursor
-        default: return visibility.showsOpenCode
+        case 3: return visibility.showsOpenCode
+        default: return visibility.showsVPS
         }
       }
       .map(\.element)
@@ -668,6 +707,7 @@ final class StatusItemController: NSObject {
       codexStore: codexStore,
       cursorStore: cursorStore,
       openCodeStore: openCodeStore,
+      vpsStore: vpsStore,
       codexStatusStore: codexStatusStore,
       cursorStatusStore: cursorStatusStore,
       visibility: visibility,
@@ -840,6 +880,7 @@ final class StatusItemController: NSObject {
       await codexStore.refreshIfNeeded(maximumAge: 0)
       await cursorStore.refreshIfNeeded(maximumAge: 0)
       await openCodeStore.refreshIfNeeded(maximumAge: 0)
+      await vpsStore.refreshIfNeeded(maximumAge: 0)
       await statusStore.refreshIfNeeded(maximumAge: 0)
       await codexStatusStore.refreshIfNeeded(maximumAge: 0)
       await cursorStatusStore.refreshIfNeeded(maximumAge: 0)
@@ -877,6 +918,8 @@ final class StatusItemController: NSObject {
       cursorStatusStore.setEnabled(visibility.showsCursor)
     case .openCode:
       openCodeStore.setEnabled(visibility.showsOpenCode)
+    case .vps:
+      vpsStore.setEnabled(visibility.showsVPS)
     }
     updateTitle()
     showContextMenu()
@@ -917,6 +960,11 @@ final class StatusItemController: NSObject {
         self?.scheduleTitleUpdate()
       }
       .store(in: &cancellables)
+    vpsStore.objectWillChange
+      .sink { [weak self] _ in
+        self?.scheduleTitleUpdate()
+      }
+      .store(in: &cancellables)
   }
 
   private func vendorTitleKey(_ vendor: MenuBarVendor) -> L10nKey {
@@ -929,6 +977,8 @@ final class StatusItemController: NSObject {
       return .menuShowCursor
     case .openCode:
       return .menuShowOpenCode
+    case .vps:
+      return .menuShowVPS
     }
   }
 }

@@ -3668,6 +3668,252 @@
         "en": {"stringUnit": {"state": "translated", "value": "OpenCode Usage"}},
         "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode 用量"}}
       }
+    },
+    "a11y.menuBarVPS": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Vultr usage: %@"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr 用量：%@"}}
+      }
+    },
+    "a11y.vpsIcon": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Vultr icon"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr 图标"}}
+      }
+    },
+    "a11y.vpsTrend": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Vultr remaining traffic and credit trend chart"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr 剩余流量和余额趋势图"}}
+      }
+    },
+    "chart.credit": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Remaining credit"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "剩余额度"}}
+      }
+    },
+    "chart.traffic": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Remaining traffic"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "剩余流量"}}
+      }
+    },
+    "menu.showVPS": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Show Vultr"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "显示 Vultr"}}
+      }
+    },
+    "tab.vps": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Vultr Usage"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr 用量"}}
+      }
+    },
+    "vps.authInvalid": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Authentication failed"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "认证失败"}}
+      }
+    },
+    "vps.billingCycle": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Billing cycle"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "计费周期"}}
+      }
+    },
+    "vps.cycleRemaining": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "%dd"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "%d天"}}
+      }
+    },
+    "vps.configEmpty": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Please enter both the Vultr API Token and Instance ID."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "请输入 Vultr API Token 和 Instance ID。"}}
+      }
+    },
+    "vps.configHelp": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "The Token is stored in Keychain. The Instance ID selects the instance used for the billing-cycle lookup."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Token 会保存到 Keychain；Instance ID 用于选择实例并推导计费周期。"}}
+      }
+    },
+    "vps.configKeychain": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Keychain"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Keychain"}}
+      }
+    },
+    "vps.configNotConfigured": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Not configured"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "未配置"}}
+      }
+    },
+    "vps.configSave": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Save and Refresh"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "保存并刷新"}}
+      }
+    },
+    "vps.configSource": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Configuration source:"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "配置来源："}}
+      }
+    },
+    "vps.configTitle": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Vultr API Configuration"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr API 配置"}}
+      }
+    },
+    "vps.configClear": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Clear Saved Configuration"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "清除已保存配置"}}
+      }
+    },
+    "vps.empty": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Add a Vultr API Token and Instance ID below to load VPS usage."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "请在下方添加 Vultr API Token 和 Instance ID 以加载 VPS 用量。"}}
+      }
+    },
+    "vps.errorDecoding": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Could not parse the Vultr response."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "无法解析 Vultr 响应。"}}
+      }
+    },
+    "vps.errorHTTP": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Vultr returned an error (%d)."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr 返回错误（%d）。"}}
+      }
+    },
+    "vps.errorKeychain": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Keychain error: %@"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Keychain 错误：%@"}}
+      }
+    },
+    "vps.errorNoNetwork": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Cannot connect to Vultr. Check your network."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "无法连接 Vultr，请检查网络。"}}
+      }
+    },
+    "vps.errorRateLimited": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Vultr rate limit reached."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr 请求频率受限。"}}
+      }
+    },
+    "vps.errorServer": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Vultr is temporarily unavailable (%d)."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr 暂时不可用（%d）。"}}
+      }
+    },
+    "vps.errorTimeout": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "The Vultr request timed out."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr 请求超时。"}}
+      }
+    },
+    "vps.errorUnauthorized": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "The Vultr API Token is invalid or unauthorized."}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr API Token 无效或无权限。"}}
+      }
+    },
+    "vps.instance": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Vultr instance"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr 实例"}}
+      }
+    },
+    "vps.lastUpdated": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Last updated: %@"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "最后更新：%@"}}
+      }
+    },
+    "vps.loading": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Loading Vultr usage…"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "正在加载 Vultr 用量…"}}
+      }
+    },
+    "vps.notConfigured": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Not configured"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "未配置"}}
+      }
+    },
+    "vps.remainingCredit": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Remaining credit (USD)"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "剩余额度（美元）"}}
+      }
+    },
+    "vps.remainingTraffic": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Remaining traffic"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "剩余流量"}}
+      }
+    },
+    "vps.saveFailed": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Could not save Vultr configuration: %@"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "无法保存 Vultr 配置：%@"}}
+      }
+    },
+    "vps.title": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Vultr Usage"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr 用量"}}
+      }
+    },
+    "vps.tokenPlaceholder": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Paste Vultr API Token"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "粘贴 Vultr API Token"}}
+      }
+    },
+    "vps.instancePlaceholder": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Paste Instance ID"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "粘贴 Instance ID"}}
+      }
+    },
+    "vps.trendCredit": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Remaining credit"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "剩余额度"}}
+      }
+    },
+    "vps.trendEstimateTraffic": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Estimated to exhaust traffic in %@"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "估计在%@内耗尽流量"}}
+      }
+    },
+    "vps.trendTraffic": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Remaining traffic"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "剩余流量"}}
+      }
+    },
+    "vps.trendWaiting": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Waiting for two samples to draw a line"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "等待至少两个样本后绘制折线"}}
+      }
     }
   },
   "version": "1.0"

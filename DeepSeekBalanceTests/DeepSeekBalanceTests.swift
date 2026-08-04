@@ -262,14 +262,18 @@ final class MenuBarUsageColorTests: XCTestCase {
     XCTAssertNil(MenuBarUsageColor.color(for: -4, isDark: true))
   }
 
-  func testOverageUsesAContinuousWhiteYellowRedGradient() throws {
+  func testOverageUsesAContinuousBrightWhiteYellowRedGradient() throws {
     let low = try rgba(XCTUnwrap(MenuBarUsageColor.color(for: 1, isDark: true)))
     let yellow = try rgba(XCTUnwrap(MenuBarUsageColor.color(for: 10, isDark: true)))
     let high = try rgba(XCTUnwrap(MenuBarUsageColor.color(for: 30, isDark: true)))
 
-    XCTAssertLessThan(low.alpha, 1)
+    XCTAssertGreaterThanOrEqual(low.alpha, 0.95)
     XCTAssertGreaterThan(low.blue, yellow.blue)
+    XCTAssertGreaterThan(yellow.green, 0.85)
+    XCTAssertGreaterThan(yellow.blue, 0.45)
     XCTAssertGreaterThan(yellow.green, high.green)
+    XCTAssertGreaterThan(high.green, 0.55)
+    XCTAssertGreaterThan(high.blue, 0.55)
     XCTAssertGreaterThanOrEqual(high.red, yellow.red)
   }
 

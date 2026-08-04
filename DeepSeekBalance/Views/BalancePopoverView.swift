@@ -38,12 +38,13 @@ enum UsageProgressEvaluator {
   }
 }
 
-/// 弹出窗口顶部切换栏：DeepSeek 用量 / Codex 用量 / Cursor 用量 / OpenCode 用量。
+/// 弹出窗口顶部切换栏：DeepSeek / Codex / Cursor / OpenCode / Vultr 用量。
 enum UsageTab: String, CaseIterable, Identifiable, Hashable {
   case deepseek
   case codex
   case cursor
   case openCode
+  case vps
 
   var id: String { rawValue }
 
@@ -58,6 +59,8 @@ enum UsageTab: String, CaseIterable, Identifiable, Hashable {
       return .cursor
     case .openCode:
       return .openCode
+    case .vps:
+      return .vps
     }
   }
 }
@@ -81,6 +84,7 @@ struct BalancePopoverView: View {
   @ObservedObject var codexStore: CodexUsageStore
   @ObservedObject var cursorStore: CursorUsageStore
   @ObservedObject var openCodeStore: OpenCodeUsageStore
+  @ObservedObject var vpsStore: VPSUsageStore
   @ObservedObject var codexStatusStore: StatusPageStatusStore
   @ObservedObject var cursorStatusStore: StatusPageStatusStore
   let visibility: MenuBarVendorVisibility
@@ -88,8 +92,11 @@ struct BalancePopoverView: View {
 
   @State private var apiKeyInput = ""
   @State private var openCodeCookieInput = ""
+  @State private var vpsTokenInput = ""
+  @State private var vpsInstanceIDInput = ""
   @State private var validationMessage: String?
   @State private var openCodeCookieValidationMessage: String?
+  @State private var vpsValidationMessage: String?
   @State private var selectedTab: UsageTab = .deepseek
   @State private var reportedPageHeights: [UsageTab: CGFloat] = [:]
   @Environment(\.controlActiveState) private var controlActiveState
@@ -223,6 +230,21 @@ struct BalancePopoverView: View {
         }
         card { openCodeTrendSection }
         card { openCodeCookieConfigurationSection }
+      case .vps:
+        VPSUsageView(
+          store: vpsStore,
+          language: language,
+          appearance: store.appearance
+        )
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(cardBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay {
+          RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .stroke(cardBorder, lineWidth: 1)
+        }
+        card { vpsTrendSection }
+        card { vpsConfigurationSection }
       }
       card { footer }
     }
@@ -261,9 +283,10 @@ struct BalancePopoverView: View {
       async let codex = codexStore.refreshIfNeeded()
       async let cursor = cursorStore.refreshIfNeeded()
       async let openCode = openCodeStore.refreshIfNeeded()
+      async let vps = vpsStore.refreshIfNeeded()
       async let codexStatus = codexStatusStore.refreshIfNeeded()
       async let cursorStatus = cursorStatusStore.refreshIfNeeded()
-      _ = await (balance, deepSeekStatus, codex, cursor, openCode, codexStatus, cursorStatus)
+      _ = await (balance, deepSeekStatus, codex, cursor, openCode, vps, codexStatus, cursorStatus)
     }
   }
 
@@ -296,6 +319,8 @@ struct BalancePopoverView: View {
       return .tabCursor
     case .openCode:
       return .tabOpenCode
+    case .vps:
+      return .tabVPS
     }
   }
 
@@ -636,6 +661,34 @@ struct BalancePopoverView: View {
     }
   }
 
+  // MARK: - Vultr 趋势区
+
+  private var vpsTrendSection: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Text(L10n.string(.trendTitle, language: language))
+        .font(AppTypography.section)
+
+      let chart = VPSTrendChartView(
+        samples: vpsStore.historySamples,
+        language: language,
+        now: vpsStore.clock.now()
+      )
+      usageTrendSummary(chart.usageChangeValue)
+
+      if vpsStore.historySamples.count >= 2 {
+        chart
+      } else {
+        Text(L10n.string(.vpsTrendWaiting, language: language))
+          .font(AppTypography.caption)
+          .foregroundStyle(.secondary)
+      }
+
+      Text(L10n.string(.trendLocalNote, language: language))
+        .font(AppTypography.caption)
+        .foregroundStyle(.secondary)
+    }
+  }
+
   // MARK: - 错误提示
 
   @ViewBuilder
@@ -787,12 +840,94 @@ struct BalancePopoverView: View {
     }
   }
 
+  // MARK: - Vultr 配置区
+
+  private var vpsConfigurationSection: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Text(L10n.string(.vpsConfigTitle, language: language))
+        .font(AppTypography.section)
+
+      SecureField(
+        L10n.string(.vpsTokenPlaceholder, language: language),
+        text: $vpsTokenInput
+      )
+      .textFieldStyle(.roundedBorder)
+      .onSubmit(saveVPSConfiguration)
+
+      TextField(
+        L10n.string(.vpsInstancePlaceholder, language: language),
+        text: $vpsInstanceIDInput
+      )
+      .textFieldStyle(.roundedBorder)
+      .onSubmit(saveVPSConfiguration)
+
+      Text(L10n.string(.vpsConfigHelp, language: language))
+        .font(AppTypography.caption)
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
+
+      if let message = vpsValidationMessage {
+        Text(message)
+          .font(AppTypography.caption)
+          .foregroundStyle(.red)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+
+      HStack(spacing: 8) {
+        Button(L10n.string(.vpsConfigSave, language: language)) {
+          saveVPSConfiguration()
+        }
+        Button(L10n.string(.vpsConfigClear, language: language)) {
+          vpsStore.clearConfiguration()
+          vpsTokenInput = ""
+          vpsInstanceIDInput = ""
+          vpsValidationMessage = nil
+        }
+        Spacer()
+      }
+      .controlSize(.small)
+
+      HStack(spacing: 4) {
+        Text(L10n.string(.vpsConfigSource, language: language))
+        Text(
+          vpsStore.hasSavedConfiguration
+            ? L10n.string(.vpsConfigKeychain, language: language)
+            : L10n.string(.vpsConfigNotConfigured, language: language)
+        )
+        .fontWeight(.medium)
+      }
+      .font(AppTypography.caption)
+      .foregroundStyle(.secondary)
+    }
+  }
+
+  private func saveVPSConfiguration() {
+    switch vpsStore.saveConfiguration(
+      token: vpsTokenInput,
+      instanceID: vpsInstanceIDInput
+    ) {
+    case .success:
+      vpsValidationMessage = nil
+      vpsTokenInput = ""
+      vpsInstanceIDInput = ""
+      Task { await vpsStore.refresh() }
+    case .emptyToken, .emptyInstanceID:
+      vpsValidationMessage = L10n.string(.vpsConfigEmpty, language: language)
+    case .keychainFailed(let detail):
+      vpsValidationMessage = L10n.string(
+        .vpsSaveFailed,
+        language: language,
+        AppDisplayError.sanitized(detail)
+      )
+    }
+  }
+
   // MARK: - 底部操作区
 
   private var footer: some View {
     HStack(spacing: 8) {
       if store.isRefreshing || statusStore.loadState == .loading || codexStore.isRefreshing
-        || cursorStore.isRefreshing || openCodeStore.isRefreshing
+        || cursorStore.isRefreshing || openCodeStore.isRefreshing || vpsStore.isRefreshing
         || codexStatusStore.loadState == .loading
         || cursorStatusStore.loadState == .loading
       {
@@ -805,13 +940,14 @@ struct BalancePopoverView: View {
           await codexStore.refreshIfNeeded(maximumAge: 0)
           await cursorStore.refreshIfNeeded(maximumAge: 0)
           await openCodeStore.refreshIfNeeded(maximumAge: 0)
+          await vpsStore.refreshIfNeeded(maximumAge: 0)
           await codexStatusStore.refreshIfNeeded(maximumAge: 0)
           await cursorStatusStore.refreshIfNeeded(maximumAge: 0)
         }
       }
       .disabled(
         store.isRefreshing || statusStore.loadState == .loading || codexStore.isRefreshing
-        || cursorStore.isRefreshing || openCodeStore.isRefreshing
+        || cursorStore.isRefreshing || openCodeStore.isRefreshing || vpsStore.isRefreshing
         || codexStatusStore.loadState == .loading
           || cursorStatusStore.loadState == .loading
       )

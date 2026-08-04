@@ -27,9 +27,11 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
     XCTAssertTrue(visibility.showsCodex)
     XCTAssertTrue(visibility.showsCursor)
     XCTAssertTrue(visibility.showsOpenCode)
+    XCTAssertTrue(visibility.showsVPS)
     XCTAssertTrue(visibility.isVisible(.deepseek))
     XCTAssertTrue(visibility.isVisible(.codex))
     XCTAssertTrue(visibility.isVisible(.cursor))
+    XCTAssertTrue(visibility.isVisible(.vps))
   }
 
   func testToggleCodexOff() {
@@ -66,8 +68,16 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
     XCTAssertTrue(visibility.showsCodex)
   }
 
+  func testToggleVPSOff() {
+    let visibility = visibility()
+    XCTAssertTrue(visibility.toggle(.vps))
+    XCTAssertFalse(visibility.showsVPS)
+    XCTAssertTrue(visibility.isVisible(.openCode))
+  }
+
   func testCannotHideLastVisibleVendor() {
     let visibility = visibility()
+    XCTAssertTrue(visibility.toggle(.vps))
     XCTAssertTrue(visibility.toggle(.openCode))
     XCTAssertTrue(visibility.toggle(.deepseek))
     XCTAssertTrue(visibility.toggle(.codex))
@@ -80,6 +90,7 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
 
   func testCannotHideLastVisibleVendorOtherOrder() {
     let visibility = visibility()
+    XCTAssertTrue(visibility.toggle(.vps))
     XCTAssertTrue(visibility.toggle(.openCode))
     XCTAssertTrue(visibility.toggle(.codex))
     XCTAssertTrue(visibility.toggle(.cursor))
@@ -103,6 +114,7 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
 
   func testToggleRejectsRejectedState() {
     let visibility = visibility()
+    XCTAssertTrue(visibility.toggle(.vps))
     XCTAssertTrue(visibility.toggle(.openCode))
     XCTAssertTrue(visibility.toggle(.deepseek))
     XCTAssertTrue(visibility.toggle(.codex))
@@ -157,6 +169,10 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
     )
     XCTAssertEqual(
       MenuBarIconLayout.cursorMaxDimension,
+      MenuBarIconLayout.codexMaxDimension
+    )
+    XCTAssertEqual(
+      MenuBarIconLayout.vpsMaxDimension,
       MenuBarIconLayout.codexMaxDimension
     )
   }

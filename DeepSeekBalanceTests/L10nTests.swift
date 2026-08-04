@@ -68,10 +68,11 @@ final class L10nTests: XCTestCase {
       L10n.string(.codexTitle, language: .english),
       L10n.string(.cursorTitle, language: .english),
       L10n.string(.openCodeTitle, language: .english),
+      L10n.string(.vpsTitle, language: .english),
     ]
     XCTAssertEqual(
       englishTitles,
-      ["DeepSeek Usage", "Codex Usage", "Cursor Usage", "OpenCode Usage"]
+      ["DeepSeek Usage", "Codex Usage", "Cursor Usage", "OpenCode Usage", "Vultr Usage"]
     )
 
     let chineseTitles = [
@@ -79,10 +80,11 @@ final class L10nTests: XCTestCase {
       L10n.string(.codexTitle, language: .simplifiedChinese),
       L10n.string(.cursorTitle, language: .simplifiedChinese),
       L10n.string(.openCodeTitle, language: .simplifiedChinese),
+      L10n.string(.vpsTitle, language: .simplifiedChinese),
     ]
     XCTAssertEqual(
       chineseTitles,
-      ["DeepSeek 用量", "Codex 用量", "Cursor 用量", "OpenCode 用量"]
+      ["DeepSeek 用量", "Codex 用量", "Cursor 用量", "OpenCode 用量", "Vultr 用量"]
     )
 
     XCTAssertEqual(

@@ -40,9 +40,10 @@ struct OpenCodeUsageView: View {
 
   private var headerCard: some View {
     HStack(spacing: 10) {
-      Image(systemName: "globe")
-        .font(.system(size: 23, weight: .semibold))
-        .foregroundStyle(.primary)
+      Image("OpenCodeIcon")
+        .renderingMode(.template)
+        .resizable()
+        .aspectRatio(contentMode: .fit)
         .frame(width: 24, height: 24)
         .padding(8)
         .background(Color.accentColor.opacity(0.12), in: Circle())

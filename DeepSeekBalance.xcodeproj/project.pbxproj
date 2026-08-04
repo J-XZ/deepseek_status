@@ -126,6 +126,13 @@
 		AA000000000000000000041A /* OpenCodeUsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000021A /* OpenCodeUsageView.swift */; };
 		AA000000000000000000041B /* OpenCodeTrendChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000021B /* OpenCodeTrendChartView.swift */; };
 		AA000000000000000000041C /* OpenCodeHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000021C /* OpenCodeHistory.swift */; };
+		AA000000000000000000041D /* VPSUsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000220 /* VPSUsageModels.swift */; };
+		AA000000000000000000041E /* VPSUsageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000221 /* VPSUsageClient.swift */; };
+		AA000000000000000000041F /* VPSConfigStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000222 /* VPSConfigStore.swift */; };
+		AA0000000000000000000420 /* VPSUsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000223 /* VPSUsageStore.swift */; };
+		AA0000000000000000000421 /* VPSHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000224 /* VPSHistory.swift */; };
+		AA0000000000000000000422 /* VPSUsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000225 /* VPSUsageView.swift */; };
+		AA0000000000000000000423 /* VPSTrendChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000226 /* VPSTrendChartView.swift */; };
 		AA000000000000000000020D /* CodexUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000108 /* CodexUsageTests.swift */; };
 		AA000000000000000000020E /* MenuBarVendorVisibilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000109 /* MenuBarVendorVisibilityTests.swift */; };
 		AA000000000000000000020F /* InMemoryCodexHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000010A /* InMemoryCodexHistoryStore.swift */; };
@@ -134,6 +141,7 @@
 		AA0000000000000000000212 /* CursorUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000010D /* CursorUsageTests.swift */; };
 		AA0000000000000000000213 /* CursorHistoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000010E /* CursorHistoryTests.swift */; };
 		AA0000000000000000000214 /* OpenCodeUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000010F /* OpenCodeUsageTests.swift */; };
+		AA0000000000000000000215 /* VPSUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000110 /* VPSUsageTests.swift */; };
 		FF0000000000000000000101 /* TimeBucketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000001 /* TimeBucketTests.swift */; };
 		FF0000000000000000000102 /* InMemoryHistoryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000002 /* InMemoryHistoryStoreTests.swift */; };
 		FF0000000000000000000103 /* LevelDBBalanceHistoryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000003 /* LevelDBBalanceHistoryStoreTests.swift */; };
@@ -217,6 +225,13 @@
 		BB000000000000000000021A /* OpenCodeUsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenCodeUsageView.swift; sourceTree = "<group>"; };
 		BB000000000000000000021B /* OpenCodeTrendChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenCodeTrendChartView.swift; sourceTree = "<group>"; };
 		BB000000000000000000021C /* OpenCodeHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenCodeHistory.swift; sourceTree = "<group>"; };
+		BB0000000000000000000220 /* VPSUsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPSUsageModels.swift; sourceTree = "<group>"; };
+		BB0000000000000000000221 /* VPSUsageClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPSUsageClient.swift; sourceTree = "<group>"; };
+		BB0000000000000000000222 /* VPSConfigStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPSConfigStore.swift; sourceTree = "<group>"; };
+		BB0000000000000000000223 /* VPSUsageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPSUsageStore.swift; sourceTree = "<group>"; };
+		BB0000000000000000000224 /* VPSHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPSHistory.swift; sourceTree = "<group>"; };
+		BB0000000000000000000225 /* VPSUsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPSUsageView.swift; sourceTree = "<group>"; };
+		BB0000000000000000000226 /* VPSTrendChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPSTrendChartView.swift; sourceTree = "<group>"; };
 		BB000000000000000000010D /* AppAppearance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAppearance.swift; sourceTree = "<group>"; };
 		BB000000000000000000010C /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		CC0000000000000000000001 /* DeepSeekBalanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepSeekBalanceTests.swift; sourceTree = "<group>"; };
@@ -239,6 +254,7 @@
 		CC000000000000000000010D /* CursorUsageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorUsageTests.swift; sourceTree = "<group>"; };
 		CC000000000000000000010E /* CursorHistoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorHistoryTests.swift; sourceTree = "<group>"; };
 		CC000000000000000000010F /* OpenCodeUsageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenCodeUsageTests.swift; sourceTree = "<group>"; };
+		CC0000000000000000000110 /* VPSUsageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPSUsageTests.swift; sourceTree = "<group>"; };
 		DD0000000000000000000101 /* builder.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/builder.cc"; sourceTree = "<group>"; };
 		DD0000000000000000000102 /* c.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/c.cc"; sourceTree = "<group>"; };
 		DD0000000000000000000103 /* db_impl.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/db_impl.cc"; sourceTree = "<group>"; };
@@ -365,6 +381,7 @@
 				BB0000000000000000000204 /* CodexUsageStore.swift */,
 				BB0000000000000000000210 /* CursorUsageStore.swift */,
 				BB0000000000000000000219 /* OpenCodeUsageStore.swift */,
+				BB0000000000000000000223 /* VPSUsageStore.swift */,
 				EE000000000000000000000B /* RefreshCoordinator.swift */,
 				BB0000000000000000000104 /* NotificationObservation.swift */,
 				BB0000000000000000000105 /* LoginItemManager.swift */,
@@ -381,6 +398,7 @@
 				BB0000000000000000000201 /* CodexUsageModels.swift */,
 				BB000000000000000000020D /* CursorUsageModels.swift */,
 				BB0000000000000000000217 /* OpenCodeUsageModels.swift */,
+				BB0000000000000000000220 /* VPSUsageModels.swift */,
 				BB0000000000000000000206 /* CodexUsageSample.swift */,
 				BB0000000000000000000212 /* CursorUsageSample.swift */,
 				EE0000000000000000000001 /* BalanceSample.swift */,
@@ -397,6 +415,7 @@
 				BB0000000000000000000202 /* CodexUsageClient.swift */,
 				BB000000000000000000020E /* CursorUsageClient.swift */,
 				BB0000000000000000000218 /* OpenCodeUsageClient.swift */,
+				BB0000000000000000000221 /* VPSUsageClient.swift */,
 				BB0000000000000000000203 /* CodexAuthProvider.swift */,
 				BB000000000000000000020F /* CursorAuthProvider.swift */,
 			);
@@ -407,6 +426,7 @@
 			isa = PBXGroup;
 			children = (
 				BB0000000000000000000006 /* KeychainStore.swift */,
+				BB0000000000000000000222 /* VPSConfigStore.swift */,
 				EE000000000000000000000A /* CredentialFingerprint.swift */,
 			);
 			path = Security;
@@ -422,6 +442,8 @@
 				BB000000000000000000020A /* CodexTrendChartView.swift */,
 				BB0000000000000000000216 /* CursorTrendChartView.swift */,
 				BB000000000000000000021B /* OpenCodeTrendChartView.swift */,
+				BB0000000000000000000225 /* VPSUsageView.swift */,
+				BB0000000000000000000226 /* VPSTrendChartView.swift */,
 				BB000000000000000000020C /* SettingsView.swift */,
 				EE000000000000000000000C /* BalanceTrendChartView.swift */,
 				EE000000000000000000000D /* BalanceTrendEmptyView.swift */,
@@ -458,6 +480,7 @@
 				CC000000000000000000010B /* CodexHistoryTests.swift */,
 				CC000000000000000000010E /* CursorHistoryTests.swift */,
 				CC000000000000000000010F /* OpenCodeUsageTests.swift */,
+				CC0000000000000000000110 /* VPSUsageTests.swift */,
 			);
 			path = DeepSeekBalanceTests;
 			sourceTree = "<group>";
@@ -489,6 +512,7 @@
 				BB0000000000000000000209 /* CodexHistoryService.swift */,
 				BB0000000000000000000215 /* CursorHistoryService.swift */,
 				BB000000000000000000021C /* OpenCodeHistory.swift */,
+				BB0000000000000000000224 /* VPSHistory.swift */,
 			);
 			path = Persistence;
 			sourceTree = "<group>";
@@ -775,6 +799,13 @@
 				AA000000000000000000041A /* OpenCodeUsageView.swift in Sources */,
 				AA000000000000000000041B /* OpenCodeTrendChartView.swift in Sources */,
 				AA000000000000000000041C /* OpenCodeHistory.swift in Sources */,
+				AA000000000000000000041D /* VPSUsageModels.swift in Sources */,
+				AA000000000000000000041E /* VPSUsageClient.swift in Sources */,
+				AA000000000000000000041F /* VPSConfigStore.swift in Sources */,
+				AA0000000000000000000420 /* VPSUsageStore.swift in Sources */,
+				AA0000000000000000000421 /* VPSHistory.swift in Sources */,
+				AA0000000000000000000422 /* VPSUsageView.swift in Sources */,
+				AA0000000000000000000423 /* VPSTrendChartView.swift in Sources */,
 				AA000000000000000000040B /* SettingsWindow.swift in Sources */,
 				AA000000000000000000040C /* SettingsView.swift in Sources */,
 			);
@@ -804,6 +835,7 @@
 				AA0000000000000000000212 /* CursorUsageTests.swift in Sources */,
 				AA0000000000000000000213 /* CursorHistoryTests.swift in Sources */,
 				AA0000000000000000000214 /* OpenCodeUsageTests.swift in Sources */,
+				AA0000000000000000000215 /* VPSUsageTests.swift in Sources */,
 				FF0000000000000000000101 /* TimeBucketTests.swift in Sources */,
 				FF0000000000000000000102 /* InMemoryHistoryStoreTests.swift in Sources */,
 				FF0000000000000000000103 /* LevelDBBalanceHistoryStoreTests.swift in Sources */,
@@ -1010,7 +1042,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 2.1.17;
+				MARKETING_VERSION = 2.1.18;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lc++",
@@ -1042,7 +1074,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 2.1.17;
+				MARKETING_VERSION = 2.1.18;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lc++",
@@ -1072,7 +1104,7 @@
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 2.1.17;
+				MARKETING_VERSION = 2.1.18;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jxz.deepseekbalance.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -1097,7 +1129,7 @@
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 2.1.17;
+				MARKETING_VERSION = 2.1.18;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jxz.deepseekbalance.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
