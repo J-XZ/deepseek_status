@@ -8,6 +8,13 @@ struct CodexTrendChartView: View {
   let language: AppLanguage
   let now: Date
 
+  @State private var selectedDate: Date?
+
+  private var selectedSample: CodexUsageSample? {
+    guard let selectedDate else { return nil }
+    return CodexTrendProcessor.nearestSample(to: selectedDate, samples: samples)
+  }
+
   private var segments: [[CodexUsageSample]] {
     CodexTrendProcessor.segments(samples)
   }
@@ -55,6 +62,9 @@ struct CodexTrendChartView: View {
     VStack(alignment: .leading, spacing: 8) {
       exhaustionEstimate
       chartView
+      if let selectedSample {
+        selectionDetail(selectedSample)
+      }
     }
   }
 
@@ -70,6 +80,14 @@ struct CodexTrendChartView: View {
           .foregroundStyle(.blue)
           .lineStyle(StrokeStyle(lineWidth: 2))
         }
+      }
+
+      if let selectedSample {
+        RuleMark(
+          x: .value(L10n.string(.chartSelectedTime, language: language), selectedSample.bucketStart)
+        )
+        .foregroundStyle(.secondary)
+        .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
       }
     }
     .chartXScale(domain: xDomain)
@@ -100,7 +118,27 @@ struct CodexTrendChartView: View {
     }
     .chartLegend(.hidden)
     .frame(height: 160)
+    .trendChartSelection($selectedDate)
     .accessibilityLabel(L10n.string(.a11yCodexLegend, language: language))
+  }
+
+  private func selectionDetail(_ sample: CodexUsageSample) -> some View {
+    TrendChartSelectionDetail(
+      date: sample.bucketStart,
+      language: language,
+      values: [
+        TrendChartSelectionDetail.valueText(
+          label: L10n.string(.codexWindowWeekly, language: language),
+          value: L10n.string(
+            .codexWindowUsedRemaining,
+            language: language,
+            max(0, min(100, 100 - sample.remainingPercent)),
+            sample.remainingPercent
+          ),
+          language: language
+        ),
+      ]
+    )
   }
 
   private func axisLabel(for date: Date) -> String {
@@ -121,16 +159,7 @@ enum CodexTrendProcessor {
   /// 把历史样本转为连续折线段：按时间升序、同桶保留最新 observedAt、
   /// 相邻间隔超过 gapThreshold 时断开。
   static func segments(_ samples: [CodexUsageSample]) -> [[CodexUsageSample]] {
-    var newestByBucket: [Int64: CodexUsageSample] = [:]
-    for sample in samples {
-      let bucketSeconds = Int64(sample.bucketStart.timeIntervalSince1970)
-      if let existing = newestByBucket[bucketSeconds], existing.observedAt > sample.observedAt {
-        continue
-      }
-      newestByBucket[bucketSeconds] = sample
-    }
-
-    let sorted = newestByBucket.values.sorted { $0.bucketStart < $1.bucketStart }
+    let sorted = newestSamples(samples)
     guard sorted.count >= 2 else { return [] }
 
     var result: [[CodexUsageSample]] = []
@@ -145,5 +174,27 @@ enum CodexTrendProcessor {
     }
     result.append(current)
     return result.filter { $0.count >= 2 }
+  }
+
+  /// 选择距离给定时间最近的、与图表相同去重规则处理后的样本。
+  static func nearestSample(
+    to date: Date,
+    samples: [CodexUsageSample]
+  ) -> CodexUsageSample? {
+    newestSamples(samples).min {
+      abs($0.bucketStart.timeIntervalSince(date)) < abs($1.bucketStart.timeIntervalSince(date))
+    }
+  }
+
+  private static func newestSamples(_ samples: [CodexUsageSample]) -> [CodexUsageSample] {
+    var newestByBucket: [Int64: CodexUsageSample] = [:]
+    for sample in samples {
+      let bucketSeconds = Int64(sample.bucketStart.timeIntervalSince1970)
+      if let existing = newestByBucket[bucketSeconds], existing.observedAt > sample.observedAt {
+        continue
+      }
+      newestByBucket[bucketSeconds] = sample
+    }
+    return newestByBucket.values.sorted { $0.bucketStart < $1.bucketStart }
   }
 }

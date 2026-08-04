@@ -34,6 +34,13 @@ struct CursorTrendChartView: View {
   let language: AppLanguage
   let now: Date
 
+  @State private var selectedDate: Date?
+
+  private var selectedSample: CursorUsageSample? {
+    guard let selectedDate else { return nil }
+    return CursorTrendProcessor.nearestSample(to: selectedDate, samples: samples)
+  }
+
   private var points: [CursorTrendPoint] {
     CursorTrendProcessor.points(samples)
   }
@@ -81,6 +88,9 @@ struct CursorTrendChartView: View {
     VStack(alignment: .leading, spacing: 8) {
       exhaustionEstimate
       chartView
+      if let selectedSample {
+        selectionDetail(selectedSample)
+      }
     }
   }
 
@@ -100,6 +110,14 @@ struct CursorTrendChartView: View {
           point.seriesName(language: language)
         ))
         .lineStyle(StrokeStyle(lineWidth: 2))
+      }
+
+      if let selectedSample {
+        RuleMark(
+          x: .value(L10n.string(.chartSelectedTime, language: language), selectedSample.bucketStart)
+        )
+        .foregroundStyle(.secondary)
+        .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
       }
     }
     .chartXScale(domain: xDomain)
@@ -136,7 +154,32 @@ struct CursorTrendChartView: View {
     }
     .chartLegend(.visible)
     .frame(height: 160)
+    .trendChartSelection($selectedDate)
     .accessibilityLabel(L10n.string(.a11yCursorLegend, language: language))
+  }
+
+  private func selectionDetail(_ sample: CursorUsageSample) -> some View {
+    var values = [
+      TrendChartSelectionDetail.valueText(
+        label: L10n.string(.cursorTrendFirstParty, language: language),
+        value: "\(sample.remainingPercent)%",
+        language: language
+      ),
+    ]
+    if let apiRemainingPercent = sample.apiRemainingPercent {
+      values.append(
+        TrendChartSelectionDetail.valueText(
+          label: L10n.string(.cursorTrendApi, language: language),
+          value: "\(apiRemainingPercent)%",
+          language: language
+        )
+      )
+    }
+    return TrendChartSelectionDetail(
+      date: sample.bucketStart,
+      language: language,
+      values: values
+    )
   }
 
   private func axisLabel(for date: Date) -> String {
@@ -217,16 +260,7 @@ enum CursorTrendProcessor {
 
   /// 保留用于向后兼容的分段逻辑（测试沿用）。
   static func segments(_ samples: [CursorUsageSample]) -> [[CursorUsageSample]] {
-    var newestByBucket: [Int64: CursorUsageSample] = [:]
-    for sample in samples {
-      let bucketSeconds = Int64(sample.bucketStart.timeIntervalSince1970)
-      if let existing = newestByBucket[bucketSeconds], existing.observedAt > sample.observedAt {
-        continue
-      }
-      newestByBucket[bucketSeconds] = sample
-    }
-
-    let sorted = newestByBucket.values.sorted { $0.bucketStart < $1.bucketStart }
+    let sorted = newestSamples(samples)
     guard sorted.count >= 2 else { return [] }
 
     var result: [[CursorUsageSample]] = []
@@ -241,5 +275,27 @@ enum CursorTrendProcessor {
     }
     result.append(current)
     return result.filter { $0.count >= 2 }
+  }
+
+  /// 选择距离给定时间最近的、与图表相同去重规则处理后的样本。
+  static func nearestSample(
+    to date: Date,
+    samples: [CursorUsageSample]
+  ) -> CursorUsageSample? {
+    newestSamples(samples).min {
+      abs($0.bucketStart.timeIntervalSince(date)) < abs($1.bucketStart.timeIntervalSince(date))
+    }
+  }
+
+  private static func newestSamples(_ samples: [CursorUsageSample]) -> [CursorUsageSample] {
+    var newestByBucket: [Int64: CursorUsageSample] = [:]
+    for sample in samples {
+      let bucketSeconds = Int64(sample.bucketStart.timeIntervalSince1970)
+      if let existing = newestByBucket[bucketSeconds], existing.observedAt > sample.observedAt {
+        continue
+      }
+      newestByBucket[bucketSeconds] = sample
+    }
+    return newestByBucket.values.sorted { $0.bucketStart < $1.bucketStart }
   }
 }

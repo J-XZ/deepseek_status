@@ -401,4 +401,42 @@ final class OpenCodeUsageTests: XCTestCase {
     )
   }
 
+  func testOpenCodeMonthlyMenuTextUsesRenewalDateWhenWindowResetIsMissing() {
+    let now = Date(timeIntervalSince1970: 1_750_000_000)
+    let subscription = OpenCodeGoSubscription(
+      rolling: nil,
+      weekly: nil,
+      monthly: OpenCodeUsageWindow(
+        kind: .monthly,
+        usedPercent: 30,
+        resetInSec: nil
+      ),
+      renewsAt: now.addingTimeInterval(15 * 24 * 3600)
+    )
+
+    XCTAssertEqual(
+      OpenCodeUsageStore.monthlyMenuText(subscription: subscription, now: now),
+      "30% (-20%)"
+    )
+  }
+
+  func testOpenCodeMonthlyMenuTextKeepsComparisonParenthesesWhenIdealIsUnavailable() {
+    let now = Date(timeIntervalSince1970: 1_750_000_000)
+    let subscription = OpenCodeGoSubscription(
+      rolling: nil,
+      weekly: nil,
+      monthly: OpenCodeUsageWindow(
+        kind: .monthly,
+        usedPercent: 30,
+        resetInSec: nil
+      ),
+      renewsAt: nil
+    )
+
+    XCTAssertEqual(
+      OpenCodeUsageStore.monthlyMenuText(subscription: subscription, now: now),
+      "30% (--)"
+    )
+  }
+
 }

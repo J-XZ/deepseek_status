@@ -274,4 +274,29 @@ final class CursorHistoryTests: XCTestCase {
     XCTAssertEqual(segments.count, 1)
     XCTAssertEqual(segments[0].count, 2)
   }
+
+  func testNearestSampleUsesLatestDuplicateAndNearestTime() {
+    let bucket = Date(timeIntervalSince1970: 1_800_000)
+    let samples = [
+      CursorUsageSample(
+        credentialID: "cursor",
+        bucketStart: bucket,
+        observedAt: bucket.addingTimeInterval(60),
+        remainingPercent: 40
+      ),
+      CursorUsageSample(
+        credentialID: "cursor",
+        bucketStart: bucket,
+        observedAt: bucket.addingTimeInterval(120),
+        remainingPercent: 30
+      ),
+      sample(1_800_600, remaining: 20),
+    ]
+
+    let selected = CursorTrendProcessor.nearestSample(
+      to: bucket.addingTimeInterval(30),
+      samples: samples
+    )
+    XCTAssertEqual(selected?.remainingPercent, 30)
+  }
 }

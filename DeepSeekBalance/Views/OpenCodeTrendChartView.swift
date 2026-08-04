@@ -13,6 +13,12 @@ struct OpenCodeTrendChartView: View {
   let now: Date
 
   @State private var preparedModel: OpenCodeTrendProcessor.ChartModel?
+  @State private var selectedDate: Date?
+
+  private var selectedSample: OpenCodeUsageSample? {
+    guard let selectedDate else { return nil }
+    return OpenCodeTrendProcessor.nearestSample(to: selectedDate, samples: samples)
+  }
 
   private var preparationID: String {
     let latest = samples.last
@@ -53,6 +59,9 @@ struct OpenCodeTrendChartView: View {
             goAndZenSection(preparedModel)
           } else {
             zenSection(preparedModel)
+          }
+          if let selectedSample {
+            selectionDetail(selectedSample)
           }
         }
       } else {
@@ -153,6 +162,13 @@ struct OpenCodeTrendChartView: View {
       ForEach(model.combinedPoints) { point in
         combinedLineMark(for: point)
       }
+
+      if let selectedSample {
+        RuleMark(
+          x: .value(L10n.string(.chartSelectedTime, language: language), selectedSample.bucketStart)
+        )
+        .foregroundStyle(.secondary)
+      }
     }
     .chartXScale(domain: xDomain)
     .chartYScale(domain: 0...1)
@@ -183,9 +199,11 @@ struct OpenCodeTrendChartView: View {
           }
         }
       }
+
     }
     .chartLegend(position: .bottom, alignment: .leading, spacing: 12)
     .frame(height: 170)
+    .trendChartSelection($selectedDate)
     .accessibilityLabel(L10n.string(.a11yOpenCodeGoLegend, language: language))
   }
 
@@ -210,6 +228,13 @@ struct OpenCodeTrendChartView: View {
         .foregroundStyle(.purple)
         .lineStyle(StrokeStyle(lineWidth: 2))
       }
+
+      if let selectedSample {
+        RuleMark(
+          x: .value(L10n.string(.chartSelectedTime, language: language), selectedSample.bucketStart)
+        )
+        .foregroundStyle(.secondary)
+      }
     }
     .chartXScale(domain: xDomain)
     .chartYScale(domain: model.zenLower...model.zenUpper)
@@ -227,7 +252,45 @@ struct OpenCodeTrendChartView: View {
     }
     .chartLegend(.hidden)
     .frame(height: 150)
+    .trendChartSelection($selectedDate)
     .accessibilityLabel(L10n.string(.a11yOpenCodeZenLegend, language: language))
+  }
+
+  private func selectionDetail(_ sample: OpenCodeUsageSample) -> some View {
+    var values: [String] = []
+    if showGoTrend {
+      for kind in OpenCodeUsageWindow.Kind.allCases {
+        guard let used = OpenCodeTrendProcessor.usagePercent(sample, kind: kind) else {
+          continue
+        }
+        values.append(
+          TrendChartSelectionDetail.valueText(
+            label: windowTitle(kind),
+            value: L10n.string(
+              .openCodeProgress,
+              language: language,
+              used,
+              max(0, min(100, 100 - used))
+            ),
+            language: language
+          )
+        )
+      }
+    }
+    if let balance = sample.zenBalanceUSD {
+      values.append(
+        TrendChartSelectionDetail.valueText(
+          label: zenSeriesTitle,
+          value: formattedAxisUSD(balance),
+          language: language
+        )
+      )
+    }
+    return TrendChartSelectionDetail(
+      date: sample.bucketStart,
+      language: language,
+      values: values
+    )
   }
 
   private var xAxis: some AxisContent {
@@ -462,6 +525,22 @@ enum OpenCodeTrendProcessor {
     return last - first
   }
 
+  /// 选择距离给定时间最近的历史样本，详情页和所有 OpenCode 图表共用。
+  static func nearestSample(
+    to date: Date,
+    samples: [OpenCodeUsageSample]
+  ) -> OpenCodeUsageSample? {
+    newestSamples(samples) {
+      $0.goRollingUsedPercent != nil
+        || $0.goWeeklyUsedPercent != nil
+        || $0.goMonthlyUsedPercent != nil
+        || $0.zenBalanceUSD?.isFinite == true
+    }
+    .min {
+      abs($0.bucketStart.timeIntervalSince(date)) < abs($1.bucketStart.timeIntervalSince(date))
+    }
+  }
+
   static func exhaustionEstimates(
     samples: [OpenCodeUsageSample],
     showGoTrend: Bool,
@@ -536,7 +615,7 @@ enum OpenCodeTrendProcessor {
     }
   }
 
-  private static func goValue(
+  static func usagePercent(
     _ sample: OpenCodeUsageSample,
     kind: OpenCodeUsageWindow.Kind
   ) -> Int? {
@@ -548,6 +627,13 @@ enum OpenCodeTrendProcessor {
     case .monthly:
       return sample.goMonthlyUsedPercent
     }
+  }
+
+  private static func goValue(
+    _ sample: OpenCodeUsageSample,
+    kind: OpenCodeUsageWindow.Kind
+  ) -> Int? {
+    usagePercent(sample, kind: kind)
   }
 
   private static func zenDomain(for points: [Point]) -> (Double, Double) {

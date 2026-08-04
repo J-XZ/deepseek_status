@@ -9,7 +9,16 @@ struct BalanceTrendChartView: View {
   let language: AppLanguage
   let now: Date
 
-  @State private var selectedSample: BalanceSample?
+  @State private var selectedDate: Date?
+
+  private var selectedSample: BalanceSample? {
+    guard let selectedDate else { return nil }
+    return BalanceTrendProcessor.nearestSample(
+      to: selectedDate,
+      samples: samples,
+      currency: currency
+    )
+  }
 
   private var model: BalanceTrendProcessor.ChartModel {
     BalanceTrendProcessor.chartModel(
@@ -117,14 +126,7 @@ struct BalanceTrendChartView: View {
     }
     .chartLegend(.hidden)
     .frame(height: 180)
-    .chartOverlay { proxy in
-      GeometryReader { geometry in
-        Rectangle()
-          .fill(.clear)
-          .contentShape(Rectangle())
-          .gesture(selectionGesture(proxy: proxy, geometry: geometry))
-      }
-    }
+    .trendChartSelection($selectedDate)
     .accessibilityLabel(
       L10n.string(
         .a11yLegend,
@@ -132,28 +134,6 @@ struct BalanceTrendChartView: View {
       )
     )
   }
-
-  private func selectionGesture(proxy: ChartProxy, geometry: GeometryProxy) -> some Gesture {
-    DragGesture(minimumDistance: 0)
-      .onChanged { value in
-        if value.translation.width == 0, value.translation.height == 0 {
-          // 点击开始时先记录，onEnded 中再决定是否取消。
-          tapStartedSample = selectedSample
-        }
-        select(at: value.location, proxy: proxy, geometry: geometry)
-      }
-      .onEnded { value in
-        let isTap =
-          abs(value.translation.width) < 4 && abs(value.translation.height) < 4
-        if isTap, tapStartedSample != nil, selectedSample == tapStartedSample {
-          // 再次点击同一选中样本：取消选择，便于阅读图表。
-          selectedSample = nil
-        }
-        tapStartedSample = nil
-      }
-  }
-
-  @State private var tapStartedSample: BalanceSample?
 
   private var legend: some View {
     HStack(spacing: 14) {
@@ -186,78 +166,145 @@ struct BalanceTrendChartView: View {
     return formatter.string(from: date)
   }
 
-  private func select(at location: CGPoint, proxy: ChartProxy, geometry: GeometryProxy) {
-    let frame = geometry[proxy.plotAreaFrame]
-    guard BalanceTrendProcessor.containsPlotCoordinate(location, in: frame) else {
-      selectedSample = nil
-      return
-    }
-    let x = location.x - frame.origin.x
-    guard let date = proxy.value(atX: x, as: Date.self) else {
-      selectedSample = nil
-      return
-    }
-    selectedSample = BalanceTrendProcessor.nearestSample(
-      to: date,
-      samples: samples,
-      currency: currency
-    )
-  }
-
-  @ViewBuilder
   private func selectionDetail(_ sample: BalanceSample) -> some View {
     let previous =
       samples
       .filter { $0.currency == currency && $0.bucketStart < sample.bucketStart }
       .sorted { $0.bucketStart < $1.bucketStart }
       .last
+    var values = [
+      TrendChartSelectionDetail.valueText(
+        label: L10n.string(.balanceTotal, language: language),
+        value: BalanceFormatter.format(
+          total: sample.totalBalance, currency: currency, locale: language.locale
+        ),
+        language: language
+      ),
+      TrendChartSelectionDetail.valueText(
+        label: L10n.string(.balanceToppedUp, language: language),
+        value: BalanceFormatter.format(
+          total: sample.toppedUpBalance, currency: currency, locale: language.locale
+        ),
+        language: language
+      ),
+      TrendChartSelectionDetail.valueText(
+        label: L10n.string(.balanceGranted, language: language),
+        value: BalanceFormatter.format(
+          total: sample.grantedBalance, currency: currency, locale: language.locale
+        ),
+        language: language
+      ),
+    ]
+    if let previous,
+      let previousTotal = BalanceTrendProcessor.decimal(from: previous.totalBalance),
+      let currentTotal = BalanceTrendProcessor.decimal(from: sample.totalBalance)
+    {
+      values.append(
+        L10n.string(
+          .trendSelectionChange,
+          language: language,
+          BalanceTrendProcessor.deltaText(
+            delta: currentTotal - previousTotal,
+            currency: currency,
+            locale: language.locale
+          )
+        )
+      )
+    }
+    return TrendChartSelectionDetail(
+      date: sample.bucketStart,
+      language: language,
+      values: values
+    )
+  }
+}
+
+/// Shared click/drag selection behavior for every provider's trend chart.
+/// The chart-specific view remains responsible for mapping the selected date
+/// to its own nearest sample and rendering the corresponding values.
+struct TrendChartSelectionModifier: ViewModifier {
+  @Binding var selectedDate: Date?
+  @State private var tapStartedDate: Date?
+
+  func body(content: Content) -> some View {
+    content.chartOverlay { proxy in
+      GeometryReader { geometry in
+        Rectangle()
+          .fill(.clear)
+          .contentShape(Rectangle())
+          .gesture(
+            DragGesture(minimumDistance: 0)
+              .onChanged { value in
+                if value.translation.width == 0, value.translation.height == 0 {
+                  tapStartedDate = selectedDate
+                }
+                selectedDate = TrendChartInteraction.date(
+                  at: value.location,
+                  proxy: proxy,
+                  geometry: geometry
+                )
+              }
+              .onEnded { value in
+                let isTap =
+                  abs(value.translation.width) < 4 && abs(value.translation.height) < 4
+                if isTap, let tapStartedDate, selectedDate == tapStartedDate {
+                  // 再次点击相同位置取消选择；拖动则保留最后选中时间。
+                  selectedDate = nil
+                }
+                tapStartedDate = nil
+              }
+          )
+      }
+    }
+  }
+}
+
+enum TrendChartInteraction {
+  static func date(
+    at location: CGPoint,
+    proxy: ChartProxy,
+    geometry: GeometryProxy
+  ) -> Date? {
+    let frame = geometry[proxy.plotAreaFrame]
+    guard BalanceTrendProcessor.containsPlotCoordinate(location, in: frame) else {
+      return nil
+    }
+    return proxy.value(atX: location.x - frame.origin.x, as: Date.self)
+  }
+}
+
+extension View {
+  func trendChartSelection(_ selectedDate: Binding<Date?>) -> some View {
+    modifier(TrendChartSelectionModifier(selectedDate: selectedDate))
+  }
+}
+
+/// Shared selected-point detail layout so all provider charts respond the same
+/// way and keep their localized labels aligned.
+struct TrendChartSelectionDetail: View {
+  let date: Date
+  let language: AppLanguage
+  let values: [String]
+
+  var body: some View {
     VStack(alignment: .leading, spacing: 3) {
       Text(
-        sample.bucketStart.formatted(
+        date.formatted(
           Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
         )
       )
         .font(AppTypography.caption.weight(.medium))
-      HStack {
-        Text(
-          "\(L10n.string(.balanceTotal, language: language)) "
-            + BalanceFormatter.format(
-              total: sample.totalBalance, currency: currency, locale: language.locale
-            )
-        )
-        Text(
-          "\(L10n.string(.balanceToppedUp, language: language)) "
-            + BalanceFormatter.format(
-              total: sample.toppedUpBalance, currency: currency, locale: language.locale
-            )
-        )
-        Text(
-          "\(L10n.string(.balanceGranted, language: language)) "
-            + BalanceFormatter.format(
-              total: sample.grantedBalance, currency: currency, locale: language.locale
-            )
-        )
-        if let previous,
-          let previousTotal = BalanceTrendProcessor.decimal(from: previous.totalBalance),
-          let currentTotal = BalanceTrendProcessor.decimal(from: sample.totalBalance)
-        {
-          Text(
-            L10n.string(
-              .trendSelectionChange,
-              language: language,
-              BalanceTrendProcessor.deltaText(
-                delta: currentTotal - previousTotal,
-                currency: currency,
-                locale: language.locale
-              )
-            )
-          )
-        }
+      ForEach(Array(values.enumerated()), id: \.offset) { _, value in
+        Text(value)
+          .font(AppTypography.caption)
+          .foregroundStyle(.secondary)
       }
-      .font(AppTypography.caption)
-      .foregroundStyle(.secondary)
     }
     .textSelection(.enabled)
+  }
+
+  static func valueText(label: String, value: String, language: AppLanguage) -> String {
+    language == .simplifiedChinese ? "\(label)：\(value)" : "\(label): \(value)"
   }
 }
 

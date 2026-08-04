@@ -43,19 +43,33 @@ struct OpenCodeUsageWindow: Codable, Equatable, Identifiable, Sendable {
 
   /// 当前窗口按时间线性消耗时应达到的已用百分比。
   func expectedUsedPercent(now: Date) -> Double? {
-    guard let resetAt = resetAt(now: now) else { return nil }
-    let windowEnd = resetAt.timeIntervalSince1970
-    let windowStart = windowEnd - kind.defaultWindowSeconds
+    expectedUsedPercent(now: now, windowEnd: resetAt(now: now))
+  }
+
+  /// 使用订阅续费时间作为窗口结束时间的理想用量计算。
+  /// 某些 OpenCode 页面只返回 renewAt，不返回各窗口的 resetInSec，
+  /// 此入口让菜单栏仍能显示理想进度差异。
+  func expectedUsedPercent(now: Date, windowEnd: Date?) -> Double? {
+    guard let windowEnd else { return nil }
+    let windowEndSeconds = windowEnd.timeIntervalSince1970
+    let windowStart = windowEndSeconds - kind.defaultWindowSeconds
     let current = now.timeIntervalSince1970
-    guard current >= windowStart, current <= windowEnd, windowStart < windowEnd else {
+    guard current >= windowStart, current <= windowEndSeconds, windowStart < windowEndSeconds else {
       return nil
     }
-    return min(100, max(0, (current - windowStart) / (windowEnd - windowStart) * 100))
+    return min(100, max(0, (current - windowStart) / (windowEndSeconds - windowStart) * 100))
   }
 
   /// 实际已用百分比 − 理想已用百分比；正数表示实际用量超前。
   func usageGapPercent(now: Date) -> Int? {
-    guard let expected = expectedUsedPercent(now: now) else { return nil }
+    usageGapPercent(now: now, windowEnd: resetAt(now: now))
+  }
+
+  /// 使用指定窗口结束时间计算实际用量与理想用量的差异。
+  func usageGapPercent(now: Date, windowEnd: Date?) -> Int? {
+    guard let expected = expectedUsedPercent(now: now, windowEnd: windowEnd) else {
+      return nil
+    }
     return usedPercent - Int(expected.rounded())
   }
 }

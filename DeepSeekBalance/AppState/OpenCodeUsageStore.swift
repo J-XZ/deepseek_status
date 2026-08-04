@@ -322,11 +322,10 @@ final class OpenCodeUsageStore: ObservableObject {
     now: Date
   ) -> String {
     guard let monthly = subscription?.monthly else { return "--" }
-    var text = "\(monthly.usedPercent)%"
-    if let gap = monthly.usageGapPercent(now: now) {
-      text += " (\(gap >= 0 ? "+" : "")\(gap)%)"
-    }
-    return text
+    let gap = monthly.usageGapPercent(now: now)
+      ?? monthly.usageGapPercent(now: now, windowEnd: subscription?.renewsAt)
+    let comparison = gap.map { "\($0 >= 0 ? "+" : "")\($0)%" } ?? "--"
+    return "\(monthly.usedPercent)% (\(comparison))"
   }
 
   private var menuBarZenText: String {

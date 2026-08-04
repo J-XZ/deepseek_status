@@ -224,4 +224,29 @@ final class CodexHistoryTests: XCTestCase {
     XCTAssertEqual(segments.count, 1)
     XCTAssertEqual(segments[0].count, 2)
   }
+
+  func testNearestSampleUsesLatestDuplicateAndNearestTime() {
+    let bucket = Date(timeIntervalSince1970: 1_800_000)
+    let samples = [
+      CodexUsageSample(
+        credentialID: "codex",
+        bucketStart: bucket,
+        observedAt: bucket.addingTimeInterval(60),
+        remainingPercent: 90
+      ),
+      CodexUsageSample(
+        credentialID: "codex",
+        bucketStart: bucket,
+        observedAt: bucket.addingTimeInterval(120),
+        remainingPercent: 80
+      ),
+      sample(1_800_600, remaining: 70),
+    ]
+
+    let selected = CodexTrendProcessor.nearestSample(
+      to: bucket.addingTimeInterval(30),
+      samples: samples
+    )
+    XCTAssertEqual(selected?.remainingPercent, 80)
+  }
 }
