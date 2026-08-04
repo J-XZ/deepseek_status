@@ -398,6 +398,18 @@ final class OpenCodeUsageTests: XCTestCase {
     XCTAssertEqual(monthly.usageGapPercent(now: now), -5)
   }
 
+  func testOpenCodeMonthlyIdealUsageUsesLongerServerResetPeriod() {
+    let now = Date(timeIntervalSince1970: 1_750_000_000)
+    let monthly = OpenCodeUsageWindow(
+      kind: .monthly,
+      usedPercent: 0,
+      resetInSec: 30 * 24 * 3600 + 75_013
+    )
+
+    XCTAssertEqual(monthly.expectedUsedPercent(now: now) ?? -1, 0, accuracy: 0.001)
+    XCTAssertEqual(monthly.usageGapPercent(now: now), 0)
+  }
+
   func testOpenCodeMonthlyMenuTextShowsUsedPercentAndIdealGap() {
     let now = Date(timeIntervalSince1970: 1_750_000_000)
     let subscription = OpenCodeGoSubscription(
@@ -418,6 +430,25 @@ final class OpenCodeUsageTests: XCTestCase {
     XCTAssertEqual(
       OpenCodeUsageStore.monthlyMenuText(subscription: nil, now: now),
       "--"
+    )
+  }
+
+  func testOpenCodeMonthlyMenuTextShowsZeroGapForLongerServerResetPeriod() {
+    let now = Date(timeIntervalSince1970: 1_750_000_000)
+    let subscription = OpenCodeGoSubscription(
+      rolling: nil,
+      weekly: nil,
+      monthly: OpenCodeUsageWindow(
+        kind: .monthly,
+        usedPercent: 0,
+        resetInSec: 30 * 24 * 3600 + 75_013
+      ),
+      renewsAt: nil
+    )
+
+    XCTAssertEqual(
+      OpenCodeUsageStore.monthlyMenuText(subscription: subscription, now: now),
+      "0% (+0%)"
     )
   }
 

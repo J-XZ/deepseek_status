@@ -52,8 +52,16 @@ struct OpenCodeUsageWindow: Codable, Equatable, Identifiable, Sendable {
   func expectedUsedPercent(now: Date, windowEnd: Date?) -> Double? {
     guard let windowEnd else { return nil }
     let windowEndSeconds = windowEnd.timeIntervalSince1970
-    let windowStart = windowEndSeconds - kind.defaultWindowSeconds
     let current = now.timeIntervalSince1970
+    let remainingWindowSeconds = windowEndSeconds - current
+    // OpenCode 的月度窗口按服务端实际周期重置，某些月份会比固定的 30 天略长。
+    // 如果剩余时间超过默认窗口长度，使用服务端返回的剩余周期作为有效窗口长度，
+    // 避免把当前时刻误判为“窗口尚未开始”，从而丢失理想用量和 +0% 差异。
+    let effectiveWindowSeconds = max(
+      kind.defaultWindowSeconds,
+      remainingWindowSeconds
+    )
+    let windowStart = windowEndSeconds - effectiveWindowSeconds
     guard current >= windowStart, current <= windowEndSeconds, windowStart < windowEndSeconds else {
       return nil
     }
