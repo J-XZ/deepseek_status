@@ -152,12 +152,21 @@ private final class MenuBarStatusContentView: NSView {
       let textX = x + iconWidth
 
       for (lineIndex, line) in lines.enumerated() {
-        let attributes: [NSAttributedString.Key: Any] = [
+        let lineColor = segment.lineColors.indices.contains(lineIndex)
+          ? segment.lineColors[lineIndex]
+          : nil
+        var attributes: [NSAttributedString.Key: Any] = [
           .font: segment.font,
-          .foregroundColor: segment.lineColors.indices.contains(lineIndex)
-            ? (segment.lineColors[lineIndex] ?? textColor)
-            : textColor
+          .foregroundColor: lineColor ?? textColor
         ]
+        if lineColor != nil {
+          // 彩色文字加轻微白色光晕，提升渐变色在菜单栏背景上的可读性。
+          let shadow = NSShadow()
+          shadow.shadowColor = NSColor.white.withAlphaComponent(0.62)
+          shadow.shadowBlurRadius = 1.2
+          shadow.shadowOffset = .zero
+          attributes[.shadow] = shadow
+        }
         let attributedLine = NSAttributedString(string: line, attributes: attributes)
         let lineSize = attributedLine.size()
         let lineCenterY = textBottom + textHeight
