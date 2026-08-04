@@ -32,7 +32,7 @@ The menu bar shows the monochrome icon and current balance:
 - OpenCode Usage page: paste a complete Netscape Cookie file or a local absolute path to load Zen balance and Go subscription usage
 - Compatible with the current OpenCode page's case-variant fields and SolidStart `$R[n]=` serialized usage windows, so an active subscription does not appear to have a missing usage window
 - OpenCode Go shows a red not-subscribed indicator when no subscription exists; an active subscription shows 5-hour, weekly, and monthly windows with used/remaining percentages, the signed gap from ideal usage, reset time, a red ideal-usage marker, and blue, green, or orange progress colors based on ideal-progress deviation
-- OpenCode uses a two-line menu bar layout for Go monthly used percentage plus its ideal-usage gap and Zen balance; the first line is `--` when Go is not subscribed or the monthly window is unavailable
+- OpenCode uses a two-line menu bar layout for Go monthly remaining percentage plus its ideal-usage gap and Zen balance; the first line is `--` when Go is not subscribed or the monthly window is unavailable
 - OpenCode trends show only an independent Zen chart without a legend when Go is not subscribed; with Go active, Go windows and Zen share one dual-axis chart with a legend
 - DeepSeek official service status card: overall status, API Service, Web Chat Service, incidents, and scheduled maintenance
 - Launch at Login using Apple's native `SMAppService.mainApp`
@@ -47,7 +47,7 @@ The menu bar shows the monochrome icon and current balance:
 4. After the key is saved, the app fetches your balance and the official service status. Click the menu bar item to see total, topped-up, and granted balances, the last update time, and the 14-day trend. Use the bottom Refresh button for an immediate update.
 5. Settings lets you switch between Chinese and English, enable Launch at Login, and clear local history.
 6. Select the OpenCode Usage page. In the Cookie section, paste the complete Netscape Cookie file content or the file's local absolute path, then click Save and Refresh. Only the OpenCode authentication Cookie is extracted and stored in the macOS Keychain.
-7. The OpenCode Usage page shows Zen balance and Go subscription status. Without Go, it shows an explicit red not-subscribed indicator; with Go, it shows used/remaining values, ideal-usage gaps, red ideal-usage markers, and reset times for the 5-hour, weekly, and monthly windows. The first menu-bar line shows Go monthly used usage and its ideal gap; the second shows Zen balance. OpenCode history is stored locally only.
+7. The OpenCode Usage page shows Zen balance and Go subscription status. Without Go, it shows an explicit red not-subscribed indicator; with Go, it shows used/remaining values, ideal-usage gaps, red ideal-usage markers, and reset times for the 5-hour, weekly, and monthly windows. The first menu-bar line shows Go monthly remaining percentage and its ideal gap; the second shows Zen balance. OpenCode history is stored locally only.
 
 If you downloaded an unsigned release, macOS may say that it cannot verify the developer on first launch. In Finder, Control-click the app, choose Open, and confirm once. Do not disable Gatekeeper globally just to run this app.
 
@@ -80,7 +80,7 @@ If you downloaded an unsigned release, macOS may say that it cannot verify the d
 - The parser accepts the current page's case-variant fields and SolidStart `$R[n]=` serialization; even if an empty legacy subscription field appears first, a later valid `SubscriptionID` is still recognized.
 - Go keeps separate 5-hour, weekly, and monthly windows. Progress bars are blue when ideal usage data is unavailable or the difference is within 10 percentage points, green when actual usage is more than 10 points behind ideal progress, and orange when it is more than 10 points ahead.
 - When Go is not subscribed, the Go card explicitly says so and uses one red indicator bar; the trend area hides Go entirely and keeps only an independent Zen chart without a single-series legend.
-- When Go is subscribed, the trend area combines the 5-hour, weekly, and monthly Go curves with the Zen balance curve in one chart: the left Y axis is Go used percentage, the right Y axis is Zen USD balance, and the bottom legend identifies each curve.
+- When Go is subscribed, the trend area combines the 5-hour, weekly, and monthly Go curves with the Zen balance curve in one chart: the left Y axis is Go remaining percentage, the right Y axis is Zen USD balance, and the bottom legend identifies each curve.
 - OpenCode trends use local 10-minute samples for the most recent 14 days. Go and Zen share one time axis, and missing samples never create synthetic data. Clearing local history does not delete the saved Cookie.
 
 ## DeepSeek Official Service Status
@@ -230,8 +230,8 @@ Full pipeline (clean + Debug + Release + tests + analyze):
 Push a version tag to publish automatically:
 
 ```bash
-git tag v2.1.15
-git push origin v2.1.15
+git tag v2.1.16
+git push origin v2.1.16
 ```
 
 `.github/workflows/release.yml` initializes the LevelDB submodule on a macOS runner, runs the unit tests, and publishes every artifact to the matching GitHub Release. Signing is optional:

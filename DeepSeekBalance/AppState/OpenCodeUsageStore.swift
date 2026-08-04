@@ -306,7 +306,7 @@ final class OpenCodeUsageStore: ObservableObject {
     }
   }
 
-  /// 菜单栏 OpenCode 使用两行紧凑布局：第一行是 Go 本月已用百分比及其
+  /// 菜单栏 OpenCode 使用两行紧凑布局：第一行是 Go 本月剩余百分比及其
   /// 与理想用量的差异，第二行是 Zen 余额。
   /// 未订阅或月度窗口不可用时，Go 行固定显示 `--`，避免误把未知状态当成可用额度。
   var menuBarLines: [String] {
@@ -325,7 +325,7 @@ final class OpenCodeUsageStore: ObservableObject {
     let gap = monthly.usageGapPercent(now: now)
       ?? monthly.usageGapPercent(now: now, windowEnd: subscription?.renewsAt)
     let comparison = gap.map { "\($0 >= 0 ? "+" : "")\($0)%" } ?? "--"
-    return "\(monthly.usedPercent)% (\(comparison))"
+    return "\(monthly.remainingPercent)% (\(comparison))"
   }
 
   private var menuBarZenText: String {

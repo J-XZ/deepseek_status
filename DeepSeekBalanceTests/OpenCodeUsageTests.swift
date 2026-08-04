@@ -340,6 +340,44 @@ final class OpenCodeUsageTests: XCTestCase {
     XCTAssertEqual(estimates.zenSeconds ?? -1, 50 * 3600, accuracy: 0.001)
   }
 
+  func testOpenCodeTrendUsesRemainingPercentForGoChartAndChange() throws {
+    let now = Date(timeIntervalSince1970: 1_750_000_000)
+    let samples = [
+      OpenCodeUsageSample(
+        credentialID: "cred",
+        bucketStart: now.addingTimeInterval(-10 * 3600),
+        observedAt: now.addingTimeInterval(-10 * 3600),
+        goRollingUsedPercent: 5,
+        goWeeklyUsedPercent: 10,
+        goMonthlyUsedPercent: 20,
+        zenBalanceUSD: nil
+      ),
+      OpenCodeUsageSample(
+        credentialID: "cred",
+        bucketStart: now,
+        observedAt: now,
+        goRollingUsedPercent: 6,
+        goWeeklyUsedPercent: 20,
+        goMonthlyUsedPercent: 30,
+        zenBalanceUSD: nil
+      ),
+    ]
+
+    let model = OpenCodeTrendProcessor.chartModel(
+      samples: samples,
+      showGoTrend: true,
+      now: now
+    )
+    let weekly = try XCTUnwrap(model.goSeries.first { $0.kind == .weekly })
+    let monthly = try XCTUnwrap(model.goSeries.first { $0.kind == .monthly })
+    XCTAssertEqual(weekly.points.map(\.value), [0.9, 0.8])
+    XCTAssertEqual(monthly.points.map(\.value), [0.8, 0.7])
+    XCTAssertEqual(
+      OpenCodeTrendProcessor.monthlyRemainingChangePercent(samples: samples),
+      -10
+    )
+  }
+
   func testUnsubscribedOpenCodeEstimateContainsOnlyZen() {
     let now = Date(timeIntervalSince1970: 1_750_000_000)
     let samples = [
@@ -410,7 +448,7 @@ final class OpenCodeUsageTests: XCTestCase {
     XCTAssertEqual(monthly.usageGapPercent(now: now), 0)
   }
 
-  func testOpenCodeMonthlyMenuTextShowsUsedPercentAndIdealGap() {
+  func testOpenCodeMonthlyMenuTextShowsRemainingPercentAndIdealGap() {
     let now = Date(timeIntervalSince1970: 1_750_000_000)
     let subscription = OpenCodeGoSubscription(
       rolling: nil,
@@ -425,7 +463,7 @@ final class OpenCodeUsageTests: XCTestCase {
 
     XCTAssertEqual(
       OpenCodeUsageStore.monthlyMenuText(subscription: subscription, now: now),
-      "30% (-20%)"
+      "70% (-20%)"
     )
     XCTAssertEqual(
       OpenCodeUsageStore.monthlyMenuText(subscription: nil, now: now),
@@ -448,7 +486,7 @@ final class OpenCodeUsageTests: XCTestCase {
 
     XCTAssertEqual(
       OpenCodeUsageStore.monthlyMenuText(subscription: subscription, now: now),
-      "0% (+0%)"
+      "100% (+0%)"
     )
   }
 
@@ -467,7 +505,7 @@ final class OpenCodeUsageTests: XCTestCase {
 
     XCTAssertEqual(
       OpenCodeUsageStore.monthlyMenuText(subscription: subscription, now: now),
-      "30% (-20%)"
+      "70% (-20%)"
     )
   }
 
@@ -486,7 +524,7 @@ final class OpenCodeUsageTests: XCTestCase {
 
     XCTAssertEqual(
       OpenCodeUsageStore.monthlyMenuText(subscription: subscription, now: now),
-      "30% (--)"
+      "70% (--)"
     )
   }
 

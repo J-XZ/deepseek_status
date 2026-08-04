@@ -36,7 +36,7 @@ struct OpenCodeTrendChartView: View {
   var usageChangeValue: String? {
     var values: [String] = []
     if showGoTrend,
-      let goChange = OpenCodeTrendProcessor.monthlyUsageChangePercent(samples: samples)
+      let goChange = OpenCodeTrendProcessor.monthlyRemainingChangePercent(samples: samples)
     {
       values.append(
         "\(L10n.string(.openCodeTrendGo, language: language)): \(goChange >= 0 ? "+" : "")\(goChange)%"
@@ -359,7 +359,7 @@ struct OpenCodeTrendChartView: View {
   }
 
   private var combinedAxisTitle: String {
-    "OpenCode"
+    L10n.string(.chartRemaining, language: language)
   }
 
   private var seriesDimensionTitle: String {
@@ -505,10 +505,10 @@ enum OpenCodeTrendProcessor {
     )
   }
 
-  static func monthlyUsageChangePercent(samples: [OpenCodeUsageSample]) -> Int? {
-    let ordered = newestSamples(samples) { $0.goMonthlyUsedPercent != nil }
-    guard let first = ordered.first?.goMonthlyUsedPercent,
-      let last = ordered.last?.goMonthlyUsedPercent,
+  static func monthlyRemainingChangePercent(samples: [OpenCodeUsageSample]) -> Int? {
+    let ordered = newestSamples(samples) { remainingPercent($0, kind: .monthly) != nil }
+    guard let first = ordered.first.flatMap({ remainingPercent($0, kind: .monthly) }),
+      let last = ordered.last.flatMap({ remainingPercent($0, kind: .monthly) }),
       ordered.count >= 2
     else {
       return nil
@@ -576,9 +576,9 @@ enum OpenCodeTrendProcessor {
     _ samples: [OpenCodeUsageSample],
     kind: OpenCodeUsageWindow.Kind
   ) -> GoSeries {
-    let matching = newestSamples(samples) { goValue($0, kind: kind) != nil }
+    let matching = newestSamples(samples) { remainingPercent($0, kind: kind) != nil }
     let points = matching.compactMap { sample -> Point? in
-      guard let value = goValue(sample, kind: kind) else { return nil }
+      guard let value = remainingPercent(sample, kind: kind) else { return nil }
       return Point(
         id: sample.id + "/" + kind.rawValue,
         date: sample.bucketStart,
@@ -599,11 +599,11 @@ enum OpenCodeTrendProcessor {
     _ samples: [OpenCodeUsageSample],
     kind: OpenCodeUsageWindow.Kind
   ) -> [UsageExhaustionPoint] {
-    newestSamples(samples) { goValue($0, kind: kind) != nil }.compactMap { sample in
-      guard let used = goValue(sample, kind: kind) else { return nil }
+    newestSamples(samples) { remainingPercent($0, kind: kind) != nil }.compactMap { sample in
+      guard let remaining = remainingPercent(sample, kind: kind) else { return nil }
       return UsageExhaustionPoint(
         date: sample.bucketStart,
-        remaining: Double(max(0, 100 - used))
+        remaining: Double(remaining)
       )
     }
   }
@@ -631,11 +631,12 @@ enum OpenCodeTrendProcessor {
     }
   }
 
-  private static func goValue(
+  static func remainingPercent(
     _ sample: OpenCodeUsageSample,
     kind: OpenCodeUsageWindow.Kind
   ) -> Int? {
-    usagePercent(sample, kind: kind)
+    guard let used = usagePercent(sample, kind: kind) else { return nil }
+    return max(0, min(100, 100 - used))
   }
 
   private static func zenDomain(for points: [Point]) -> (Double, Double) {
