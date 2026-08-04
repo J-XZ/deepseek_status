@@ -107,14 +107,18 @@ struct OpenCodeTrendChartView: View {
 
   private func exhaustionTexts(_ model: OpenCodeTrendProcessor.ChartModel) -> [String] {
     var result: [String] = []
-    if showGoTrend, let seconds = model.exhaustion.goWeeklySeconds {
-      result.append(
-        L10n.string(
-          .trendEstimateWeekly,
-          language: language,
-          UsageExhaustionEstimator.formattedDuration(seconds, language: language)
+    if showGoTrend {
+      if let seconds = model.exhaustion.goWeeklySeconds {
+        result.append(
+          L10n.string(
+            .trendEstimateWeekly,
+            language: language,
+            UsageExhaustionEstimator.formattedDuration(seconds, language: language)
+          )
         )
-      )
+      } else {
+        result.append(L10n.string(.trendEstimateGoUnavailable, language: language))
+      }
     }
     if let seconds = model.exhaustion.zenSeconds {
       result.append(
@@ -124,8 +128,8 @@ struct OpenCodeTrendChartView: View {
           UsageExhaustionEstimator.formattedDuration(seconds, language: language)
         )
       )
-    } else if model.exhaustion.zenHasData {
-      result.append(L10n.string(.trendEstimateUnavailable, language: language))
+    } else {
+      result.append(L10n.string(.trendEstimateZenUnavailable, language: language))
     }
     return result
   }
@@ -440,6 +444,7 @@ enum OpenCodeTrendProcessor {
 
   struct ExhaustionEstimates: Sendable {
     let goWeeklySeconds: TimeInterval?
+    let goHasData: Bool
     let zenSeconds: TimeInterval?
     let zenHasData: Bool
   }
@@ -548,17 +553,20 @@ enum OpenCodeTrendProcessor {
     showGoTrend: Bool,
     now: Date
   ) -> ExhaustionEstimates {
+    let goPoints: [UsageExhaustionPoint]
     let goWeekly: TimeInterval?
     if showGoTrend {
-      let points = makeQuotaExhaustionPoints(samples, kind: .weekly)
-      goWeekly = UsageExhaustionEstimator.estimate(points: points, now: now)
+      goPoints = makeQuotaExhaustionPoints(samples, kind: .weekly)
+      goWeekly = UsageExhaustionEstimator.estimate(points: goPoints, now: now)
     } else {
+      goPoints = []
       goWeekly = nil
     }
 
     let zenPoints = makeZenExhaustionPoints(samples)
     return ExhaustionEstimates(
       goWeeklySeconds: goWeekly,
+      goHasData: !goPoints.isEmpty,
       zenSeconds: UsageExhaustionEstimator.estimate(points: zenPoints, now: now),
       zenHasData: !zenPoints.isEmpty
     )

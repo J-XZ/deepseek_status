@@ -70,7 +70,7 @@ struct CursorTrendChartView: View {
       ) {
         Text(
           L10n.string(
-            .trendEstimateWeekly,
+            .trendEstimateMonthly,
             language: language,
             UsageExhaustionEstimator.formattedDuration(seconds, language: language)
           )

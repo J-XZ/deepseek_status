@@ -2017,6 +2017,54 @@
         }
       }
     },
+    "trend.estimateGoUnavailable": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Go weekly quota exhaustion estimate unavailable: not enough usage data"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂时无法估算 Go 周额度耗尽时间：暂无足够用量数据"
+          }
+        }
+      }
+    },
+    "trend.estimateMonthly": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated to exhaust monthly quota in %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "估计在%@内耗尽月额度"
+          }
+        }
+      }
+    },
+    "trend.estimateZenUnavailable": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zen balance exhaustion estimate unavailable: not enough usage data"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂时无法估算 Zen 额度耗尽时间：暂无足够用量数据"
+          }
+        }
+      }
+    },
     "trend.estimateUnavailable": {
       "localizations": {
         "en": {
@@ -3901,6 +3949,12 @@
       "localizations": {
         "en": {"stringUnit": {"state": "translated", "value": "Estimated to exhaust traffic in %@"}},
         "zh-Hans": {"stringUnit": {"state": "translated", "value": "估计在%@内耗尽流量"}}
+      }
+    },
+    "vps.trendEstimateUnavailable": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Traffic exhaustion estimate unavailable: not enough usage data"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "暂时无法估算流量耗尽时间：暂无足够用量数据"}}
       }
     },
     "vps.trendTraffic": {

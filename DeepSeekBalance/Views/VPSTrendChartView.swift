@@ -43,29 +43,30 @@ struct VPSTrendChartView: View {
   private var exhaustionEstimate: some View {
     HStack {
       Spacer(minLength: 0)
-      if let seconds = UsageExhaustionEstimator.estimate(
-        points: VPSUsageTrendProcessor.deduplicatedSamples(samples).map {
-          UsageExhaustionPoint(
-            date: $0.bucketStart,
-            remaining: max($0.remainingBandwidthGB, 0)
-          )
-        },
-        now: now
-      ) {
-        Text(
-          L10n.string(
-            .vpsTrendEstimateTraffic,
-            language: language,
-            UsageExhaustionEstimator.formattedDuration(seconds, language: language)
-          )
-        )
+      Text(exhaustionEstimateText)
         .font(AppTypography.caption)
         .foregroundStyle(.secondary)
         .multilineTextAlignment(.trailing)
         .lineLimit(1)
         .minimumScaleFactor(0.75)
-      }
     }
+  }
+
+  private var exhaustionEstimateText: String {
+    let points = VPSUsageTrendProcessor.deduplicatedSamples(samples).map {
+      UsageExhaustionPoint(
+        date: $0.bucketStart,
+        remaining: max($0.remainingBandwidthGB, 0)
+      )
+    }
+    guard let seconds = UsageExhaustionEstimator.estimate(points: points, now: now) else {
+      return L10n.string(.vpsTrendEstimateUnavailable, language: language)
+    }
+    return L10n.string(
+      .vpsTrendEstimateTraffic,
+      language: language,
+      UsageExhaustionEstimator.formattedDuration(seconds, language: language)
+    )
   }
 
   private var trafficTitle: String {

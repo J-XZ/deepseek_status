@@ -60,6 +60,18 @@ final class L10nTests: XCTestCase {
       L10n.string(.appTitle, language: .simplifiedChinese),
       "DeepSeek API 余额"
     )
+    XCTAssertEqual(
+      L10n.string(.trendEstimateMonthly, language: .simplifiedChinese, "3天"),
+      "估计在3天内耗尽月额度"
+    )
+    XCTAssertEqual(
+      L10n.string(.trendEstimateGoUnavailable, language: .simplifiedChinese),
+      "暂时无法估算 Go 周额度耗尽时间：暂无足够用量数据"
+    )
+    XCTAssertEqual(
+      L10n.string(.trendEstimateZenUnavailable, language: .simplifiedChinese),
+      "暂时无法估算 Zen 额度耗尽时间：暂无足够用量数据"
+    )
   }
 
   func testProviderTitlesUseTheSameUsageWording() {
