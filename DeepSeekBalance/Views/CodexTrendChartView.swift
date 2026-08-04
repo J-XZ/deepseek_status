@@ -87,7 +87,7 @@ struct CodexTrendChartView: View {
           x: .value(L10n.string(.chartSelectedTime, language: language), selectedSample.bucketStart)
         )
         .foregroundStyle(.secondary)
-        .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
+        .lineStyle(TrendChartSelectionStyle.rule)
       }
     }
     .chartXScale(domain: xDomain)

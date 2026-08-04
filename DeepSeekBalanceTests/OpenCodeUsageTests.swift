@@ -112,6 +112,26 @@ final class OpenCodeUsageTests: XCTestCase {
     XCTAssertEqual(subscription.monthly?.resetInSec, 2676166)
   }
 
+  func testParsesCapturedSolidStartPageWithLiteSubscriptionAndZeroMonthlyUsage() throws {
+    let page = """
+    $R[31]={mine:!0,useBalance:!1,rollingUsage:$R[33]={status:"ok",resetInSec:8629,usagePercent:3},weeklyUsage:$R[34]={status:"ok",resetInSec:490560,usagePercent:1},monthlyUsage:$R[35]={status:"ok",resetInSec:2667013,usagePercent:0}}
+    subscription:null,subscriptionID:null,subscriptionPlan:null,lite:$R[38]={},liteSubscriptionID:"sub_lite_active"
+    """
+
+    let subscription = try XCTUnwrap(
+      try OpenCodeUsageClient.parseGoSubscription(
+        text: page,
+        now: Date(timeIntervalSince1970: 1_785_808_349)
+      )
+    )
+    XCTAssertEqual(subscription.rolling?.usedPercent, 3)
+    XCTAssertEqual(subscription.rolling?.resetInSec, 8629)
+    XCTAssertEqual(subscription.weekly?.usedPercent, 1)
+    XCTAssertEqual(subscription.weekly?.resetInSec, 490560)
+    XCTAssertEqual(subscription.monthly?.usedPercent, 0)
+    XCTAssertEqual(subscription.monthly?.resetInSec, 2667013)
+  }
+
   func testKeepsIntegerOnePercentInJSONWindow() throws {
     let page = """
       {

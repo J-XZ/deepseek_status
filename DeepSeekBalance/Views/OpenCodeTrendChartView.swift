@@ -168,6 +168,7 @@ struct OpenCodeTrendChartView: View {
           x: .value(L10n.string(.chartSelectedTime, language: language), selectedSample.bucketStart)
         )
         .foregroundStyle(.secondary)
+        .lineStyle(TrendChartSelectionStyle.rule)
       }
     }
     .chartXScale(domain: xDomain)
@@ -234,6 +235,7 @@ struct OpenCodeTrendChartView: View {
           x: .value(L10n.string(.chartSelectedTime, language: language), selectedSample.bucketStart)
         )
         .foregroundStyle(.secondary)
+        .lineStyle(TrendChartSelectionStyle.rule)
       }
     }
     .chartXScale(domain: xDomain)
