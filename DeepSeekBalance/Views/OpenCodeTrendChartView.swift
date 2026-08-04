@@ -97,8 +97,10 @@ struct OpenCodeTrendChartView: View {
             .font(AppTypography.caption)
             .foregroundStyle(.secondary)
             .multilineTextAlignment(.trailing)
-            .lineLimit(1)
+            .lineLimit(2)
             .minimumScaleFactor(0.75)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .trailing)
         }
       }
       .frame(maxWidth: .infinity, alignment: .trailing)

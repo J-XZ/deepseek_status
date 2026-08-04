@@ -230,8 +230,8 @@ Full pipeline (clean + Debug + Release + tests + analyze):
 Push a version tag to publish automatically:
 
 ```bash
-git tag v2.1.18
-git push origin v2.1.18
+git tag v2.1.19
+git push origin v2.1.19
 ```
 
 `.github/workflows/release.yml` initializes the LevelDB submodule on a macOS runner, runs the unit tests, and publishes every artifact to the matching GitHub Release. Signing is optional:

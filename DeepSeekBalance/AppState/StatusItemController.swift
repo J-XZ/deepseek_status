@@ -244,6 +244,8 @@ private final class MenuBarStatusContentView: NSView {
 /// 弹出窗口尺寸计算：页面内容决定目标高度，屏幕可用区域决定硬上限。
 enum PopoverSizing {
   static let width: CGFloat = 500
+  static let horizontalPadding: CGFloat = 14
+  static let contentWidth: CGFloat = width - horizontalPadding * 2
   static let fallbackHeight: CGFloat = 820
   /// 给菜单栏、Dock 和窗口边缘留出安全空间，避免小屏上沿/底部贴边。
   static let verticalSafetyMargin: CGFloat = 32

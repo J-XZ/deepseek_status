@@ -59,28 +59,28 @@ struct BalanceTrendChartView: View {
     }
   }
 
+  @ViewBuilder
   private var exhaustionEstimate: some View {
-    HStack {
-      Spacer(minLength: 0)
-      if let seconds = UsageExhaustionEstimator.estimate(
-        points: BalanceTrendProcessor.points(for: samples, currency: currency)
-          .filter { $0.metric == .total }
-          .map { UsageExhaustionPoint(date: $0.date, remaining: $0.value) },
-        now: now
-      ) {
-        Text(
-          L10n.string(
-            .trendEstimateBalance,
-            language: language,
-            UsageExhaustionEstimator.formattedDuration(seconds, language: language)
-          )
+    if let seconds = UsageExhaustionEstimator.estimate(
+      points: BalanceTrendProcessor.points(for: samples, currency: currency)
+        .filter { $0.metric == .total }
+        .map { UsageExhaustionPoint(date: $0.date, remaining: $0.value) },
+      now: now
+    ) {
+      Text(
+        L10n.string(
+          .trendEstimateBalance,
+          language: language,
+          UsageExhaustionEstimator.formattedDuration(seconds, language: language)
         )
-        .font(AppTypography.caption)
-        .foregroundStyle(.secondary)
-        .multilineTextAlignment(.trailing)
-        .lineLimit(1)
-        .minimumScaleFactor(0.75)
-      }
+      )
+      .font(AppTypography.caption)
+      .foregroundStyle(.secondary)
+      .multilineTextAlignment(.trailing)
+      .lineLimit(2)
+      .minimumScaleFactor(0.75)
+      .fixedSize(horizontal: false, vertical: true)
+      .frame(maxWidth: .infinity, alignment: .trailing)
     }
   }
 

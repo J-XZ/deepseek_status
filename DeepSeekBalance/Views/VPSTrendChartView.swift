@@ -41,15 +41,14 @@ struct VPSTrendChartView: View {
   }
 
   private var exhaustionEstimate: some View {
-    HStack {
-      Spacer(minLength: 0)
-      Text(exhaustionEstimateText)
-        .font(AppTypography.caption)
-        .foregroundStyle(.secondary)
-        .multilineTextAlignment(.trailing)
-        .lineLimit(1)
-        .minimumScaleFactor(0.75)
-    }
+    Text(exhaustionEstimateText)
+      .font(AppTypography.caption)
+      .foregroundStyle(.secondary)
+      .multilineTextAlignment(.trailing)
+      .lineLimit(2)
+      .minimumScaleFactor(0.75)
+      .fixedSize(horizontal: false, vertical: true)
+      .frame(maxWidth: .infinity, alignment: .trailing)
   }
 
   private var exhaustionEstimateText: String {

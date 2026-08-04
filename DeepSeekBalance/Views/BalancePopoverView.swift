@@ -111,18 +111,23 @@ struct BalancePopoverView: View {
   }
 
   var body: some View {
-    ScrollView {
+    ScrollView(.vertical) {
+      // ScrollView 的内容在横向没有天然的收缩约束。英文长文案会让内容层
+      // 按理想宽度展开，随后被弹窗左右边缘裁掉；这里明确给内容层分配弹窗
+      // 的可用内宽，让所有子视图都在同一宽度下换行和压缩。
       contentStack(for: selectedTab)
-      .padding(14)
-      .background {
-        GeometryReader { proxy in
-          Color.clear.preference(
-            key: VendorPageHeightPreferenceKey.self,
-            value: [selectedTab: proxy.size.height]
-          )
+        .frame(width: PopoverSizing.contentWidth, alignment: .leading)
+        .padding(PopoverSizing.horizontalPadding)
+        .background {
+          GeometryReader { proxy in
+            Color.clear.preference(
+              key: VendorPageHeightPreferenceKey.self,
+              value: [selectedTab: proxy.size.height]
+            )
+          }
         }
-      }
     }
+    .frame(width: PopoverSizing.width)
     // 在 ScrollView 外持续测量所有可见供应商页，避免当前页的滚动约束反过来
     // 把其它页面的自然高度压缩成固定值。测量层只参与布局，不显示隐藏内容；
     // 异步趋势图完成加载后，仍可通过 GeometryReader 更新页面自然高度。
@@ -257,8 +262,8 @@ struct BalancePopoverView: View {
     VStack(spacing: 0) {
       ForEach(visibleTabs) { tab in
         contentStack(for: tab)
-          .padding(14)
-          .frame(width: PopoverSizing.width)
+          .frame(width: PopoverSizing.contentWidth, alignment: .leading)
+          .padding(PopoverSizing.horizontalPadding)
           .fixedSize(horizontal: false, vertical: true)
           .background {
             GeometryReader { proxy in
@@ -296,10 +301,16 @@ struct BalancePopoverView: View {
     Picker("", selection: $selectedTab) {
       ForEach(visibleTabs) { tab in
         Text(L10n.string(tabLabelKey(tab), language: language))
+          .font(AppTypography.caption)
+          .lineLimit(1)
+          .minimumScaleFactor(0.7)
+          .allowsTightening(true)
           .tag(tab)
       }
     }
     .pickerStyle(.segmented)
+    .controlSize(.small)
+    .frame(maxWidth: .infinity)
     .labelsHidden()
     .accessibilityLabel(L10n.string(.a11yProviderPicker, language: language))
     .onAppear {
@@ -520,6 +531,7 @@ struct BalancePopoverView: View {
       } ?? L10n.string(.trendSummaryInsufficient, language: language)
     )
     .font(AppTypography.body.weight(.medium))
+    .fixedSize(horizontal: false, vertical: true)
   }
 
   private var trendSection: some View {
