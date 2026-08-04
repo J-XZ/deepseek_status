@@ -126,7 +126,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            build/artifacts/* \
-            --title "DeepSeekBalance $GITHUB_REF_NAME" \
-            --generate-notes
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "Release $GITHUB_REF_NAME already exists; replacing its assets."
+            gh release upload "$GITHUB_REF_NAME" \
+              build/artifacts/* \
+              --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              build/artifacts/* \
+              --title "DeepSeekBalance $GITHUB_REF_NAME" \
+              --generate-notes
+          fi
