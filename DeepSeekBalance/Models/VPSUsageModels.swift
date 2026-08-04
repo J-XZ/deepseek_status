@@ -40,9 +40,12 @@ struct VPSUsageSnapshot: Equatable, Sendable {
 
 /// Vultr 流量在当前计费周期结束时的续航预测。
 ///
-/// 这里拟合的是“剩余流量”的净趋势，而不是只统计下降量：Vultr 每天增加的流量和
+/// 这里拟合的是“剩余流量”的净趋势，而不是只统计下降量：Vultr 每小时分配的带宽和
 /// 当天实际消耗都会反映在剩余值中，因此一阶导数代表净日变化，二阶导数代表净变化
 /// 的加速度。这样不会把每天发放的流量误判成一次性充值或重置。
+///
+/// 为避免把几小时内的阶梯噪声外推成抛物线，估算要求至少 24 小时数据，并且优先
+/// 使用可用的最长窗口；只有窗口跨度至少 3 天时才启用二次项。
 struct VPSTrafficForecast: Equatable, Sendable {
   let currentRemainingGB: Double
   let projectedRemainingAtCycleEndGB: Double?
@@ -62,6 +65,10 @@ enum VPSTrafficForecastEstimator {
     72 * 3600,
     UsageHistoryWindow.seconds,
   ]
+  /// 数据跨度不足时不给出耗尽估算，避免把几小时的变化拟合成抛物线。
+  private static let minimumDataSpan: TimeInterval = 24 * 3600
+  /// 二次项只在至少 3 天的数据上启用；短窗口一律使用线性拟合。
+  private static let quadraticMinimumSpan: TimeInterval = 3 * day
 
   private struct Point {
     let date: Date
@@ -111,9 +118,16 @@ enum VPSTrafficForecastEstimator {
     }
     points.sort { $0.date < $1.date }
 
-    guard points.count >= 2 else { return nil }
+    guard points.count >= 2,
+      points.last!.date.timeIntervalSince(points.first!.date) >= minimumDataSpan
+    else {
+      return nil
+    }
 
+    // 优先使用尽可能长的窗口：Vultr 带宽按小时分配，最近 24 小时内的阶梯
+    // 噪声会被更长的趋势平均掉；数据越多，外推越稳定。
     let selectedPoints = windows
+      .reversed()
       .map { window in
         points.filter { $0.date >= now.addingTimeInterval(-window) }
       }
@@ -122,8 +136,15 @@ enum VPSTrafficForecastEstimator {
       }
       ?? points
 
-    guard selectedPoints.count >= 2,
-      let coefficients = fit(selectedPoints, relativeTo: now),
+    guard selectedPoints.count >= 2 else { return nil }
+
+    let selectedSpan = selectedPoints.last!.date.timeIntervalSince(selectedPoints.first!.date)
+    guard
+      let coefficients = fit(
+        selectedPoints,
+        relativeTo: now,
+        allowQuadratic: selectedSpan >= quadraticMinimumSpan
+      ),
       coefficients.slope.isFinite,
       coefficients.acceleration.isFinite
     else {
@@ -170,7 +191,12 @@ enum VPSTrafficForecastEstimator {
 
   /// Fit `remaining = a + b * days + c * days²` with `days = 0` at the current response.
   /// The current slope is `b`; the second derivative is `2c`.
-  private static func fit(_ points: [Point], relativeTo now: Date) -> Coefficients? {
+  /// 短窗口禁用二次项：抛物线对几小时内的阶梯数据过于敏感，外推会失真。
+  private static func fit(
+    _ points: [Point],
+    relativeTo now: Date,
+    allowQuadratic: Bool
+  ) -> Coefficients? {
     let values = points.map { point in
       (
         x: point.date.timeIntervalSince(now) / day,
@@ -182,7 +208,7 @@ enum VPSTrafficForecastEstimator {
     let elapsed = last.x - first.x
     guard elapsed > 0 else { return nil }
 
-    guard values.count >= 3 else {
+    guard values.count >= 3, allowQuadratic else {
       let slope = (last.y - first.y) / elapsed
       return slope.isFinite ? Coefficients(slope: slope, acceleration: 0) : nil
     }

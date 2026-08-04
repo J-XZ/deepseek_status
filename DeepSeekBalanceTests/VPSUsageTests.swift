@@ -231,28 +231,117 @@ final class VPSUsageTests: XCTestCase {
     XCTAssertEqual(try XCTUnwrap(forecast.riskScore), 0, accuracy: 0.0001)
   }
 
+  func testTrafficForecastRequiresMinimumDataSpan() throws {
+    let now = Date(timeIntervalSince1970: 1_800_000_000)
+    let samples = [
+      VPSUsageSample(
+        credentialID: "cred",
+        bucketStart: now.addingTimeInterval(-4 * 3600),
+        observedAt: now.addingTimeInterval(-4 * 3600),
+        remainingBandwidthGB: 100,
+        remainingCreditUSD: 5
+      ),
+      VPSUsageSample(
+        credentialID: "cred",
+        bucketStart: now.addingTimeInterval(-3 * 3600),
+        observedAt: now.addingTimeInterval(-3 * 3600),
+        remainingBandwidthGB: 101,
+        remainingCreditUSD: 5
+      ),
+      VPSUsageSample(
+        credentialID: "cred",
+        bucketStart: now.addingTimeInterval(-2 * 3600),
+        observedAt: now.addingTimeInterval(-2 * 3600),
+        remainingBandwidthGB: 104,
+        remainingCreditUSD: 5
+      ),
+      VPSUsageSample(
+        credentialID: "cred",
+        bucketStart: now.addingTimeInterval(-3600),
+        observedAt: now.addingTimeInterval(-3600),
+        remainingBandwidthGB: 106,
+        remainingCreditUSD: 5
+      ),
+    ]
+
+    XCTAssertNil(
+      VPSTrafficForecastEstimator.estimate(
+        samples: samples,
+        currentRemainingGB: 106,
+        cycleEnd: now.addingTimeInterval(11 * 86_400),
+        now: now
+      )
+    )
+  }
+
+  func testTrafficForecastUsesLinearFitForShortWindow() throws {
+    let now = Date(timeIntervalSince1970: 1_800_000_000)
+    let samples = [
+      VPSUsageSample(
+        credentialID: "cred",
+        bucketStart: now.addingTimeInterval(-2 * 86_400),
+        observedAt: now.addingTimeInterval(-2 * 86_400),
+        remainingBandwidthGB: 100,
+        remainingCreditUSD: 5
+      ),
+      VPSUsageSample(
+        credentialID: "cred",
+        bucketStart: now.addingTimeInterval(-86_400),
+        observedAt: now.addingTimeInterval(-86_400),
+        remainingBandwidthGB: 104,
+        remainingCreditUSD: 5
+      ),
+    ]
+
+    let forecast = try XCTUnwrap(
+      VPSTrafficForecastEstimator.estimate(
+        samples: samples,
+        currentRemainingGB: 106,
+        cycleEnd: now.addingTimeInterval(10 * 86_400),
+        now: now
+      )
+    )
+
+    XCTAssertEqual(try XCTUnwrap(forecast.dailyNetChangeGB), 3, accuracy: 0.0001)
+    XCTAssertEqual(try XCTUnwrap(forecast.dailyAccelerationGB), 0, accuracy: 0.0001)
+    XCTAssertEqual(
+      try XCTUnwrap(forecast.projectedRemainingAtCycleEndGB),
+      136,
+      accuracy: 0.0001
+    )
+    XCTAssertNil(forecast.exhaustionInterval)
+    XCTAssertEqual(try XCTUnwrap(forecast.riskScore), 0, accuracy: 0.0001)
+  }
+
   func testTrafficForecastUsesSecondDerivativeForAcceleratingConsumption() throws {
     let now = Date(timeIntervalSince1970: 1_800_000_000)
     let samples = [
       VPSUsageSample(
         credentialID: "cred",
-        bucketStart: now.addingTimeInterval(-18 * 3600),
-        observedAt: now.addingTimeInterval(-18 * 3600),
-        remainingBandwidthGB: 10.9375,
+        bucketStart: now.addingTimeInterval(-4 * 86_400),
+        observedAt: now.addingTimeInterval(-4 * 86_400),
+        remainingBandwidthGB: 28,
         remainingCreditUSD: 5
       ),
       VPSUsageSample(
         credentialID: "cred",
-        bucketStart: now.addingTimeInterval(-12 * 3600),
-        observedAt: now.addingTimeInterval(-12 * 3600),
-        remainingBandwidthGB: 8.75,
+        bucketStart: now.addingTimeInterval(-3 * 86_400),
+        observedAt: now.addingTimeInterval(-3 * 86_400),
+        remainingBandwidthGB: 25,
         remainingCreditUSD: 5
       ),
       VPSUsageSample(
         credentialID: "cred",
-        bucketStart: now.addingTimeInterval(-6 * 3600),
-        observedAt: now.addingTimeInterval(-6 * 3600),
-        remainingBandwidthGB: 6.4375,
+        bucketStart: now.addingTimeInterval(-2 * 86_400),
+        observedAt: now.addingTimeInterval(-2 * 86_400),
+        remainingBandwidthGB: 20,
+        remainingCreditUSD: 5
+      ),
+      VPSUsageSample(
+        credentialID: "cred",
+        bucketStart: now.addingTimeInterval(-86_400),
+        observedAt: now.addingTimeInterval(-86_400),
+        remainingBandwidthGB: 13,
         remainingCreditUSD: 5
       ),
     ]
