@@ -61,6 +61,10 @@ final class BalanceStore: ObservableObject {
   let loginItemStore: LoginItemStore?
 
   private let coordinator = RefreshCoordinator()
+  /// 在凭据解析和网络请求之间也保持单飞，避免第二个菜单刷新在首个请求
+  /// 已经结束、但还未完成整个刷新流程时又发起重复请求。
+  private var refreshGateTask: Task<Void, Never>?
+  private var refreshGateGeneration = 0
   private var autoRefreshTask: Task<Void, Never>?
   private var startupRefreshTask: Task<Void, Never>?
   private var startupPruneTask: Task<Void, Never>?
@@ -121,6 +125,7 @@ final class BalanceStore: ObservableObject {
   }
 
   deinit {
+    refreshGateTask?.cancel()
     autoRefreshTask?.cancel()
     startupRefreshTask?.cancel()
     startupPruneTask?.cancel()
@@ -223,28 +228,125 @@ final class BalanceStore: ObservableObject {
   // MARK: - 刷新入口
 
   func refresh(force: Bool = false) async {
+    await refreshRequest(force: force, maximumAge: nil)
+  }
+
+  private func refreshRequest(force: Bool, maximumAge: TimeInterval?) async {
     guard isEnabled else { return }
-    let credential: ResolvedCredential?
+    var credentialOverride: ResolvedCredential?
+
+    // 先观察当前凭据是否发生变化，再决定加入现有请求还是替换它。
+    // 如果当前凭据尚未解析，直接加入即可；这覆盖启动刷新与生命周期通知
+    // 同时到达的情况，避免它们在两个 Keychain 读取完成后各自发起请求。
+    if !force, let refreshGateTask {
+      if let currentCredentialID {
+        do {
+          let credential = try await resolveCredential()
+          guard let credential else {
+            cancelRefreshGate()
+            applyNotConfiguredState()
+            return
+          }
+
+          // refreshIfNeeded 可能在凭据解析期间跨过了新鲜度边界，重新检查一次，
+          // 避免首个请求刚完成后又重复发送第二个请求。
+          if let maximumAge {
+            guard balance == nil
+              || clock.now().timeIntervalSince(lastUpdated ?? .distantPast) >= maximumAge
+            else {
+              return
+            }
+          }
+
+          if credential.credentialID == currentCredentialID {
+            await refreshGateTask.value
+            return
+          }
+          // Keychain 已切换到新凭据：取消旧请求，并复用这次已解析的凭据。
+          credentialOverride = credential
+        } catch {
+          cancelRefreshGate()
+          presentKeychainError(error)
+          return
+        }
+      } else {
+        await refreshGateTask.value
+        return
+      }
+    }
+
+    if force || refreshGateTask != nil {
+      cancelRefreshGate()
+    }
+
+    refreshGateGeneration += 1
+    let generation = refreshGateGeneration
+    let task: Task<Void, Never> = Task { [weak self] in
+      guard let self else { return }
+      await self.performResolvedRefresh(
+        credential: credentialOverride,
+        force: force,
+        maximumAge: maximumAge
+      )
+    }
+    refreshGateTask = task
+    await task.value
+    if refreshGateGeneration == generation {
+      refreshGateTask = nil
+    }
+  }
+
+  private func resolveCredential() async throws -> ResolvedCredential? {
+    let keyProvider = self.keyProvider
+    return try await Task.detached(priority: .utility) {
+      try keyProvider.resolveCredential()
+    }.value
+  }
+
+  private func performResolvedRefresh(
+    credential: ResolvedCredential?,
+    force: Bool,
+    maximumAge: TimeInterval?
+  ) async {
+    let resolvedCredential: ResolvedCredential?
     do {
-      let keyProvider = self.keyProvider
-      credential = try await Task.detached(priority: .utility) {
-        try keyProvider.resolveCredential()
-      }.value
+      if let credential {
+        resolvedCredential = credential
+      } else {
+        resolvedCredential = try await resolveCredential()
+      }
     } catch {
-      coordinator.cancelAll()
+      cancelRefreshGate()
       presentKeychainError(error)
       return
     }
 
-    guard let credential else {
-      coordinator.cancelAll()
+    guard let resolvedCredential else {
+      cancelRefreshGate()
       applyNotConfiguredState()
       return
     }
 
-    if currentCredentialID != credential.credentialID {
-      switchCredential(to: credential)
+    // refreshIfNeeded 可能在凭据解析期间跨过了新鲜度边界，重新检查一次。
+    if let maximumAge {
+      guard balance == nil
+        || clock.now().timeIntervalSince(lastUpdated ?? .distantPast) >= maximumAge
+      else {
+        return
+      }
     }
+
+    if currentCredentialID != resolvedCredential.credentialID {
+      switchCredential(to: resolvedCredential)
+    }
+    await performRefreshFlow(credential: resolvedCredential, force: force)
+  }
+
+  private func performRefreshFlow(
+    credential: ResolvedCredential,
+    force: Bool
+  ) async {
+    guard currentCredentialID == credential.credentialID else { return }
 
     guard coordinator.begin(credentialID: credential.credentialID, force: force) else {
       await coordinator.awaitCurrent()
@@ -259,13 +361,20 @@ final class BalanceStore: ObservableObject {
     coordinator.finish(token: token)
   }
 
+  private func cancelRefreshGate() {
+    refreshGateGeneration += 1
+    refreshGateTask?.cancel()
+    refreshGateTask = nil
+    coordinator.cancelAll()
+  }
+
   /// 打开菜单时调用：距上次成功超过 maximumAge 秒才刷新。
   func refreshIfNeeded(maximumAge: TimeInterval = 60) async {
     guard balance == nil || clock.now().timeIntervalSince(lastUpdated ?? .distantPast) >= maximumAge
     else {
       return
     }
-    await refresh()
+    await refreshRequest(force: false, maximumAge: maximumAge)
   }
 
   /// 底部总刷新：并发刷新余额与官方状态，两者错误互不覆盖。

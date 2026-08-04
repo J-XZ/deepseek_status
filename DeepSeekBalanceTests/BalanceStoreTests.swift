@@ -157,7 +157,9 @@ final class BalanceStoreTests: XCTestCase {
 
     let first: Task<Void, Never> = Task { await store.refresh() }
     await waitForRecordedRequests(1)
+    let readsBeforeSecond = keychain.readCount
     let second: Task<Void, Never> = Task { await store.refresh() }
+    await waitForKeychainReads(keychain, readsBeforeSecond + 1)
     await Task.yield()
 
     MockURLProtocol.releaseAllHeld()
@@ -177,7 +179,9 @@ final class BalanceStoreTests: XCTestCase {
 
     let first: Task<Void, Never> = Task { await store.refresh() }
     await waitForRecordedRequests(1)
+    let readsBeforeMenuOpen = keychain.readCount
     let menuOpen: Task<Void, Never> = Task { await store.refreshIfNeeded(maximumAge: 60) }
+    await waitForKeychainReads(keychain, readsBeforeMenuOpen + 1)
     await Task.yield()
 
     MockURLProtocol.releaseAllHeld()
@@ -364,5 +368,20 @@ final class BalanceStoreTests: XCTestCase {
     }
     let current = await client.keys.count
     XCTFail("等待 \(count) 个请求超时，当前 \(current)")
+  }
+
+  private func waitForKeychainReads(
+    _ keychain: FakeKeychainStore,
+    _ count: Int,
+    timeout: TimeInterval = 2
+  ) async {
+    let deadline = Date().addingTimeInterval(timeout)
+    while Date() < deadline {
+      if keychain.readCount >= count {
+        return
+      }
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
+    XCTFail("等待 Keychain 读取次数达到 \(count) 超时，当前 \(keychain.readCount)")
   }
 }

@@ -4,10 +4,13 @@ import Foundation
 
 /// 内存版 Keychain，用于单元测试。
 final class FakeKeychainStore: APIKeyStoring, @unchecked Sendable {
+  private let readCounter = AtomicCounter()
   var storedValue: String?
   var saveError: Error?
   var readError: Error?
   var deleteError: Error?
+
+  var readCount: Int { readCounter.value }
 
   func save(apiKey: String) throws {
     if let saveError { throw saveError }
@@ -15,6 +18,7 @@ final class FakeKeychainStore: APIKeyStoring, @unchecked Sendable {
   }
 
   func readAPIKey() throws -> String? {
+    readCounter.increment()
     if let readError { throw readError }
     return storedValue
   }
@@ -22,6 +26,26 @@ final class FakeKeychainStore: APIKeyStoring, @unchecked Sendable {
   func deleteAPIKey() throws {
     if let deleteError { throw deleteError }
     storedValue = nil
+  }
+}
+
+final class AtomicCounter: @unchecked Sendable {
+  private let lock = NSLock()
+  private var storage = 0
+
+  var value: Int {
+    lock.lock()
+    defer { lock.unlock() }
+    return storage
+  }
+
+  @discardableResult
+  func increment() -> Int {
+    lock.lock()
+    storage += 1
+    let result = storage
+    lock.unlock()
+    return result
   }
 }
 
