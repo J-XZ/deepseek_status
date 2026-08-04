@@ -368,8 +368,8 @@ struct OpenCodeUsageClient: OpenCodeUsageFetching {
       }
     }
     guard var resolvedPercent = percent, resolvedPercent.isFinite else { return nil }
-    if directPercent, resolvedPercent >= 0, resolvedPercent <= 1 {
-      resolvedPercent *= 100
+    if directPercent {
+      resolvedPercent = normalizedUsagePercent(resolvedPercent)
     }
     let boundedPercent = max(0, min(100, Int(resolvedPercent.rounded())))
 
@@ -411,9 +411,7 @@ struct OpenCodeUsageClient: OpenCodeUsageFetching {
     guard var percent = extractDouble(pattern: percentPattern, text: body), percent.isFinite else {
       return nil
     }
-    if percent >= 0, percent <= 1 {
-      percent *= 100
-    }
+    percent = normalizedUsagePercent(percent)
     let resetPattern = #"(?i)(?:[\"']?(?:resetInSec|resetInSeconds|resetSeconds|reset_sec|reset_in_sec|resetsInSec|resetsInSeconds|resetIn|resetSec)[\"']?)\s*:\s*([0-9]+)"#
     let resetInSec = extractInt(pattern: resetPattern, text: body)
     return OpenCodeUsageWindow(
@@ -421,6 +419,14 @@ struct OpenCodeUsageClient: OpenCodeUsageFetching {
       usedPercent: max(0, min(100, Int(percent.rounded()))),
       resetInSec: resetInSec
     )
+  }
+
+  /// OpenCode 当前接口返回整数百分比（例如 `1` 就是 1%），旧版本/兼容
+  /// 数据也可能返回 0~1 的小数比例（例如 `0.25` 表示 25%）。只有严格
+  /// 小于 1 的正数才按小数比例转换，避免把真实的 1% 误显示成 100%。
+  private static func normalizedUsagePercent(_ value: Double) -> Double {
+    guard value > 0, value < 1 else { return value }
+    return value * 100
   }
 
   private enum SubscriptionMarker: Equatable {

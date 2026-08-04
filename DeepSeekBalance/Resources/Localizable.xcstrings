@@ -3555,6 +3555,24 @@
         "zh-Hans": {"stringUnit": {"state": "translated", "value": "已用 %d%% · 剩余 %d%%"}}
       }
     },
+    "openCode.progressWithGap": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "%d%% used · %d%% remaining (%@)"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "已用 %d%% · 剩余 %d%%（%@）"}}
+      }
+    },
+    "openCode.resetAt": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Resets at %@"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "重置时间：%@"}}
+      }
+    },
+    "openCode.expectedMarker": {
+      "localizations": {
+        "en": {"stringUnit": {"state": "translated", "value": "Ideal usage marker"}},
+        "zh-Hans": {"stringUnit": {"state": "translated", "value": "理想用量标记"}}
+      }
+    },
     "openCode.subscribed": {
       "localizations": {
         "en": {"stringUnit": {"state": "translated", "value": "Subscribed"}},

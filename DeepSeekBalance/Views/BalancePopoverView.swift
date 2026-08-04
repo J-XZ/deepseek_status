@@ -92,6 +92,8 @@ struct BalancePopoverView: View {
   @State private var openCodeCookieValidationMessage: String?
   @State private var selectedTab: UsageTab = .deepseek
   @State private var reportedPageHeights: [UsageTab: CGFloat] = [:]
+  @State private var pageHeightMeasurementQueue: [UsageTab] = []
+  @State private var measuredPage: UsageTab?
   @Environment(\.controlActiveState) private var controlActiveState
 
   private var language: AppLanguage {
@@ -101,6 +103,37 @@ struct BalancePopoverView: View {
   /// 仅显示菜单栏可见的供应商页。
   private var visibleTabs: [UsageTab] {
     UsageTab.allCases.filter { visibility.isVisible($0.vendor) }
+  }
+
+  /// 只有影响页面自然高度的状态才触发重新测量，避免每次刷新进度状态时
+  /// 同时重新构造所有供应商页面。
+  private var pageHeightSignature: String {
+    var parts: [String] = []
+    parts.append(visibleTabs.map(\.rawValue).joined(separator: ","))
+    parts.append(language.rawValue)
+    parts.append(String(describing: store.status))
+    parts.append(String(store.balance?.balanceInfos.count ?? 0))
+    parts.append(String(store.availableCurrencies.count))
+    parts.append(String(store.historySamples.count))
+    parts.append(String(describing: statusStore.loadState))
+    parts.append(String(statusStore.status != nil))
+    parts.append(String(describing: codexStore.status))
+    parts.append(String(codexStore.usage != nil))
+    parts.append(String(codexStore.usage?.additionalRateLimits?.count ?? 0))
+    parts.append(String(codexStore.historySamples.count))
+    parts.append(String(describing: cursorStore.status))
+    parts.append(String(cursorStore.usage != nil))
+    parts.append(String(cursorStore.historySamples.count))
+    parts.append(String(describing: openCodeStore.status))
+    parts.append(String(openCodeStore.snapshot != nil))
+    parts.append(String(openCodeStore.snapshot?.goSubscription?.windows.count ?? 0))
+    parts.append(String(openCodeStore.historySamples.count))
+    parts.append(String(openCodeStore.lastDisplayError != nil))
+    parts.append(String(describing: codexStatusStore.loadState))
+    parts.append(String(codexStatusStore.status != nil))
+    parts.append(String(describing: cursorStatusStore.loadState))
+    parts.append(String(cursorStatusStore.status != nil))
+    return parts.joined(separator: "|")
   }
 
   var body: some View {
@@ -131,18 +164,29 @@ struct BalancePopoverView: View {
     .background(windowBackground)
     .preferredColorScheme(store.appearance.colorScheme)
     .onAppear {
-      Task { await store.refreshIfNeeded() }
-      Task { await statusStore.refreshIfNeeded() }
-      Task { await codexStore.refreshIfNeeded() }
-      Task { await cursorStore.refreshIfNeeded() }
-      Task { await openCodeStore.refreshIfNeeded() }
-      Task { await codexStatusStore.refreshIfNeeded() }
-      Task { await cursorStatusStore.refreshIfNeeded() }
+      schedulePageHeightMeasurement()
+      refreshStoresAfterFirstFrame()
     }
     .onPreferenceChange(VendorPageHeightPreferenceKey.self) { pageHeights in
-      guard !pageHeights.isEmpty, pageHeights != reportedPageHeights else { return }
-      reportedPageHeights = pageHeights
-      onPageHeightsChange(pageHeights)
+      guard let tab = measuredPage,
+        pageHeightMeasurementQueue.contains(tab),
+        let height = pageHeights[tab]
+      else {
+        return
+      }
+
+      var updatedHeights = reportedPageHeights
+      if updatedHeights[tab] != height {
+        updatedHeights[tab] = height
+        reportedPageHeights = updatedHeights
+        onPageHeightsChange(updatedHeights)
+      }
+
+      pageHeightMeasurementQueue.removeAll { $0 == tab }
+      measuredPage = pageHeightMeasurementQueue.first
+    }
+    .onChange(of: pageHeightSignature) { _ in
+      schedulePageHeightMeasurement()
     }
   }
 
@@ -212,25 +256,53 @@ struct BalancePopoverView: View {
     .font(AppTypography.body)
   }
 
-  /// 以实际弹窗宽度测量各页完整自然高度；隐藏供应商不参与高度计算。
+  /// 以实际弹窗宽度逐页测量完整自然高度。一次只布局一个隐藏页面，
+  /// 避免打开菜单时同时构造所有供应商的卡片和趋势图。
+  @ViewBuilder
   private var pageHeightMeasurements: some View {
-    VStack(spacing: 0) {
-      ForEach(visibleTabs) { tab in
-        contentStack(for: tab)
-          .padding(14)
-          .frame(width: PopoverSizing.width)
-          .fixedSize(horizontal: false, vertical: true)
-          .background {
-            GeometryReader { proxy in
-              Color.clear.preference(
-                key: VendorPageHeightPreferenceKey.self,
-                value: [tab: proxy.size.height]
-              )
-            }
+    if let tab = measuredPage {
+      contentStack(for: tab)
+        .padding(14)
+        .frame(width: PopoverSizing.width)
+        .fixedSize(horizontal: false, vertical: true)
+        .background {
+          GeometryReader { proxy in
+            Color.clear.preference(
+              key: VendorPageHeightPreferenceKey.self,
+              value: [tab: proxy.size.height]
+            )
           }
-      }
+        }
     }
-    .fixedSize(horizontal: false, vertical: true)
+  }
+
+  private func schedulePageHeightMeasurement() {
+    let tabs = visibleTabs
+    pageHeightMeasurementQueue = tabs
+    measuredPage = tabs.first
+
+    let visibleSet = Set(tabs)
+    let filtered = reportedPageHeights.filter { visibleSet.contains($0.key) }
+    if filtered != reportedPageHeights {
+      reportedPageHeights = filtered
+      onPageHeightsChange(filtered)
+    }
+  }
+
+  /// 让首帧先完成布局，再启动各供应商的网络刷新；网络请求本身并行，
+  /// 但统一由一个任务协调，减少菜单打开瞬间的任务与 SwiftUI 更新风暴。
+  private func refreshStoresAfterFirstFrame() {
+    Task { @MainActor in
+      await Task.yield()
+      async let balance = store.refreshIfNeeded()
+      async let deepSeekStatus = statusStore.refreshIfNeeded()
+      async let codex = codexStore.refreshIfNeeded()
+      async let cursor = cursorStore.refreshIfNeeded()
+      async let openCode = openCodeStore.refreshIfNeeded()
+      async let codexStatus = codexStatusStore.refreshIfNeeded()
+      async let cursorStatus = cursorStatusStore.refreshIfNeeded()
+      _ = await (balance, deepSeekStatus, codex, cursor, openCode, codexStatus, cursorStatus)
+    }
   }
 
   // MARK: - 顶部切换栏

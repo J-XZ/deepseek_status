@@ -93,7 +93,7 @@ final class OpenCodeUsageTests: XCTestCase {
     subscriptionID: null,
     subscriptionPlan: null,
     SubscriptionID: "sub_active",
-    rollingUsage:$R[36]={status:"ok",resetInSec:17808,usagePercent:0},
+    rollingUsage:$R[36]={status:"ok",resetInSec:17808,usagePercent:1},
     weeklyUsage:$R[37]={status:"ok",resetInSec:499713,usagePercent:12},
     monthlyUsage:$R[38]={status:"ok",resetInSec:2676166,usagePercent:34}
     """
@@ -104,10 +104,33 @@ final class OpenCodeUsageTests: XCTestCase {
         now: Date(timeIntervalSince1970: 1_750_000_000)
       )
     )
-    XCTAssertEqual(subscription.rolling?.usedPercent, 0)
+    XCTAssertEqual(subscription.rolling?.usedPercent, 1)
     XCTAssertEqual(subscription.rolling?.resetInSec, 17808)
     XCTAssertEqual(subscription.weekly?.usedPercent, 12)
+    XCTAssertEqual(subscription.weekly?.resetInSec, 499713)
     XCTAssertEqual(subscription.monthly?.usedPercent, 34)
+    XCTAssertEqual(subscription.monthly?.resetInSec, 2676166)
+  }
+
+  func testKeepsIntegerOnePercentInJSONWindow() throws {
+    let page = """
+      {
+        "subscription": {"id": "sub_1"},
+        "rollingUsage": {"usagePercent": 1, "resetInSec": 3600},
+        "weeklyUsage": {"usagePercent": 2, "resetInSec": 7200},
+        "monthlyUsage": {"usagePercent": 3, "resetInSec": 10800}
+      }
+    """
+
+    let subscription = try XCTUnwrap(
+      try OpenCodeUsageClient.parseGoSubscription(
+        text: page,
+        now: Date(timeIntervalSince1970: 1_750_000_000)
+      )
+    )
+    XCTAssertEqual(subscription.rolling?.usedPercent, 1)
+    XCTAssertEqual(subscription.weekly?.usedPercent, 2)
+    XCTAssertEqual(subscription.monthly?.usedPercent, 3)
   }
 
   func testHistorySampleStoresAllGoWindowsAndZenBalance() throws {
@@ -263,6 +286,119 @@ final class OpenCodeUsageTests: XCTestCase {
     ]
 
     XCTAssertNil(OpenCodeTrendProcessor.zenExhaustionEstimate(samples: samples, now: now))
+  }
+
+  func testSubscribedOpenCodeEstimatesWeeklyGoAndZenSeparately() {
+    let now = Date(timeIntervalSince1970: 1_750_000_000)
+    let samples = [
+      OpenCodeUsageSample(
+        credentialID: "cred",
+        bucketStart: now.addingTimeInterval(-10 * 3600),
+        observedAt: now.addingTimeInterval(-10 * 3600),
+        goRollingUsedPercent: 5,
+        goWeeklyUsedPercent: 10,
+        goMonthlyUsedPercent: 20,
+        zenBalanceUSD: 6
+      ),
+      OpenCodeUsageSample(
+        credentialID: "cred",
+        bucketStart: now,
+        observedAt: now,
+        goRollingUsedPercent: 6,
+        goWeeklyUsedPercent: 20,
+        goMonthlyUsedPercent: 30,
+        zenBalanceUSD: 5
+      ),
+    ]
+
+    let estimates = OpenCodeTrendProcessor.exhaustionEstimates(
+      samples: samples,
+      showGoTrend: true,
+      now: now
+    )
+    XCTAssertEqual(estimates.goWeeklySeconds ?? -1, 80 * 3600, accuracy: 0.001)
+    XCTAssertEqual(estimates.zenSeconds ?? -1, 50 * 3600, accuracy: 0.001)
+  }
+
+  func testUnsubscribedOpenCodeEstimateContainsOnlyZen() {
+    let now = Date(timeIntervalSince1970: 1_750_000_000)
+    let samples = [
+      OpenCodeUsageSample(
+        credentialID: "cred",
+        bucketStart: now.addingTimeInterval(-10 * 3600),
+        observedAt: now.addingTimeInterval(-10 * 3600),
+        goRollingUsedPercent: 5,
+        goWeeklyUsedPercent: 10,
+        goMonthlyUsedPercent: 20,
+        zenBalanceUSD: 6
+      ),
+      OpenCodeUsageSample(
+        credentialID: "cred",
+        bucketStart: now,
+        observedAt: now,
+        goRollingUsedPercent: 6,
+        goWeeklyUsedPercent: 20,
+        goMonthlyUsedPercent: 30,
+        zenBalanceUSD: 5
+      ),
+    ]
+
+    let estimates = OpenCodeTrendProcessor.exhaustionEstimates(
+      samples: samples,
+      showGoTrend: false,
+      now: now
+    )
+    XCTAssertNil(estimates.goWeeklySeconds)
+    XCTAssertEqual(estimates.zenSeconds ?? -1, 50 * 3600, accuracy: 0.001)
+  }
+
+  func testOpenCodeWindowIdealUsageGapUsesEachWindowLength() {
+    let now = Date(timeIntervalSince1970: 1_750_000_000)
+    let rolling = OpenCodeUsageWindow(
+      kind: .rolling,
+      usedPercent: 70,
+      resetInSec: 2 * 3600
+    )
+    let weekly = OpenCodeUsageWindow(
+      kind: .weekly,
+      usedPercent: 80,
+      resetInSec: 3 * 24 * 3600
+    )
+    let monthly = OpenCodeUsageWindow(
+      kind: .monthly,
+      usedPercent: 45,
+      resetInSec: 15 * 24 * 3600
+    )
+
+    XCTAssertEqual(rolling.expectedUsedPercent(now: now) ?? -1, 60, accuracy: 0.001)
+    XCTAssertEqual(rolling.usageGapPercent(now: now), 10)
+    XCTAssertEqual(weekly.expectedUsedPercent(now: now) ?? -1, 400 / 7, accuracy: 0.001)
+    XCTAssertEqual(weekly.usageGapPercent(now: now), 23)
+    XCTAssertEqual(monthly.expectedUsedPercent(now: now) ?? -1, 50, accuracy: 0.001)
+    XCTAssertEqual(monthly.usageGapPercent(now: now), -5)
+  }
+
+  func testOpenCodeMonthlyMenuTextShowsUsedPercentAndIdealGap() {
+    let now = Date(timeIntervalSince1970: 1_750_000_000)
+    let subscription = OpenCodeGoSubscription(
+      rolling: nil,
+      weekly: nil,
+      monthly: OpenCodeUsageWindow(
+        kind: .monthly,
+        usedPercent: 30,
+        resetInSec: 15 * 24 * 3600
+      ),
+      renewsAt: nil
+    )
+
+    XCTAssertEqual(
+      OpenCodeUsageStore.monthlyMenuText(subscription: subscription, now: now),
+      "30% (-20%)"
+    )
+    XCTAssertEqual(
+      OpenCodeUsageStore.monthlyMenuText(subscription: nil, now: now),
+      "--"
+    )
   }
 
 }

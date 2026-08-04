@@ -226,7 +226,10 @@ final class BalanceStore: ObservableObject {
     guard isEnabled else { return }
     let credential: ResolvedCredential?
     do {
-      credential = try keyProvider.resolveCredential()
+      let keyProvider = self.keyProvider
+      credential = try await Task.detached(priority: .utility) {
+        try keyProvider.resolveCredential()
+      }.value
     } catch {
       coordinator.cancelAll()
       presentKeychainError(error)

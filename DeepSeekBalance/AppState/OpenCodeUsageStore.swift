@@ -108,6 +108,7 @@ final class OpenCodeUsageStore: ObservableObject {
   private var refreshTask: Task<Void, Never>?
   private var autoRefreshTask: Task<Void, Never>?
   private var startupPruneTask: Task<Void, Never>?
+  private var cookieProbeTask: Task<Void, Never>?
   private var autoRefreshInterval: TimeInterval?
 
   init(
@@ -126,9 +127,17 @@ final class OpenCodeUsageStore: ObservableObject {
     self.refreshInterval = refreshInterval
     self.historyService = historyService ?? Self.makeDefaultHistoryService(clock: clock)
     self.autoRefreshInterval = autoRefreshInterval
-    self.hasSavedCookie = (try? cookieStore.readCookieHeader()) != nil
+    self.hasSavedCookie = false
 
     startAutoRefreshIfNeeded()
+    let cookieStore = self.cookieStore
+    cookieProbeTask = Task { [weak self] in
+      let hasCookie = await Task.detached(priority: .utility) {
+        (try? cookieStore.readCookieHeader()) != nil
+      }.value
+      guard !Task.isCancelled else { return }
+      self?.hasSavedCookie = hasCookie
+    }
     if startupRefresh {
       refreshTask = Task { [weak self] in
         await self?.refresh()
@@ -148,6 +157,7 @@ final class OpenCodeUsageStore: ObservableObject {
     refreshTask?.cancel()
     autoRefreshTask?.cancel()
     startupPruneTask?.cancel()
+    cookieProbeTask?.cancel()
   }
 
   private(set) var isEnabled = true
@@ -206,22 +216,26 @@ final class OpenCodeUsageStore: ObservableObject {
       status = .loading
     }
 
-    let cookieHeader: String
+    let cookieStore = self.cookieStore
+    let savedCookie: String?
     do {
-      guard let saved = try cookieStore.readCookieHeader(), !saved.isEmpty else {
-        hasSavedCookie = false
-        status = .notConfigured
-        lastDisplayError = nil
-        historySamples = []
-        return
-      }
-      cookieHeader = saved
-      hasSavedCookie = true
+      savedCookie = try await Task.detached(priority: .utility) {
+        try cookieStore.readCookieHeader()
+      }.value
     } catch {
       status = .keychainError
       lastDisplayError = .keychain(error.localizedDescription)
       return
     }
+    guard let savedCookie, !savedCookie.isEmpty else {
+      hasSavedCookie = false
+      status = .notConfigured
+      lastDisplayError = nil
+      historySamples = []
+      return
+    }
+    let cookieHeader = savedCookie
+    hasSavedCookie = true
 
     let credentialID = Self.credentialID(for: cookieHeader)
     historySamples = (try? await historyService.recentSamples(credentialID: credentialID)) ?? []
@@ -292,17 +306,27 @@ final class OpenCodeUsageStore: ObservableObject {
     }
   }
 
-  /// 菜单栏 OpenCode 使用两行紧凑布局：第一行是 Go 月度剩余额度，第二行是 Zen 余额。
+  /// 菜单栏 OpenCode 使用两行紧凑布局：第一行是 Go 本月已用百分比及其
+  /// 与理想用量的差异，第二行是 Zen 余额。
   /// 未订阅或月度窗口不可用时，Go 行固定显示 `--`，避免误把未知状态当成可用额度。
   var menuBarLines: [String] {
     [menuBarGoMonthlyText, menuBarZenText]
   }
 
   private var menuBarGoMonthlyText: String {
-    if let monthly = snapshot?.goSubscription?.monthly {
-      return "\(monthly.remainingPercent)%"
+    Self.monthlyMenuText(subscription: snapshot?.goSubscription, now: clock.now())
+  }
+
+  nonisolated static func monthlyMenuText(
+    subscription: OpenCodeGoSubscription?,
+    now: Date
+  ) -> String {
+    guard let monthly = subscription?.monthly else { return "--" }
+    var text = "\(monthly.usedPercent)%"
+    if let gap = monthly.usageGapPercent(now: now) {
+      text += " (\(gap >= 0 ? "+" : "")\(gap)%)"
     }
-    return "--"
+    return text
   }
 
   private var menuBarZenText: String {

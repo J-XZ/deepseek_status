@@ -347,6 +347,7 @@ final class StatusItemController: NSObject {
     loginItemStore: loginItemStore
   )
   private var cancellables: Set<AnyCancellable> = []
+  private var titleUpdateTask: Task<Void, Never>?
 
   init(
     store: BalanceStore,
@@ -375,6 +376,10 @@ final class StatusItemController: NSObject {
     configureButton()
     configurePopover()
     subscribeToStore()
+  }
+
+  deinit {
+    titleUpdateTask?.cancel()
   }
 
   // MARK: - 按钮
@@ -444,6 +449,8 @@ final class StatusItemController: NSObject {
   /// Cursor 和 OpenCode 的多组用量使用较小字体纵向排列。
   /// 被隐藏的供应商不显示。内容视图使用系统标签颜色，图标按当前外观手动着色。
   private func updateTitle() {
+    titleUpdateTask?.cancel()
+    titleUpdateTask = nil
     guard let button = statusItem.button else { return }
 
     let font = NSFont.monospacedDigitSystemFont(
@@ -772,33 +779,37 @@ final class StatusItemController: NSObject {
 
   // MARK: - 菜单栏文字更新
 
+  /// 将同一轮刷新产生的多次 objectWillChange 合并成一次菜单栏重绘。
+  /// 图标模板化、着色和宽度测量都在主线程完成，合并更新可明显降低弹窗打开时的卡顿。
+  private func scheduleTitleUpdate() {
+    guard titleUpdateTask == nil else { return }
+    titleUpdateTask = Task { @MainActor [weak self] in
+      await Task.yield()
+      guard let self else { return }
+      self.titleUpdateTask = nil
+      self.updateTitle()
+    }
+  }
+
   private func subscribeToStore() {
     store.objectWillChange
       .sink { [weak self] _ in
-        Task { @MainActor in
-          self?.updateTitle()
-        }
+        self?.scheduleTitleUpdate()
       }
       .store(in: &cancellables)
     codexStore.objectWillChange
       .sink { [weak self] _ in
-        Task { @MainActor in
-          self?.updateTitle()
-        }
+        self?.scheduleTitleUpdate()
       }
       .store(in: &cancellables)
     cursorStore.objectWillChange
       .sink { [weak self] _ in
-        Task { @MainActor in
-          self?.updateTitle()
-        }
+        self?.scheduleTitleUpdate()
       }
       .store(in: &cancellables)
     openCodeStore.objectWillChange
       .sink { [weak self] _ in
-        Task { @MainActor in
-          self?.updateTitle()
-        }
+        self?.scheduleTitleUpdate()
       }
       .store(in: &cancellables)
   }

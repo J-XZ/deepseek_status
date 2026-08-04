@@ -30,9 +30,33 @@ struct OpenCodeUsageWindow: Codable, Equatable, Identifiable, Sendable {
     max(0, min(100, 100 - usedPercent))
   }
 
+  /// 根据服务端返回的“距离窗口重置的秒数”反推出当前窗口结束时间。
+  /// now 显式传入，保证菜单栏和详情页使用同一个时间基准，也便于测试。
+  func resetAt(now: Date) -> Date? {
+    guard let resetInSec, resetInSec >= 0 else { return nil }
+    return now.addingTimeInterval(TimeInterval(resetInSec))
+  }
+
   var resetAt: Date? {
-    guard let resetInSec else { return nil }
-    return Date().addingTimeInterval(TimeInterval(resetInSec))
+    resetAt(now: Date())
+  }
+
+  /// 当前窗口按时间线性消耗时应达到的已用百分比。
+  func expectedUsedPercent(now: Date) -> Double? {
+    guard let resetAt = resetAt(now: now) else { return nil }
+    let windowEnd = resetAt.timeIntervalSince1970
+    let windowStart = windowEnd - kind.defaultWindowSeconds
+    let current = now.timeIntervalSince1970
+    guard current >= windowStart, current <= windowEnd, windowStart < windowEnd else {
+      return nil
+    }
+    return min(100, max(0, (current - windowStart) / (windowEnd - windowStart) * 100))
+  }
+
+  /// 实际已用百分比 − 理想已用百分比；正数表示实际用量超前。
+  func usageGapPercent(now: Date) -> Int? {
+    guard let expected = expectedUsedPercent(now: now) else { return nil }
+    return usedPercent - Int(expected.rounded())
   }
 }
 

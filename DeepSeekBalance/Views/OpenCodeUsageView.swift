@@ -175,28 +175,67 @@ struct OpenCodeUsageView: View {
   }
 
   private func windowRow(_ window: OpenCodeUsageWindow) -> some View {
-    VStack(alignment: .leading, spacing: 4) {
+    let now = store.clock.now()
+    let expected = window.expectedUsedPercent(now: now)
+    let gap = window.usageGapPercent(now: now)
+
+    return VStack(alignment: .leading, spacing: 4) {
       HStack(spacing: 8) {
         Text(windowTitle(window.kind))
           .font(AppTypography.caption.weight(.semibold))
           .foregroundStyle(.secondary)
         Spacer()
         Text(
-          L10n.string(
-            .openCodeProgress,
-            language: language,
-            window.usedPercent,
-            window.remainingPercent
-          )
+          windowProgressText(window, gap: gap)
         )
         .font(AppTypography.caption.monospacedDigit())
         .foregroundStyle(amountForegroundStyle)
       }
       OpenCodeProgressBar(
         progress: Double(window.usedPercent) / 100,
-        color: progressColor(for: window)
+        color: progressColor(for: window, expected: expected),
+        expected: expected,
+        expectedAccessibilityLabel: L10n.string(
+          .openCodeExpectedMarker,
+          language: language
+        )
+      )
+      if let reset = window.resetAt(now: now) {
+        Text(
+          L10n.string(
+            .openCodeResetAt,
+            language: language,
+            reset.formatted(
+              Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
+            )
+          )
+        )
+        .font(AppTypography.caption)
+        .foregroundStyle(.secondary)
+      }
+    }
+  }
+
+  private func windowProgressText(
+    _ window: OpenCodeUsageWindow,
+    gap: Int?
+  ) -> String {
+    guard let gap else {
+      return L10n.string(
+        .openCodeProgress,
+        language: language,
+        window.usedPercent,
+        window.remainingPercent
       )
     }
+    let signedGap = "\(gap >= 0 ? "+" : "")\(gap)%"
+    return L10n.string(
+      .openCodeProgressWithGap,
+      language: language,
+      window.usedPercent,
+      window.remainingPercent,
+      signedGap
+    )
   }
 
   private var emptyView: some View {
@@ -228,21 +267,14 @@ struct OpenCodeUsageView: View {
     }
   }
 
-  private func progressColor(for window: OpenCodeUsageWindow) -> Color {
-    let ideal: Double?
-    if let resetInSec = window.resetInSec {
-      let now = store.clock.now()
-      let resetAt = now.addingTimeInterval(TimeInterval(resetInSec))
-      ideal = CodexUsageFormatter.expectedUsedPercent(
-        resetAt: Int(resetAt.timeIntervalSince1970),
-        limitWindowSeconds: Int(window.kind.defaultWindowSeconds),
-        now: now
-      )
-    } else {
-      ideal = nil
-    }
-
-    switch UsageProgressEvaluator.status(usedPercent: window.usedPercent, idealPercent: ideal) {
+  private func progressColor(
+    for window: OpenCodeUsageWindow,
+    expected: Double?
+  ) -> Color {
+    switch UsageProgressEvaluator.status(
+      usedPercent: window.usedPercent,
+      idealPercent: expected
+    ) {
     case .noIdeal, .onTrack:
       return .blue
     case .behindIdeal:
@@ -266,6 +298,20 @@ struct OpenCodeUsageView: View {
 struct OpenCodeProgressBar: View {
   let progress: Double
   let color: Color
+  let expected: Double?
+  let expectedAccessibilityLabel: String
+
+  init(
+    progress: Double,
+    color: Color,
+    expected: Double? = nil,
+    expectedAccessibilityLabel: String = "Ideal usage"
+  ) {
+    self.progress = progress
+    self.color = color
+    self.expected = expected
+    self.expectedAccessibilityLabel = expectedAccessibilityLabel
+  }
 
   var body: some View {
     GeometryReader { proxy in
@@ -275,9 +321,21 @@ struct OpenCodeProgressBar: View {
         Capsule()
           .fill(color)
           .frame(width: proxy.size.width * max(0, min(1, progress)))
+        if let expected {
+          Rectangle()
+            .fill(.red)
+            .frame(width: 3, height: 8)
+            .position(x: markerX(width: proxy.size.width, expected: expected), y: 4)
+            .accessibilityLabel(expectedAccessibilityLabel)
+        }
       }
     }
     .frame(height: 8)
     .accessibilityValue("\(Int(max(0, min(1, progress)) * 100))%")
+  }
+
+  private func markerX(width: CGFloat, expected: Double) -> CGFloat {
+    let fraction = CGFloat(min(max(expected / 100, 0), 1))
+    return min(max(width * fraction, 2), max(width - 2, 2))
   }
 }
