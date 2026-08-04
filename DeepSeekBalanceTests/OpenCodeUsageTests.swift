@@ -87,6 +87,29 @@ final class OpenCodeUsageTests: XCTestCase {
     XCTAssertEqual(subscription.monthly?.usedPercent, 43)
   }
 
+  func testParsesCurrentSolidStartGoWindowShape() throws {
+    let page = """
+    subscription: null,
+    subscriptionID: null,
+    subscriptionPlan: null,
+    SubscriptionID: "sub_active",
+    rollingUsage:$R[36]={status:"ok",resetInSec:17808,usagePercent:0},
+    weeklyUsage:$R[37]={status:"ok",resetInSec:499713,usagePercent:12},
+    monthlyUsage:$R[38]={status:"ok",resetInSec:2676166,usagePercent:34}
+    """
+
+    let subscription = try XCTUnwrap(
+      try OpenCodeUsageClient.parseGoSubscription(
+        text: page,
+        now: Date(timeIntervalSince1970: 1_750_000_000)
+      )
+    )
+    XCTAssertEqual(subscription.rolling?.usedPercent, 0)
+    XCTAssertEqual(subscription.rolling?.resetInSec, 17808)
+    XCTAssertEqual(subscription.weekly?.usedPercent, 12)
+    XCTAssertEqual(subscription.monthly?.usedPercent, 34)
+  }
+
   func testHistorySampleStoresAllGoWindowsAndZenBalance() throws {
     let now = Date(timeIntervalSince1970: 1_750_000_000)
     let snapshot = OpenCodeUsageSnapshot(

@@ -30,6 +30,7 @@ The menu bar shows the monochrome icon and current balance:
 - All provider trend cards use the consistent `Usage Trend` title and `Usage change over the last 14 days:` second line; charts use Apple Swift Charts, 10-minute time buckets, and local storage
 - Trend chart supports click/drag selection with local time, each balance figure, and the delta from the previous sample
 - OpenCode Usage page: paste a complete Netscape Cookie file or a local absolute path to load Zen balance and Go subscription usage
+- Compatible with the current OpenCode page's case-variant fields and SolidStart `$R[n]=` serialized usage windows, so an active subscription does not appear to have a missing usage window
 - OpenCode Go shows a red not-subscribed indicator when no subscription exists; an active subscription shows 5-hour, weekly, and monthly windows with blue, green, or orange progress colors based on ideal-progress deviation
 - OpenCode uses a two-line menu bar layout for Go monthly remaining percentage and Zen balance; the first line is `--` when Go is not subscribed
 - OpenCode trends show only an independent Zen chart without a legend when Go is not subscribed; with Go active, Go windows and Zen share one dual-axis chart with a legend
@@ -76,6 +77,7 @@ If you downloaded an unsigned release, macOS may say that it cannot verify the d
 
 - Cookie input accepts either complete Netscape Cookie file content or a local absolute path (including a `~` prefix). The app keeps only the `auth` / `__Host-auth` login Cookie in the Keychain; it does not store the complete Cookie file or write Cookie data into trend history.
 - OpenCode Zen is represented by a USD balance. OpenCode Go is represented by independent subscription usage windows, with server-provided reset times shown next to each window.
+- The parser accepts the current page's case-variant fields and SolidStart `$R[n]=` serialization; even if an empty legacy subscription field appears first, a later valid `SubscriptionID` is still recognized.
 - Go keeps separate 5-hour, weekly, and monthly windows. Progress bars are blue when ideal usage data is unavailable or the difference is within 10 percentage points, green when actual usage is more than 10 points behind ideal progress, and orange when it is more than 10 points ahead.
 - When Go is not subscribed, the Go card explicitly says so and uses one red indicator bar; the trend area hides Go entirely and keeps only an independent Zen chart without a single-series legend.
 - When Go is subscribed, the trend area combines the 5-hour, weekly, and monthly Go curves with the Zen balance curve in one chart: the left Y axis is Go used percentage, the right Y axis is Zen USD balance, and the bottom legend identifies each curve.
@@ -228,8 +230,8 @@ Full pipeline (clean + Debug + Release + tests + analyze):
 Push a version tag to publish automatically:
 
 ```bash
-git tag v2.1.9
-git push origin v2.1.9
+git tag v2.1.10
+git push origin v2.1.10
 ```
 
 `.github/workflows/release.yml` initializes the LevelDB submodule on a macOS runner, runs the unit tests, and publishes every artifact to the matching GitHub Release. Signing is optional:

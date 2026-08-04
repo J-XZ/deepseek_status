@@ -260,13 +260,15 @@ final class CodexUsageTests: XCTestCase {
       )
     }
     let history = InMemoryCodexHistoryStore()
+    let clock = FixedClock(date: Date(timeIntervalSince1970: 1_700_000_000))
     let store = CodexUsageStore(
       client: makeClient(),
       authProvider: MockCodexAuthProvider(),
-      clock: FixedClock(date: Date(timeIntervalSince1970: 1_700_000_000)),
+      clock: clock,
       startupRefresh: false,
+      startupPrune: false,
       autoRefreshInterval: nil,
-      historyService: CodexHistoryService(store: history, clock: SystemClock())
+      historyService: CodexHistoryService(store: history, clock: clock)
     )
     await store.refresh()
     XCTAssertEqual(store.status, .loaded)

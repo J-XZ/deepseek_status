@@ -30,6 +30,7 @@
 - 所有供应商趋势卡片统一使用「用量趋势」标题，并在第二行显示「近14天用量变化」；图表使用 Apple Swift Charts，10 分钟时间桶采样，本地存储
 - 趋势图支持鼠标点击/拖动选择样本，显示本地时间、各项余额与前一样本变化
 - OpenCode 用量页面：支持粘贴完整 Netscape Cookie 文件内容或本机绝对路径，查询 Zen 余额与 Go 订阅用量
+- 兼容 OpenCode 当前网页使用的大小写字段和 SolidStart `$R[n]=` 序列化用量窗口，避免已订阅但无法识别 5 小时 / 每周 / 月度用量
 - OpenCode Go 未订阅时使用红色提示进度条；已订阅时展示 5 小时、每周和月度用量窗口，并按理想进度自动显示蓝色、绿色或橘色
 - OpenCode 菜单栏使用两行显示 Go 月度剩余百分比和 Zen 余额；无 Go 订阅时第一行显示 `--`
 - OpenCode 趋势图：无 Go 订阅时只显示独立 Zen 余额图；有订阅时将 Go 各窗口与 Zen 放在同一张双 Y 轴图中，并用图例区分
@@ -76,6 +77,7 @@
 
 - Cookie 输入支持两种形式：完整 Netscape Cookie 文件内容，或本机绝对路径（支持 `~` 开头）。应用只保留 `auth` / `__Host-auth` 登录 Cookie 到 Keychain，不保存完整 Cookie 文件内容，也不把 Cookie 写入趋势历史。
 - OpenCode Zen 使用美元余额；OpenCode Go 使用独立的订阅用量窗口。Go 用量以已使用百分比展示，接口返回的重置时间会显示在对应窗口旁。
+- 解析兼容 OpenCode 当前网页的大小写字段和 SolidStart `$R[n]=` 序列化格式；即使页面先出现空的旧订阅字段，后续有效的 `SubscriptionID` 仍会被识别。
 - Go 的 5 小时、每周、月度窗口分别保留；进度条会根据实际进度与理想时间进度的差异着色：没有理想用量信息或差异在 10 个百分点以内为蓝色，实际落后超过 10 个百分点为绿色，实际超前超过 10 个百分点为橘色。
 - Go 未订阅时，Go 卡片明确显示未订阅，红色进度条只用于提示没有订阅；趋势区域隐藏 Go 图，只保留 Zen 独立图，并且不显示单曲线图例。
 - Go 已订阅时，趋势区域将 5 小时、每周、月度 Go 曲线和 Zen 余额曲线放在同一张图中：左侧 Y 轴为 Go 已用百分比，右侧 Y 轴为 Zen 美元余额，底部图例标识每条曲线。
@@ -228,8 +230,8 @@ Release 构建：
 推送版本标签即可自动发布：
 
 ```bash
-git tag v2.1.9
-git push origin v2.1.9
+git tag v2.1.10
+git push origin v2.1.10
 ```
 
 `.github/workflows/release.yml` 会在 macOS runner 上初始化 LevelDB submodule、运行单元测试并把全部产物发布到对应的 GitHub Release。签名是可选的：

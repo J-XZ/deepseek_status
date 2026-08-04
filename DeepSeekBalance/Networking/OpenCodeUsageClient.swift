@@ -399,18 +399,22 @@ struct OpenCodeUsageClient: OpenCodeUsageFetching {
     text: String
   ) -> OpenCodeUsageWindow? {
     let escapedName = NSRegularExpression.escapedPattern(for: name)
-    let pattern = #"(?s)(?:[\"']?"# + escapedName + #"[\"']?)\s*:\s*\{([^{}]*)\}"#
+    // SolidStart 当前页面会把窗口对象写成
+    // `rollingUsage:$R[36]={...}`，而不是直接写成 `rollingUsage:{...}`。
+    // `$R[n]=` 是页面序列化引用，不是用量数据本身。
+    let pattern = #"(?is)(?:[\"']?"# + escapedName
+      + #"[\"']?)\s*:\s*(?:\$R\[\d+\]\s*=\s*)?\{([^{}]*)\}"#
     guard let body = extractString(pattern: pattern, capture: 1, text: text) else {
       return nil
     }
-    let percentPattern = #"(?:[\"']?(?:usagePercent|usedPercent|percentUsed|percent|usage_percent|used_percent|utilization|utilizationPercent|utilization_percent)[\"']?)\s*:\s*([+-]?[0-9]+(?:\.[0-9]+)?)"#
+    let percentPattern = #"(?i)(?:[\"']?(?:usagePercent|usedPercent|percentUsed|percent|usage_percent|used_percent|utilization|utilizationPercent|utilization_percent)[\"']?)\s*:\s*([+-]?[0-9]+(?:\.[0-9]+)?)"#
     guard var percent = extractDouble(pattern: percentPattern, text: body), percent.isFinite else {
       return nil
     }
     if percent >= 0, percent <= 1 {
       percent *= 100
     }
-    let resetPattern = #"(?:[\"']?(?:resetInSec|resetInSeconds|resetSeconds|reset_sec|reset_in_sec|resetsInSec|resetsInSeconds|resetIn|resetSec)[\"']?)\s*:\s*([0-9]+)"#
+    let resetPattern = #"(?i)(?:[\"']?(?:resetInSec|resetInSeconds|resetSeconds|reset_sec|reset_in_sec|resetsInSec|resetsInSeconds|resetIn|resetSec)[\"']?)\s*:\s*([0-9]+)"#
     let resetInSec = extractInt(pattern: resetPattern, text: body)
     return OpenCodeUsageWindow(
       kind: kind,
@@ -433,13 +437,20 @@ struct OpenCodeUsageClient: OpenCodeUsageFetching {
       let escaped = NSRegularExpression.escapedPattern(for: name)
       let pattern = #"(?:[\"']?"# + escaped
         + #"[\"']?)\s*:\s*([^\s,}\]]+)"#
-      guard let value = extractString(pattern: pattern, capture: 1, text: text) else {
+      guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
         continue
       }
-      found = true
-      let normalized = value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-      if !["null", "nil", "undefined", "false"].contains(normalized) {
-        return .active
+      let range = NSRange(text.startIndex..<text.endIndex, in: text)
+      for match in regex.matches(in: text, options: [], range: range) {
+        guard let valueRange = Range(match.range(at: 1), in: text) else { continue }
+        found = true
+        let normalized = String(text[valueRange])
+          .trimmingCharacters(in: .whitespacesAndNewlines)
+          .trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+          .lowercased()
+        if !["", "null", "nil", "undefined", "false"].contains(normalized) {
+          return .active
+        }
       }
     }
 
