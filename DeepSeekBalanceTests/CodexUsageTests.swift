@@ -406,6 +406,34 @@ final class CodexUsageTests: XCTestCase {
     XCTAssertEqual(info.accountID, "user-123")
   }
 
+  func testAuthProviderFallsBackWhenCodexHomeHasNoAuthFile() throws {
+    let directory = FileManager.default.temporaryDirectory
+      .appendingPathComponent(UUID().uuidString, isDirectory: true)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+
+    let codexHome = directory.appendingPathComponent("codex-home", isDirectory: true)
+    try FileManager.default.createDirectory(at: codexHome, withIntermediateDirectories: true)
+    let fallbackAuth = directory.appendingPathComponent("default-auth.json")
+    try Data(TestFixtures.codexAuthJSON.utf8).write(to: fallbackAuth)
+
+    let resolved = CodexAuthProvider.resolveDefaultAuthFileURL(
+      fileManager: .default,
+      environment: ["CODEX_HOME": codexHome.path],
+      defaultAuthFileURL: fallbackAuth
+    )
+    XCTAssertEqual(resolved, fallbackAuth)
+
+    let preferred = codexHome.appendingPathComponent("auth.json")
+    try Data(TestFixtures.codexAuthJSON.utf8).write(to: preferred)
+    let resolvedWithLogin = CodexAuthProvider.resolveDefaultAuthFileURL(
+      fileManager: .default,
+      environment: ["CODEX_HOME": codexHome.path],
+      defaultAuthFileURL: fallbackAuth
+    )
+    XCTAssertEqual(resolvedWithLogin, preferred)
+  }
+
   func testAuthProviderMissingFileThrows() {
     let provider = CodexAuthProvider(
       authFileURL: URL(fileURLWithPath: "/nonexistent/auth.json")

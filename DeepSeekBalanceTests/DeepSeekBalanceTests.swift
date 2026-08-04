@@ -256,29 +256,50 @@ final class PopoverSizingTests: XCTestCase {
 }
 
 final class MenuBarUsageColorTests: XCTestCase {
-  func testNoOverageKeepsSystemColor() {
+  func testMissingOrZeroGapKeepsSystemColor() {
     XCTAssertNil(MenuBarUsageColor.color(for: nil, isDark: true))
     XCTAssertNil(MenuBarUsageColor.color(for: 0, isDark: true))
-    XCTAssertNil(MenuBarUsageColor.color(for: -4, isDark: true))
-    XCTAssertNil(MenuBarUsageColor.color(for: -10, isDark: true))
+    XCTAssertNotNil(MenuBarUsageColor.color(for: -1, isDark: true))
+    XCTAssertNotNil(MenuBarUsageColor.color(for: 1, isDark: true))
   }
 
   func testUnderUsageUsesContinuousGreenInterval() throws {
     let near = try rgba(XCTUnwrap(MenuBarUsageColor.color(for: -11, isDark: true)))
+    let mid = try rgba(XCTUnwrap(MenuBarUsageColor.color(for: -5, isDark: true)))
     let full = try rgba(XCTUnwrap(MenuBarUsageColor.color(for: -30, isDark: true)))
     let clamped = try rgba(XCTUnwrap(MenuBarUsageColor.color(for: -31, isDark: true)))
 
     XCTAssertGreaterThanOrEqual(near.alpha, 0.95)
     XCTAssertGreaterThan(near.green, near.red)
     XCTAssertGreaterThan(near.green, near.blue)
-    XCTAssertGreaterThan(near.red, full.red)
-    XCTAssertGreaterThan(near.blue, full.blue)
+    XCTAssertEqual(near.red, full.red, accuracy: 0.0001)
+    XCTAssertEqual(near.blue, full.blue, accuracy: 0.0001)
+    XCTAssertGreaterThan(mid.red, full.red)
+    XCTAssertLessThan(mid.red, 0.9)
+    XCTAssertGreaterThan(mid.blue, full.blue)
+    XCTAssertLessThan(mid.blue, 0.9)
     XCTAssertGreaterThan(full.green, 0.9)
     XCTAssertLessThan(full.red, 0.65)
     XCTAssertLessThan(full.blue, 0.65)
     XCTAssertEqual(full.green, clamped.green, accuracy: 0.0001)
     XCTAssertEqual(full.red, clamped.red, accuracy: 0.0001)
     XCTAssertEqual(full.blue, clamped.blue, accuracy: 0.0001)
+  }
+
+  func testGradientIsContinuousAcrossWholeRange() throws {
+    let gaps = Array(-10...30)
+    var previous: (red: CGFloat, green: CGFloat, blue: CGFloat, alpha: CGFloat)?
+    for gap in gaps where gap != 0 {
+      let current = try rgba(XCTUnwrap(MenuBarUsageColor.color(for: gap, isDark: true)))
+      if let previous {
+        XCTAssertFalse(
+          abs(previous.red - current.red) < 0.0001
+            && abs(previous.green - current.green) < 0.0001
+            && abs(previous.blue - current.blue) < 0.0001
+        )
+      }
+      previous = current
+    }
   }
 
   func testOverageUsesAContinuousBrightWhiteYellowRedGradient() throws {
@@ -294,6 +315,28 @@ final class MenuBarUsageColorTests: XCTestCase {
     XCTAssertGreaterThan(high.green, 0.55)
     XCTAssertGreaterThan(high.blue, 0.55)
     XCTAssertGreaterThanOrEqual(high.red, yellow.red)
+  }
+
+  func testTrafficRiskUsesGreenYellowRedGradient() throws {
+    XCTAssertNil(MenuBarUsageColor.color(forTrafficRisk: nil, isDark: true))
+
+    let safe = try rgba(XCTUnwrap(MenuBarUsageColor.color(forTrafficRisk: 0, isDark: true)))
+    let yellow = try rgba(XCTUnwrap(MenuBarUsageColor.color(forTrafficRisk: 0.5, isDark: true)))
+    let severe = try rgba(XCTUnwrap(MenuBarUsageColor.color(forTrafficRisk: 1, isDark: true)))
+    let quarter = try rgba(XCTUnwrap(MenuBarUsageColor.color(forTrafficRisk: 0.25, isDark: true)))
+    let threeQuarter = try rgba(XCTUnwrap(MenuBarUsageColor.color(forTrafficRisk: 0.75, isDark: true)))
+
+    XCTAssertGreaterThanOrEqual(safe.alpha, 0.95)
+    XCTAssertGreaterThan(safe.green, 0.9)
+    XCTAssertLessThan(safe.red, 0.65)
+    XCTAssertLessThan(safe.blue, 0.65)
+    XCTAssertGreaterThan(yellow.green, 0.85)
+    XCTAssertGreaterThan(yellow.blue, 0.45)
+    XCTAssertGreaterThan(yellow.green, severe.green)
+    XCTAssertGreaterThanOrEqual(severe.red, yellow.red)
+    XCTAssertGreaterThan(safe.green, yellow.green)
+    XCTAssertGreaterThan(quarter.green, threeQuarter.green)
+    XCTAssertGreaterThan(threeQuarter.red, quarter.red)
   }
 
   private func rgba(_ color: NSColor) throws -> (red: CGFloat, green: CGFloat, blue: CGFloat, alpha: CGFloat) {

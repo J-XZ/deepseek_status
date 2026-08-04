@@ -54,18 +54,25 @@ struct CodexAuthProvider: CodexAuthProviding {
     self.fileManager = fileManager
   }
 
-  /// 解析默认 auth.json 路径：`$CODEX_HOME/auth.json` 或 `~/.codex/auth.json`。
+  /// 解析默认 auth.json 路径：优先 `$CODEX_HOME/auth.json`，但该文件不存在时
+  /// 回退到 `~/.codex/auth.json`，避免设置了 Codex 工作目录却未在其下登录时
+  /// 找不到用户已有的 ChatGPT 登录信息。
   static func resolveDefaultAuthFileURL(
     fileManager: FileManager = .default,
-    environment: [String: String] = ProcessInfo.processInfo.environment
+    environment: [String: String] = ProcessInfo.processInfo.environment,
+    defaultAuthFileURL: URL? = nil
   ) -> URL? {
+    let fallback = defaultAuthFileURL
+      ?? URL(fileURLWithPath: fileManager.homeDirectoryForCurrentUser.path)
+        .appendingPathComponent(".codex/auth.json")
+
     if let codexHome = environment["CODEX_HOME"], !codexHome.isEmpty {
-      return URL(fileURLWithPath: codexHome).appendingPathComponent("auth.json")
+      let preferred = URL(fileURLWithPath: codexHome).appendingPathComponent("auth.json")
+      if fileManager.fileExists(atPath: preferred.path) {
+        return preferred
+      }
     }
-    guard let home = fileManager.homeDirectoryForCurrentUser.path as String? else {
-      return nil
-    }
-    return URL(fileURLWithPath: home).appendingPathComponent(".codex/auth.json")
+    return fallback
   }
 
   func loadAuthInfo() throws -> CodexAuthInfo {

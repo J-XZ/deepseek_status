@@ -28,10 +28,9 @@ enum MenuBarDisplayLayout {
 }
 
 enum MenuBarUsageColor {
-  /// 低于理想用量超过 10 个百分点时过渡到绿色，-30 个百分点时完全变绿。
-  /// +10 个百分点时过渡到黄色，+30 个百分点时过渡到红色，区间内连续插值。
-  /// 使用偏白的高亮黄/红，并保持较高不透明度，确保菜单栏上清晰可读。
-  static let greenPeakGap: CGFloat = 30
+  /// 整段连续渐变：-10 及以下完全绿 → 0 系统色 → +10 黄 → +30 红，
+  /// 任意相邻颜色之间都做线性插值，不使用固定色彩档位。
+  static let greenPeakGap: CGFloat = 10
   static let yellowPeakGap: CGFloat = 10
   static let redPeakGap: CGFloat = 30
   static let colorAlpha: CGFloat = 0.96
@@ -57,45 +56,51 @@ enum MenuBarUsageColor {
 
   static func color(for gap: Int?, isDark: Bool) -> NSColor? {
     guard let gap else { return nil }
+    guard gap != 0 else { return nil }
     let gapValue = CGFloat(gap)
     let baseColor = isDark ? NSColor.white : NSColor.labelColor
-
-    if gapValue <= -greenPeakGap {
-      return brightGreen.withAlphaComponent(colorAlpha)
-    }
-    if gapValue < -yellowPeakGap {
-      let fraction = (abs(gapValue) - yellowPeakGap) / (greenPeakGap - yellowPeakGap)
-      return blend(baseColor, brightGreen, fraction: fraction)
-        .withAlphaComponent(colorAlpha)
-    }
-    guard gapValue > 0 else { return nil }
-
-    let normalized = min(max(gapValue / redPeakGap, 0), 1)
-    let yellowPosition = yellowPeakGap / redPeakGap
-    let interpolated: NSColor
-    if normalized <= yellowPosition {
-      let fraction = normalized / yellowPosition
-      interpolated = blend(baseColor, brightYellow, fraction: fraction)
-    } else {
-      let fraction = (normalized - yellowPosition) / (1 - yellowPosition)
-      interpolated = blend(brightYellow, brightRed, fraction: fraction)
-    }
-    return interpolated.withAlphaComponent(colorAlpha)
+    return interpolated(
+      value: gapValue,
+      stops: [
+        (-greenPeakGap, brightGreen),
+        (0, baseColor),
+        (yellowPeakGap, brightYellow),
+        (redPeakGap, brightRed),
+      ]
+    )
   }
 
-  /// Vultr traffic risk uses the same continuous white → yellow → red ramp as other
-  /// usage values, but its input is a runway risk score rather than an overage percent.
+  /// Vultr 风险分同样使用连续渐变：0（安全）→ 0.5（黄）→ 1（红）。
   static func color(forTrafficRisk risk: Double?, isDark: Bool) -> NSColor? {
     guard let risk, risk.isFinite else { return nil }
-    let normalized = min(max(CGFloat(risk), 0), 1)
-    let baseColor = isDark ? NSColor.white : NSColor.labelColor
-    let interpolated: NSColor
-    if normalized <= 0.5 {
-      interpolated = blend(baseColor, brightYellow, fraction: normalized * 2)
-    } else {
-      interpolated = blend(brightYellow, brightRed, fraction: (normalized - 0.5) * 2)
+    return interpolated(
+      value: CGFloat(risk),
+      stops: [
+        (0, brightGreen),
+        (0.5, brightYellow),
+        (1, brightRed),
+      ]
+    )
+  }
+
+  /// 在多个颜色停靠点之间按数值线性插值，超出两端时钳制到端点颜色。
+  private static func interpolated(
+    value: CGFloat,
+    stops: [(value: CGFloat, color: NSColor)]
+  ) -> NSColor? {
+    guard let first = stops.first, let last = stops.last else { return nil }
+    let clamped = min(max(value, first.value), last.value)
+    for index in 0..<(stops.count - 1) {
+      let lower = stops[index]
+      let upper = stops[index + 1]
+      if clamped <= upper.value {
+        let span = upper.value - lower.value
+        let fraction = span > 0 ? (clamped - lower.value) / span : 0
+        return blend(lower.color, upper.color, fraction: fraction)
+          .withAlphaComponent(colorAlpha)
+      }
     }
-    return interpolated.withAlphaComponent(colorAlpha)
+    return last.color.withAlphaComponent(colorAlpha)
   }
 
   private static func blend(
