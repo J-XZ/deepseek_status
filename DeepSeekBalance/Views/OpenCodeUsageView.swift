@@ -105,8 +105,10 @@ struct OpenCodeUsageView: View {
   private func zenCard(_ snapshot: OpenCodeUsageSnapshot) -> some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack {
-        Label(L10n.string(.openCodeZenTitle, language: language), systemImage: "sparkles")
-          .font(AppTypography.section)
+        serviceTitle(
+          imageName: "OpenCodeZenIcon",
+          title: L10n.string(.openCodeZenTitle, language: language)
+        )
         Spacer()
         if let balance = snapshot.zenBalanceUSD {
           Text(formattedUSD(balance))
@@ -143,8 +145,10 @@ struct OpenCodeUsageView: View {
   private func goCard(_ snapshot: OpenCodeUsageSnapshot) -> some View {
     VStack(alignment: .leading, spacing: 10) {
       HStack {
-        Label(L10n.string(.openCodeGoTitle, language: language), systemImage: "gauge.with.dots.needle.67percent")
-          .font(AppTypography.section)
+        serviceTitle(
+          imageName: "OpenCodeGoIcon",
+          title: L10n.string(.openCodeGoTitle, language: language)
+        )
         Spacer()
         Text(
           snapshot.goSubscription == nil
@@ -173,6 +177,19 @@ struct OpenCodeUsageView: View {
     }
     .padding(10)
     .background(cardBackground, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+  }
+
+  private func serviceTitle(imageName: String, title: String) -> some View {
+    HStack(spacing: 6) {
+      Image(imageName)
+        .renderingMode(.template)
+        .resizable()
+        .aspectRatio(contentMode: .fit)
+        .frame(width: 20, height: 20)
+        .accessibilityHidden(true)
+      Text(title)
+    }
+    .font(AppTypography.section)
   }
 
   private func windowRow(_ window: OpenCodeUsageWindow) -> some View {
