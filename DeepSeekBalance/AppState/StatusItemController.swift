@@ -629,7 +629,7 @@ final class StatusItemController: NSObject {
         MenuBarStatusContentView.Segment(
           icon: menuBarBrandIcon(
             named: "OpenCodeIcon",
-            size: MenuBarIconLayout.openCodeMaxDimension,
+            size: MenuBarIconLayout.openCodeMaxDimension
           ),
           lines: openCodeStore.menuBarLines,
           font: cursorFont,
@@ -647,7 +647,7 @@ final class StatusItemController: NSObject {
         MenuBarStatusContentView.Segment(
           icon: menuBarBrandIcon(
             named: "VultrIcon",
-            size: MenuBarIconLayout.vpsMaxDimension,
+            size: MenuBarIconLayout.vpsMaxDimension
           ),
           lines: vpsStore.menuBarLines(language: store.language),
           font: cursorFont,
