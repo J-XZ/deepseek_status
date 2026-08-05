@@ -54,7 +54,15 @@ enum MenuBarUsageColor {
     blue: 0.64,
     alpha: 1.0
   )
-  /// 进度条中间色：浅天蓝，明度与绿/黄/红三色一致（约 0.72），
+  /// 进度条绿色：低饱和度暗绿（鼠尾草绿），
+  /// 避免亮绿色在渐变中过于刺眼、与其他颜色不协调。
+  private static let progressGreen = NSColor(
+    srgbRed: 0.31,
+    green: 0.55,
+    blue: 0.33,
+    alpha: 1.0
+  )
+  /// 进度条中间色：浅天蓝，明度与黄/红两色一致（约 0.72），
   /// 避免系统蓝（明度 0.5）在渐变中显得过于浓烈、与其他颜色不协调。
   private static let progressBlue = NSColor(
     srgbRed: 0.45,
@@ -80,13 +88,14 @@ enum MenuBarUsageColor {
   }
 
   /// 进度条渐变与菜单栏共用阈值（-10 完全绿 / +10 完全黄 / +30 完全红），
-  /// 但把 0 点的中间色从菜单栏的系统白/标签色替换为蓝色。
+  /// 但把 0 点的中间色从菜单栏的系统白/标签色替换为蓝色，
+  /// 并把绿色替换为低饱和度暗绿以适配进度条配色。
   static func progressColor(forGap gap: Double?) -> NSColor? {
     guard let gap, gap.isFinite else { return nil }
     return interpolated(
       value: CGFloat(gap),
       stops: [
-        (-greenPeakGap, brightGreen),
+        (-greenPeakGap, progressGreen),
         (0, progressBlue),
         (yellowPeakGap, brightYellow),
         (redPeakGap, brightRed),

@@ -353,6 +353,9 @@ final class MenuBarUsageColorTests: XCTestCase {
     XCTAssertGreaterThan(green.green, green.blue)
     XCTAssertLessThan(green.red, 0.65)
     XCTAssertLessThan(green.blue, 0.65)
+    // 低饱和度暗绿：绿分量明显偏暗，且与红/蓝分量的差距较小（不刺眼）。
+    XCTAssertLessThan(green.green, 0.75)
+    XCTAssertLessThan(green.green - green.red, 0.35)
     // 0 点为蓝色（区别于菜单栏的白色中间色）。
     XCTAssertGreaterThan(blue.blue, blue.red)
     XCTAssertGreaterThan(blue.blue, blue.green)
