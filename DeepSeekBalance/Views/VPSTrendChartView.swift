@@ -10,6 +10,7 @@ struct VPSTrendChartView: View {
   let cycleStart: Date?
   let cycleEnd: Date?
 
+  @State private var preparedModel: VPSUsageTrendProcessor.ChartModel?
   @State private var selectedDate: Date?
 
   init(
@@ -28,8 +29,12 @@ struct VPSTrendChartView: View {
     self.cycleEnd = cycleEnd
   }
 
-  private var model: VPSUsageTrendProcessor.ChartModel {
-    VPSUsageTrendProcessor.chartModel(samples: samples, now: now)
+  /// 图表数据与样本集不变时无需重新准备；不把当前分钟纳入 ID，
+  /// 否则每次刷新/跨分钟都会把整张图重置为等待状态再重建，造成可见闪烁。
+  private var preparationID: String {
+    let latest = samples.last
+    let observedAt = latest?.observedAt.timeIntervalSince1970 ?? -1
+    return "\(samples.count)-\(latest?.id ?? "empty")-\(observedAt)"
   }
 
   private var selectedSample: VPSUsageSample? {
@@ -56,18 +61,36 @@ struct VPSTrendChartView: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      if model.canDraw {
-        exhaustionEstimate
-        chartView
-        if let selectedSample {
-          selectionDetail(selectedSample)
+      if let model = preparedModel {
+        if model.canDraw {
+          exhaustionEstimate
+          chartView(model: model)
+          if let selectedSample {
+            selectionDetail(selectedSample)
+          }
+        } else {
+          waitingText
         }
       } else {
-        Text(L10n.string(.vpsTrendWaiting, language: language))
-          .font(AppTypography.caption)
-          .foregroundStyle(.secondary)
+        waitingText
       }
     }
+    .task(id: preparationID) {
+      preparedModel = nil
+      let capturedSamples = samples
+      let capturedNow = now
+      let model = await Task.detached(priority: .userInitiated) {
+        VPSUsageTrendProcessor.chartModel(samples: capturedSamples, now: capturedNow)
+      }.value
+      guard !Task.isCancelled else { return }
+      preparedModel = model
+    }
+  }
+
+  private var waitingText: some View {
+    Text(L10n.string(.vpsTrendWaiting, language: language))
+      .font(AppTypography.caption)
+      .foregroundStyle(.secondary)
   }
 
   private var exhaustionEstimate: some View {
@@ -110,35 +133,38 @@ struct VPSTrendChartView: View {
     L10n.string(.vpsTrendCredit, language: language)
   }
 
-  private var chartView: some View {
-    Chart {
+  private func chartView(model: VPSUsageTrendProcessor.ChartModel) -> some View {
+    let timeLabel = L10n.string(.chartTime, language: language)
+    let trafficSeriesName = trafficTitle
+    let creditSeriesName = creditTitle
+    return Chart {
       ForEach(model.samples) { sample in
         LineMark(
-          x: .value(L10n.string(.chartTime, language: language), sample.bucketStart),
+          x: .value(timeLabel, sample.bucketStart),
           y: .value(
-            trafficTitle,
+            trafficSeriesName,
             VPSUsageTrendProcessor.normalized(
               sample.remainingBandwidthGB,
               in: model.trafficDomain
             )
           ),
-          series: .value("series", trafficTitle)
+          series: .value("series", trafficSeriesName)
         )
-        .foregroundStyle(by: .value("series", trafficTitle))
+        .foregroundStyle(by: .value("series", trafficSeriesName))
         .lineStyle(StrokeStyle(lineWidth: 2))
 
         LineMark(
-          x: .value(L10n.string(.chartTime, language: language), sample.bucketStart),
+          x: .value(timeLabel, sample.bucketStart),
           y: .value(
-            creditTitle,
+            creditSeriesName,
             VPSUsageTrendProcessor.normalized(
               sample.availableCreditUSD,
               in: model.creditDomain
             )
           ),
-          series: .value("series", creditTitle)
+          series: .value("series", creditSeriesName)
         )
-        .foregroundStyle(by: .value("series", creditTitle))
+        .foregroundStyle(by: .value("series", creditSeriesName))
         .lineStyle(StrokeStyle(lineWidth: 2))
       }
 

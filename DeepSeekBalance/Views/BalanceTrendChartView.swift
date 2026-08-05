@@ -9,7 +9,16 @@ struct BalanceTrendChartView: View {
   let language: AppLanguage
   let now: Date
 
+  @State private var preparedModel: BalanceTrendProcessor.ChartModel?
   @State private var selectedDate: Date?
+
+  /// 图表数据与样本集不变时无需重新准备；不把当前分钟纳入 ID，
+  /// 否则每次刷新/跨分钟都会把整张图重置为等待状态再重建，造成可见闪烁。
+  private var preparationID: String {
+    let latest = samples.last
+    let observedAt = latest?.observedAt.timeIntervalSince1970 ?? -1
+    return "\(samples.count)-\(currency)-\(latest?.id ?? "empty")-\(observedAt)"
+  }
 
   private var selectedSample: BalanceSample? {
     guard let selectedDate else { return nil }
@@ -17,14 +26,6 @@ struct BalanceTrendChartView: View {
       to: selectedDate,
       samples: samples,
       currency: currency
-    )
-  }
-
-  private var model: BalanceTrendProcessor.ChartModel {
-    BalanceTrendProcessor.chartModel(
-      samples: samples,
-      currency: currency,
-      now: now
     )
   }
 
@@ -51,12 +52,42 @@ struct BalanceTrendChartView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
       exhaustionEstimate
-      chartView
-      legend
-      if let selectedSample {
-        selectionDetail(selectedSample)
+      if let model = preparedModel {
+        chartView(model: model)
+        legend
+        if let selectedSample {
+          selectionDetail(selectedSample)
+        }
+      } else {
+        preparingPlaceholder
       }
     }
+    .task(id: preparationID) {
+      preparedModel = nil
+      let capturedSamples = samples
+      let capturedCurrency = currency
+      let capturedNow = now
+      let model = await Task.detached(priority: .userInitiated) {
+        BalanceTrendProcessor.chartModel(
+          samples: capturedSamples,
+          currency: capturedCurrency,
+          now: capturedNow
+        )
+      }.value
+      guard !Task.isCancelled else { return }
+      preparedModel = model
+    }
+  }
+
+  /// 首次准备期间保持与图表相同的高度，避免弹窗高度跳动。
+  private var preparingPlaceholder: some View {
+    ZStack {
+      Rectangle().fill(.clear)
+      ProgressView()
+        .controlSize(.small)
+    }
+    .frame(height: 180)
+    .frame(maxWidth: .infinity)
   }
 
   @ViewBuilder
@@ -84,13 +115,15 @@ struct BalanceTrendChartView: View {
     }
   }
 
-  private var chartView: some View {
-    Chart {
+  private func chartView(model: BalanceTrendProcessor.ChartModel) -> some View {
+    let timeLabel = L10n.string(.chartTime, language: language)
+    let amountLabel = L10n.string(.chartAmount, language: language)
+    return Chart {
       ForEach(model.segments) { segment in
         ForEach(segment.points) { point in
           LineMark(
-            x: .value(L10n.string(.chartTime, language: language), point.date),
-            y: .value(L10n.string(.chartAmount, language: language), point.value),
+            x: .value(timeLabel, point.date),
+            y: .value(amountLabel, point.value),
             series: .value(L10n.string(.chartSegment, language: language), segment.id)
           )
           .foregroundStyle(metricColor(segment.metric))
