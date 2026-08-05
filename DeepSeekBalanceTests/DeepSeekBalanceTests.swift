@@ -155,37 +155,50 @@ final class BalanceFormattingTests: XCTestCase {
 }
 
 final class PopoverSizingTests: XCTestCase {
-  func testTargetHeightUsesLargestVisibleVendorPage() {
+  func testPageHeightUsesTheSelectedTabHeight() {
     XCTAssertEqual(
-      PopoverSizing.largestPageHeight([640, 812, 704]),
+      PopoverSizing.pageHeight(
+        [.deepseek: 640, .codex: 812, .vps: 704],
+        for: .codex
+      ),
       812
+    )
+  }
+
+  func testPageHeightFallsBackWhenTabWasNotMeasuredYet() {
+    XCTAssertEqual(
+      PopoverSizing.pageHeight(
+        [.deepseek: 640],
+        for: .vps
+      ),
+      PopoverSizing.fallbackHeight
     )
   }
 
   func testTargetHeightIsNotCappedOnAComfortableScreen() {
     XCTAssertEqual(
       PopoverSizing.constrainedHeight(
-        pageHeights: [640, 812, 704],
+        pageHeight: 812,
         visibleFrameHeight: 1_000
       ),
       812
     )
   }
 
-  func testTallestPageUsesTheAvailableScreenHeightBeforeScrolling() {
+  func testTallPageUsesTheAvailableScreenHeightBeforeScrolling() {
     XCTAssertEqual(
       PopoverSizing.constrainedHeight(
-        pageHeights: [820, 1_160, 940],
+        pageHeight: 1_160,
         visibleFrameHeight: 1_440
       ),
       1_160
     )
   }
 
-  func testTallestPageIsCappedOnlyWhenItExceedsTheVisibleScreen() {
+  func testTallPageIsCappedOnlyWhenItExceedsTheVisibleScreen() {
     XCTAssertEqual(
       PopoverSizing.constrainedHeight(
-        pageHeights: [820, 1_160, 940],
+        pageHeight: 1_160,
         visibleFrameHeight: 1_000
       ),
       968
@@ -195,7 +208,7 @@ final class PopoverSizingTests: XCTestCase {
   func testTargetHeightIsCappedByTheScreenVisibleFrame() {
     XCTAssertEqual(
       PopoverSizing.constrainedHeight(
-        pageHeights: [640, 812, 704],
+        pageHeight: 812,
         visibleFrameHeight: 700
       ),
       668
@@ -205,7 +218,7 @@ final class PopoverSizingTests: XCTestCase {
   func testTinyScreensNeverReceiveAHeightAboveTheirVisibleFrame() {
     XCTAssertEqual(
       PopoverSizing.constrainedHeight(
-        pageHeights: [640],
+        pageHeight: 640,
         visibleFrameHeight: 20
       ),
       1
@@ -228,6 +241,18 @@ final class PopoverSizingTests: XCTestCase {
         isPopoverShown: true
       ),
       900
+    )
+  }
+
+  func testShownPopoverShrinksToTheNewPageWhenTabSwitches() {
+    XCTAssertEqual(
+      PopoverSizing.stableHeight(
+        targetHeight: 760,
+        currentHeight: 820,
+        isPopoverShown: true,
+        allowsShrink: true
+      ),
+      760
     )
   }
 

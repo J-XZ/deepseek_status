@@ -313,7 +313,7 @@ private final class MenuBarStatusContentView: NSView {
   }
 }
 
-/// 弹出窗口尺寸计算：页面内容决定目标高度，屏幕可用区域决定硬上限。
+/// 弹出窗口尺寸计算：每个供应商页独立决定目标高度，屏幕可用区域决定硬上限。
 enum PopoverSizing {
   static let width: CGFloat = 500
   static let horizontalPadding: CGFloat = 14
@@ -322,15 +322,19 @@ enum PopoverSizing {
   /// 给菜单栏、Dock 和窗口边缘留出安全空间，避免小屏上沿/底部贴边。
   static let verticalSafetyMargin: CGFloat = 32
 
-  static func largestPageHeight(_ pageHeights: [CGFloat]) -> CGFloat {
-    pageHeights.max() ?? fallbackHeight
+  /// 当前选中供应商页的自然高度；尚未测量到该页时退回默认高度。
+  static func pageHeight(
+    _ pageHeights: [UsageTab: CGFloat],
+    for tab: UsageTab
+  ) -> CGFloat {
+    pageHeights[tab] ?? fallbackHeight
   }
 
   static func constrainedHeight(
-    pageHeights: [CGFloat],
+    pageHeight: CGFloat,
     visibleFrameHeight: CGFloat?
   ) -> CGFloat {
-    let targetHeight = largestPageHeight(pageHeights)
+    let targetHeight = pageHeight
     guard let visibleFrameHeight else { return targetHeight }
 
     let screenLimit = max(1, visibleFrameHeight - verticalSafetyMargin)
@@ -338,15 +342,17 @@ enum PopoverSizing {
   }
 
   /// 异步刷新期间只允许弹窗变大，不允许已显示的弹窗被低估后突然缩小。
-  /// 关闭后重新打开时仍会按最新页面高度重新计算，因此真实内容减少不会永久占用空间。
+  /// 切换供应商标签页时（allowsShrink = true）放行收缩，让窗口平滑缩到新页面
+  /// 自己的高度；关闭后重新打开时也会按最新页面高度重新计算。
   static func stableHeight(
     targetHeight: CGFloat,
     currentHeight: CGFloat,
     isPopoverShown: Bool,
-    maximumHeight: CGFloat? = nil
+    maximumHeight: CGFloat? = nil,
+    allowsShrink: Bool = false
   ) -> CGFloat {
     let boundedTarget = maximumHeight.map { min(targetHeight, max(1, $0)) } ?? targetHeight
-    guard isPopoverShown, currentHeight.isFinite, currentHeight > 0 else {
+    guard !allowsShrink, isPopoverShown, currentHeight.isFinite, currentHeight > 0 else {
       return boundedTarget
     }
     let boundedCurrent = maximumHeight.map { min(currentHeight, max(1, $0)) } ?? currentHeight
@@ -504,6 +510,8 @@ final class StatusItemController: NSObject {
   private let visibility: MenuBarVendorVisibility
   private var menuBarContentView: MenuBarStatusContentView?
   private var vendorPageHeights: [UsageTab: CGFloat] = [:]
+  private var selectedUsageTab: UsageTab = .deepseek
+  private var lastSizedTab: UsageTab?
   private lazy var settingsWindow = SettingsWindow(
     store: store,
     loginItemStore: loginItemStore
@@ -803,6 +811,9 @@ final class StatusItemController: NSObject {
       visibility: visibility,
       onPageHeightsChange: { [weak self] pageHeights in
         self?.updatePopoverSize(for: pageHeights)
+      },
+      onSelectedTabChange: { [weak self] tab in
+        self?.popoverSelectionChanged(to: tab)
       }
     )
     .environment(\.locale, store.language.locale)
@@ -811,7 +822,9 @@ final class StatusItemController: NSObject {
       width: PopoverSizing.width,
       height: PopoverSizing.fallbackHeight
     )
-    popover.animates = false
+    // 弹出时使用系统自带的淡入/缩放过渡；标签切换的高度变化由
+    // applyPopoverSize 里的窗口动画平滑过渡。
+    popover.animates = true
     popover.behavior = .transient
     observePopoverDismissal()
   }
@@ -916,28 +929,45 @@ final class StatusItemController: NSObject {
     }
   }
 
+  /// 标签切换：立即按新页面高度重算并动画调整，不等 160ms 防抖。
+  private func popoverSelectionChanged(to tab: UsageTab) {
+    guard tab != selectedUsageTab else { return }
+    selectedUsageTab = tab
+    pendingPopoverSizeTask?.cancel()
+    applyPopoverSize()
+  }
+
   private func applyPopoverSize(for button: NSStatusBarButton? = nil) {
     let button = button ?? statusItem.button
     guard let button else { return }
     let visibleFrameHeight = button.window?.screen?.visibleFrame.height
       ?? NSScreen.main?.visibleFrame.height
+    let pageHeight = PopoverSizing.pageHeight(vendorPageHeights, for: selectedUsageTab)
     let height = PopoverSizing.constrainedHeight(
-      pageHeights: Array(vendorPageHeights.values),
+      pageHeight: pageHeight,
       visibleFrameHeight: visibleFrameHeight
     )
+    // 只有切换标签页这一条路径允许窗口收缩到新页面高度；
+    // 同一页面内数据到达导致的测量变化仍只允许变大。
+    let allowsShrink = lastSizedTab != nil && lastSizedTab != selectedUsageTab
     let stableHeight = PopoverSizing.stableHeight(
       targetHeight: height,
       currentHeight: popover.contentSize.height,
       isPopoverShown: popover.isShown,
       maximumHeight: visibleFrameHeight.map {
         max(1, $0 - PopoverSizing.verticalSafetyMargin)
-      }
+      },
+      allowsShrink: allowsShrink
     )
     let size = NSSize(width: PopoverSizing.width, height: stableHeight)
-    guard size != popover.contentSize else { return }
+    guard size != popover.contentSize else {
+      lastSizedTab = selectedUsageTab
+      return
+    }
     popover.contentViewController?.preferredContentSize = size
     guard popover.isShown, let window = popover.contentViewController?.view.window else {
       popover.contentSize = size
+      lastSizedTab = selectedUsageTab
       return
     }
     // 弹窗已展示时平滑伸缩窗口高度：顶部（箭头侧）固定在菜单栏下方，
@@ -955,6 +985,7 @@ final class StatusItemController: NSObject {
       window.animator().setFrame(targetFrame, display: true)
     } completionHandler: {
       self.popover.contentSize = size
+      self.lastSizedTab = self.selectedUsageTab
     }
   }
 

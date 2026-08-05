@@ -89,6 +89,7 @@ struct BalancePopoverView: View {
   @ObservedObject var cursorStatusStore: StatusPageStatusStore
   let visibility: MenuBarVendorVisibility
   let onPageHeightsChange: ([UsageTab: CGFloat]) -> Void
+  let onSelectedTabChange: (UsageTab) -> Void
 
   @State private var apiKeyInput = ""
   @State private var openCodeCookieInput = ""
@@ -146,6 +147,10 @@ struct BalancePopoverView: View {
     .preferredColorScheme(store.appearance.colorScheme)
     .onAppear {
       refreshStoresAfterFirstFrame()
+      onSelectedTabChange(selectedTab)
+    }
+    .onChange(of: selectedTab) { newTab in
+      onSelectedTabChange(newTab)
     }
     .onPreferenceChange(VendorPageHeightPreferenceKey.self) { pageHeights in
       guard !pageHeights.isEmpty else { return }
