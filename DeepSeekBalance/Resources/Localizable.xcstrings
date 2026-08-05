@@ -1388,7 +1388,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "最近更新：%@"
+            "value": "最后更新：%@"
           }
         }
       }
@@ -1980,7 +1980,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "近14天用量变化：%@"
+            "value": "近 14 天用量变化：%@"
           }
         }
       }
@@ -1996,7 +1996,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "近14天用量变化：样本不足"
+            "value": "近 14 天用量变化：样本不足"
           }
         }
       }
@@ -2012,7 +2012,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "估计在%@内耗尽额度"
+            "value": "估计余额在%@内耗尽"
           }
         }
       }
@@ -2092,7 +2092,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "估计在%@内耗尽5h额度"
+            "value": "估计在%@内耗尽 5 小时额度"
           }
         }
       }
@@ -2588,7 +2588,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "近14天用量变化：样本不足"
+            "value": "近 14 天用量变化：样本不足"
           }
         }
       }
@@ -2604,7 +2604,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "近14天用量变化：%@"
+            "value": "近 14 天用量变化：%@"
           }
         }
       }
@@ -3132,7 +3132,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "近14天用量变化：%@"
+            "value": "近 14 天用量变化：%@"
           }
         }
       }
@@ -3148,7 +3148,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "近14天用量变化：样本不足"
+            "value": "近 14 天用量变化：样本不足"
           }
         }
       }
@@ -3427,584 +3427,1554 @@
     },
     "a11y.menuBarOpenCode": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "OpenCode usage: %@"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode 用量：%@"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode usage: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode 用量：%@"
+          }
+        }
       }
     },
     "a11y.openCodeGoLegend": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "OpenCode Go and Zen usage trend chart"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode Go 与 Zen 用量趋势图"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode Go and Zen usage trend chart"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode Go 与 Zen 用量趋势图"
+          }
+        }
       }
     },
     "a11y.openCodeIcon": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "OpenCode icon"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode 图标"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode icon"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode 图标"
+          }
+        }
       }
     },
     "a11y.openCodeZenLegend": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "OpenCode Zen usage trend chart"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode Zen 用量趋势图"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode Zen usage trend chart"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode Zen 用量趋势图"
+          }
+        }
       }
     },
     "menu.showOpenCode": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Show OpenCode"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "显示 OpenCode"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show OpenCode"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示 OpenCode"
+          }
+        }
+      }
+    },
+    "openCode.account": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workspace: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "工作区：%@"
+          }
+        }
       }
     },
     "openCode.authInvalid": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Cookie expired"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Cookie 已过期"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cookie expired"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cookie 已过期"
+          }
+        }
       }
     },
     "openCode.cookieClear": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Clear Saved Cookie"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "清除已保存 Cookie"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear Saved Cookie"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清除已保存 Cookie"
+          }
+        }
       }
     },
     "openCode.cookieEmpty": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Please enter Cookie content or a file path."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "请输入 Cookie 内容或文件路径。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Please enter Cookie content or a file path."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请输入 Cookie 内容或文件路径。"
+          }
+        }
       }
     },
     "openCode.cookieFileReadFailed": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Could not read the Cookie file."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "无法读取 Cookie 文件。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not read the Cookie file."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法读取 Cookie 文件。"
+          }
+        }
       }
     },
     "openCode.cookieHelp": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Paste a complete Netscape Cookie file, or paste its local path (for example ~/Downloads/cookies.txt). Only the OpenCode auth cookie is stored in Keychain."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "可粘贴完整 Netscape Cookie 文件内容，也可粘贴本机路径（例如 ~/Downloads/cookies.txt）。应用只会把 OpenCode 登录 Cookie 保存到 Keychain。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste a complete Netscape Cookie file, or paste its local path (for example ~/Downloads/cookies.txt). Only the OpenCode auth cookie is stored in Keychain."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可粘贴完整 Netscape Cookie 文件内容，也可粘贴本机路径（例如 ~/Downloads/cookies.txt）。应用只会把 OpenCode 登录 Cookie 保存到 Keychain。"
+          }
+        }
       }
     },
     "openCode.cookieInvalid": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "No valid opencode.ai auth cookie was found."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "未找到有效的 opencode.ai 登录 Cookie。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No valid opencode.ai auth cookie was found."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未找到有效的 opencode.ai 登录 Cookie。"
+          }
+        }
       }
     },
     "openCode.cookiePlaceholder": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Paste Netscape Cookie content or a local file path"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "粘贴 Netscape Cookie 内容或本机文件路径"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste Netscape Cookie content or a local file path"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "粘贴 Netscape Cookie 内容或本机文件路径"
+          }
+        }
       }
     },
     "openCode.cookieSave": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Save and Refresh"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "保存并刷新"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save and Refresh"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存并刷新"
+          }
+        }
       }
     },
     "openCode.cookieSaveFailed": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Could not save Cookie: %@"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "无法保存 Cookie：%@"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not save Cookie: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法保存 Cookie：%@"
+          }
+        }
       }
     },
     "openCode.cookieSource": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Cookie source:"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Cookie 来源："}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cookie source:"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cookie 来源："
+          }
+        }
       }
     },
     "openCode.cookieSourceKeychain": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Keychain"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Keychain"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keychain"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keychain"
+          }
+        }
       }
     },
     "openCode.cookieSourceNotConfigured": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Not configured"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "未配置"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not configured"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未配置"
+          }
+        }
       }
     },
     "openCode.cookieTitle": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "OpenCode Cookie"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode Cookie"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode Cookie"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode Cookie"
+          }
+        }
       }
     },
     "openCode.empty": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Add an OpenCode Cookie below to load OpenCode Go and Zen data."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "请在下方添加 OpenCode Cookie 以加载 OpenCode Go 和 Zen 数据。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add an OpenCode Cookie below to load OpenCode Go and Zen data."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请在下方添加 OpenCode Cookie 以加载 OpenCode Go 和 Zen 数据。"
+          }
+        }
       }
     },
     "openCode.errorDecoding": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Could not parse the OpenCode response."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "无法解析 OpenCode 响应。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not parse the OpenCode response."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法解析 OpenCode 响应。"
+          }
+        }
       }
     },
     "openCode.errorHttp": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "OpenCode returned an error (%d)."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode 返回错误（%d）。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode returned an error (%d)."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode 返回错误（%d）。"
+          }
+        }
       }
     },
     "openCode.errorInvalidCookie": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "The saved OpenCode Cookie is invalid."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "已保存的 OpenCode Cookie 无效。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The saved OpenCode Cookie is invalid."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已保存的 OpenCode Cookie 无效。"
+          }
+        }
       }
     },
     "openCode.errorKeychain": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Keychain error: %@"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Keychain 错误：%@"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keychain error: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keychain 错误：%@"
+          }
+        }
       }
     },
     "openCode.errorNoNetwork": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Cannot connect to OpenCode. Check your network."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "无法连接 OpenCode，请检查网络。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cannot connect to OpenCode. Check your network."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法连接 OpenCode，请检查网络。"
+          }
+        }
       }
     },
     "openCode.errorServer": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "OpenCode is temporarily unavailable (%d)."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode 暂时不可用（%d）。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode is temporarily unavailable (%d)."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode 暂时不可用（%d）。"
+          }
+        }
       }
     },
     "openCode.errorTimeout": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "The OpenCode request timed out."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode 请求超时。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The OpenCode request timed out."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode 请求超时。"
+          }
+        }
       }
     },
     "openCode.errorUnauthorized": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "The OpenCode Cookie is expired or unauthorized."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode Cookie 已过期或无权限。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The OpenCode Cookie is expired or unauthorized."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode Cookie 已过期或无权限。"
+          }
+        }
       }
     },
     "openCode.goTitle": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "OpenCode Go"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode Go"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode Go"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode Go"
+          }
+        }
       }
     },
     "openCode.lastUpdated": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Last updated: %@"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "最后更新：%@"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last updated: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最后更新：%@"
+          }
+        }
       }
     },
     "openCode.loading": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Loading OpenCode data…"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "正在加载 OpenCode 数据…"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading OpenCode data…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在加载 OpenCode 数据…"
+          }
+        }
       }
     },
     "openCode.noData": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Unavailable"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "暂无数据"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unavailable"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不可用"
+          }
+        }
       }
     },
     "openCode.noSubscription": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Not subscribed"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "未订阅"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not subscribed"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未订阅"
+          }
+        }
       }
     },
     "openCode.noSubscriptionDetail": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "No active OpenCode Go subscription was found. The red progress bar indicates that no subscription is available."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "未找到有效的 OpenCode Go 订阅。红色进度条表示当前没有可用订阅。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No active OpenCode Go subscription was found. The red progress bar indicates that no subscription is available."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未找到有效的 OpenCode Go 订阅。红色进度条表示当前没有可用订阅。"
+          }
+        }
       }
     },
     "openCode.notConfigured": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Not configured"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "未配置"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not configured"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未配置"
+          }
+        }
       }
     },
     "openCode.progress": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "%d%% used · %d%% remaining"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "已用 %d%% · 剩余 %d%%"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%% used · %d%% remaining"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已用 %d%% · 剩余 %d%%"
+          }
+        }
       }
     },
     "openCode.progressWithGap": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "%d%% used · %d%% remaining (%@)"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "已用 %d%% · 剩余 %d%%（%@）"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%% used · %d%% remaining (%@)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已用 %d%% · 剩余 %d%%（%@）"
+          }
+        }
       }
     },
     "openCode.resetAt": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Resets at %@"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "重置时间：%@"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resets at %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重置时间：%@"
+          }
+        }
       }
     },
     "openCode.expectedMarker": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Ideal usage marker"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "理想用量标记"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ideal usage marker"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "理想用量标记"
+          }
+        }
       }
     },
     "openCode.subscribed": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Subscribed"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "已订阅"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subscribed"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已订阅"
+          }
+        }
       }
     },
     "openCode.title": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "OpenCode Usage"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode 用量"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode Usage"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode 用量"
+          }
+        }
       }
     },
     "openCode.trendGo": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Go usage windows"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Go 用量窗口"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Go usage windows"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Go 用量窗口"
+          }
+        }
       }
     },
     "openCode.trendGoSummary": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Usage change over the last 14 days: %@"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "近14天用量变化：%@"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usage change over the last 14 days: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "近 14 天用量变化：%@"
+          }
+        }
       }
     },
     "openCode.trendInsufficient": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Usage change over the last 14 days: not enough samples"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "近14天用量变化：样本不足"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usage change over the last 14 days: not enough samples"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "近 14 天用量变化：样本不足"
+          }
+        }
       }
     },
     "openCode.trendTitle": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Usage Trend"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "用量趋势"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usage Trend"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用量趋势"
+          }
+        }
       }
     },
     "openCode.trendWaiting": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Waiting for two samples to draw a line"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "等待至少两个样本后绘制折线"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting for two samples to draw a line"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "等待至少两个样本后绘制折线"
+          }
+        }
       }
     },
     "openCode.trendZen": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Zen balance"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Zen 余额"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zen balance"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zen 余额"
+          }
+        }
       }
     },
     "openCode.trendZenSummary": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Usage change over the last 14 days: %@"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "近14天用量变化：%@"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usage change over the last 14 days: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "近 14 天用量变化：%@"
+          }
+        }
       }
     },
     "openCode.usageUnavailable": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Subscription found, but no usage window is currently available."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "已找到订阅，但当前没有可用的用量窗口。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subscription found, but no usage window is currently available."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已找到订阅，但当前没有可用的用量窗口。"
+          }
+        }
       }
     },
     "openCode.windowMonthly": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Monthly window"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "月度窗口"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Monthly window"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "月度窗口"
+          }
+        }
       }
     },
     "openCode.windowRolling": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "5-hour window"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "5 小时窗口"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5-hour window"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 小时窗口"
+          }
+        }
       }
     },
     "openCode.windowWeekly": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Weekly window"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "每周窗口"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly window"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每周窗口"
+          }
+        }
       }
     },
     "openCode.zenDescription": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Pay-as-you-go Zen balance"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "按量付费的 Zen 余额"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pay-as-you-go Zen balance"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按量付费的 Zen 余额"
+          }
+        }
       }
     },
     "openCode.zenTitle": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "OpenCode Zen"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode Zen"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode Zen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode Zen"
+          }
+        }
       }
     },
     "tab.openCode": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "OpenCode Usage"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "OpenCode 用量"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode Usage"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode 用量"
+          }
+        }
       }
     },
     "a11y.menuBarVPS": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Vultr usage: %@"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr 用量：%@"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vultr usage: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vultr 用量：%@"
+          }
+        }
       }
     },
     "a11y.vpsIcon": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Vultr icon"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr 图标"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vultr icon"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vultr 图标"
+          }
+        }
       }
     },
     "a11y.vpsTrend": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Vultr remaining traffic and credit trend chart"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr 剩余流量和余额趋势图"}}
-      }
-    },
-    "chart.credit": {
-      "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Remaining credit"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "剩余额度"}}
-      }
-    },
-    "chart.traffic": {
-      "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Remaining traffic"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "剩余流量"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vultr remaining traffic and credit trend chart"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vultr 剩余流量和余额趋势图"
+          }
+        }
       }
     },
     "menu.showVPS": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Show Vultr"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "显示 Vultr"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Vultr"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示 Vultr"
+          }
+        }
       }
     },
     "tab.vps": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Vultr Usage"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr 用量"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vultr Usage"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vultr 用量"
+          }
+        }
       }
     },
     "vps.authInvalid": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Authentication failed"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "认证失败"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentication failed"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "认证失败"
+          }
+        }
       }
     },
     "vps.billingCycle": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Billing cycle"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "计费周期"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Billing cycle"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "计费周期"
+          }
+        }
       }
     },
     "vps.cycleRemaining": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "%dd"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "%d天"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%dd"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d天"
+          }
+        }
       }
     },
     "vps.configEmpty": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Please enter both the Vultr API Token and Instance ID."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "请输入 Vultr API Token 和 Instance ID。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Please enter both the Vultr API Token and Instance ID."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请输入 Vultr API Token 和 Instance ID。"
+          }
+        }
       }
     },
     "vps.configHelp": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "The Token is stored in Keychain. The Instance ID selects the instance used for the billing-cycle lookup."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Token 会保存到 Keychain；Instance ID 用于选择实例并推导计费周期。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Token is stored in Keychain. The Instance ID selects the instance used for the billing-cycle lookup."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Token 会保存到 Keychain；Instance ID 用于选择实例并推导计费周期。"
+          }
+        }
       }
     },
     "vps.configKeychain": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Keychain"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Keychain"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keychain"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keychain"
+          }
+        }
       }
     },
     "vps.configNotConfigured": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Not configured"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "未配置"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not configured"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未配置"
+          }
+        }
       }
     },
     "vps.configSave": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Save and Refresh"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "保存并刷新"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save and Refresh"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存并刷新"
+          }
+        }
       }
     },
     "vps.configSource": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Configuration source:"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "配置来源："}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configuration source:"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "配置来源："
+          }
+        }
       }
     },
     "vps.configTitle": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Vultr API Configuration"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr API 配置"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vultr API Configuration"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vultr API 配置"
+          }
+        }
       }
     },
     "vps.configClear": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Clear Saved Configuration"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "清除已保存配置"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear Saved Configuration"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清除已保存配置"
+          }
+        }
       }
     },
     "vps.empty": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Add a Vultr API Token and Instance ID below to load VPS usage."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "请在下方添加 Vultr API Token 和 Instance ID 以加载 VPS 用量。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a Vultr API Token and Instance ID below to load VPS usage."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请在下方添加 Vultr API Token 和 Instance ID 以加载 VPS 用量。"
+          }
+        }
       }
     },
     "vps.errorDecoding": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Could not parse the Vultr response."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "无法解析 Vultr 响应。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not parse the Vultr response."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法解析 Vultr 响应。"
+          }
+        }
       }
     },
     "vps.errorHTTP": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Vultr returned an error (%d)."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr 返回错误（%d）。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vultr returned an error (%d)."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vultr 返回错误（%d）。"
+          }
+        }
       }
     },
     "vps.errorKeychain": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Keychain error: %@"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Keychain 错误：%@"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keychain error: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keychain 错误：%@"
+          }
+        }
       }
     },
     "vps.errorNoNetwork": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Cannot connect to Vultr. Check your network."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "无法连接 Vultr，请检查网络。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cannot connect to Vultr. Check your network."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法连接 Vultr，请检查网络。"
+          }
+        }
       }
     },
     "vps.errorRateLimited": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Vultr rate limit reached."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr 请求频率受限。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vultr rate limit reached."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vultr 请求频率受限。"
+          }
+        }
       }
     },
     "vps.errorServer": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Vultr is temporarily unavailable (%d)."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr 暂时不可用（%d）。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vultr is temporarily unavailable (%d)."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vultr 暂时不可用（%d）。"
+          }
+        }
       }
     },
     "vps.errorTimeout": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "The Vultr request timed out."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr 请求超时。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Vultr request timed out."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vultr 请求超时。"
+          }
+        }
       }
     },
     "vps.errorUnauthorized": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "The Vultr API Token is invalid or unauthorized."}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr API Token 无效或无权限。"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Vultr API Token is invalid or unauthorized."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vultr API Token 无效或无权限。"
+          }
+        }
       }
     },
     "vps.instance": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Vultr instance"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr 实例"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vultr instance"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vultr 实例"
+          }
+        }
       }
     },
     "vps.lastUpdated": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Last updated: %@"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "最后更新：%@"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last updated: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最后更新：%@"
+          }
+        }
       }
     },
     "vps.loading": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Loading Vultr usage…"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "正在加载 Vultr 用量…"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading Vultr usage…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在加载 Vultr 用量…"
+          }
+        }
       }
     },
     "vps.notConfigured": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Not configured"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "未配置"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not configured"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未配置"
+          }
+        }
       }
     },
     "vps.remainingCredit": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Remaining credit (USD)"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "剩余额度（美元）"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remaining credit (USD)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "剩余额度（美元）"
+          }
+        }
       }
     },
     "vps.remainingTraffic": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Remaining traffic"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "剩余流量"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remaining traffic"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "剩余流量"
+          }
+        }
       }
     },
     "vps.saveFailed": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Could not save Vultr configuration: %@"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "无法保存 Vultr 配置：%@"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not save Vultr configuration: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法保存 Vultr 配置：%@"
+          }
+        }
+      }
+    },
+    "vps.account": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Account: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "账号：%@"
+          }
+        }
       }
     },
     "vps.title": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Vultr Usage"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "Vultr 用量"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vultr Usage"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vultr 用量"
+          }
+        }
       }
     },
     "vps.tokenPlaceholder": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Paste Vultr API Token"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "粘贴 Vultr API Token"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste Vultr API Token"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "粘贴 Vultr API Token"
+          }
+        }
       }
     },
     "vps.instancePlaceholder": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Paste Instance ID"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "粘贴 Instance ID"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste Instance ID"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "粘贴 Instance ID"
+          }
+        }
       }
     },
     "vps.trendCredit": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Remaining credit"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "剩余额度"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remaining credit"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "剩余额度"
+          }
+        }
       }
     },
     "vps.trendEstimateTraffic": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Estimated to exhaust traffic in %@"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "估计在%@内耗尽流量"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated to exhaust traffic in %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "估计在%@内耗尽流量"
+          }
+        }
       }
     },
     "vps.trendEstimateCycleEnd": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Estimated traffic remaining at cycle end: %@"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "预计计费周期结束时剩余流量：%@"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated traffic remaining at cycle end: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "预计计费周期结束时剩余流量：%@"
+          }
+        }
       }
     },
     "vps.trendEstimateUnavailable": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Traffic exhaustion estimate unavailable: not enough usage data"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "暂时无法估算流量耗尽时间：暂无足够用量数据"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traffic exhaustion estimate unavailable: not enough usage data"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂时无法估算流量耗尽时间：暂无足够用量数据"
+          }
+        }
       }
     },
     "vps.trendTraffic": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Remaining traffic"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "剩余流量"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remaining traffic"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "剩余流量"
+          }
+        }
       }
     },
     "vps.trendWaiting": {
       "localizations": {
-        "en": {"stringUnit": {"state": "translated", "value": "Waiting for two samples to draw a line"}},
-        "zh-Hans": {"stringUnit": {"state": "translated", "value": "等待至少两个样本后绘制折线"}}
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting for two samples to draw a line"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "等待至少两个样本后绘制折线"
+          }
+        }
       }
     }
   },

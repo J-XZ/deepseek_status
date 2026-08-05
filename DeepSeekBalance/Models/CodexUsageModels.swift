@@ -2,18 +2,16 @@ import Foundation
 
 /// ChatGPT `/backend-api/wham/usage` 响应模型（Codex 订阅用量）。
 /// 所有字段可选，缺失或为 null 时回退为空，避免整体解码失败。
-struct CodexUsageResponse: Codable, Equatable, Sendable {
+struct CodexUsageResponse: Decodable, Equatable, Sendable {
   let userID: String?
   let accountID: String?
   let email: String?
   let planType: String?
   let rateLimit: CodexRateLimit?
-  let codeReviewRateLimit: CodexRateLimit?
   let additionalRateLimits: [CodexAdditionalRateLimit]?
   let credits: CodexCredits?
   let spendControl: CodexSpendControl?
-  let rateLimitReachedType: String?
-  let rateLimitResetCredits: CodexResetCredits?
+  let topLevelIndividualLimit: CodexSpendControlLimit?
 
   enum CodingKeys: String, CodingKey {
     case userID = "user_id"
@@ -21,30 +19,102 @@ struct CodexUsageResponse: Codable, Equatable, Sendable {
     case email
     case planType = "plan_type"
     case rateLimit = "rate_limit"
-    case codeReviewRateLimit = "code_review_rate_limit"
     case additionalRateLimits = "additional_rate_limits"
     case credits
     case spendControl = "spend_control"
-    case rateLimitReachedType = "rate_limit_reached_type"
-    case rateLimitResetCredits = "rate_limit_reset_credits"
+    case topLevelIndividualLimit = "individual_limit"
+    case topLevelIndividualLimitCamel = "individualLimit"
   }
 
-  /// 主用量窗口（菜单栏与概览使用）。
-  var primaryWindow: CodexUsageWindow? {
-    rateLimit?.primaryWindow
+  init(
+    userID: String? = nil,
+    accountID: String? = nil,
+    email: String? = nil,
+    planType: String? = nil,
+    rateLimit: CodexRateLimit? = nil,
+    additionalRateLimits: [CodexAdditionalRateLimit]? = nil,
+    credits: CodexCredits? = nil,
+    spendControl: CodexSpendControl? = nil,
+    topLevelIndividualLimit: CodexSpendControlLimit? = nil
+  ) {
+    self.userID = userID
+    self.accountID = accountID
+    self.email = email
+    self.planType = planType
+    self.rateLimit = rateLimit
+    self.additionalRateLimits = additionalRateLimits
+    self.credits = credits
+    self.spendControl = spendControl
+    self.topLevelIndividualLimit = topLevelIndividualLimit
   }
 
-  /// 5 小时用量窗口：官方目前只下发每周窗口，5 小时窗口字段为 null。
-  /// 预留实现：将来 Codex 若增加 5 小时限制，此值会自动变为实际剩余；
-  /// 查不到该限制时视为可用量始终 100%。
-  var fiveHourRemainingPercent: Int {
-    rateLimit?.secondaryWindow?.remainingPercent ?? 100
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    userID = try? container.decodeIfPresent(String.self, forKey: .userID)
+    accountID = try? container.decodeIfPresent(String.self, forKey: .accountID)
+    email = try? container.decodeIfPresent(String.self, forKey: .email)
+    planType = try? container.decodeIfPresent(String.self, forKey: .planType)
+    rateLimit = try? container.decodeIfPresent(CodexRateLimit.self, forKey: .rateLimit)
+    additionalRateLimits = try? container.decodeIfPresent(
+      [CodexAdditionalRateLimit].self,
+      forKey: .additionalRateLimits
+    )
+    credits = try? container.decodeIfPresent(CodexCredits.self, forKey: .credits)
+    spendControl = try? container.decodeIfPresent(CodexSpendControl.self, forKey: .spendControl)
+    topLevelIndividualLimit =
+      (try? container.decodeIfPresent(CodexSpendControlLimit.self, forKey: .topLevelIndividualLimit))
+      ?? (try? container.decodeIfPresent(CodexSpendControlLimit.self, forKey: .topLevelIndividualLimitCamel))
   }
 
-  /// 主窗口剩余百分比：0...100。
+  /// 每周用量窗口（604800 秒）。
+  /// 服务端结构不稳定：历史版本把周窗口放在 primary_window，文档示例中
+  /// 也可能放在 secondary_window。一律按 `limitWindowSeconds` 识别，
+  /// 不依赖窗口位置，保证在两种结构下都能取到周用量。
+  var weeklyWindow: CodexUsageWindow? {
+    [rateLimit?.primaryWindow, rateLimit?.secondaryWindow]
+      .compactMap { $0 }
+      .first { $0.limitWindowSeconds == 604800 }
+  }
+
+  /// 5 小时用量窗口（18000 秒）；未下发时为 nil。
+  var fiveHourWindow: CodexUsageWindow? {
+    [rateLimit?.primaryWindow, rateLimit?.secondaryWindow]
+      .compactMap { $0 }
+      .first { $0.limitWindowSeconds == 18000 }
+  }
+
+  /// 官方下发的额度限制快照。参考 CodexBar：`individual_limit` 可能出现在
+  /// 顶层、`rate_limit` 内部或 `spend_control` 内部，三处都尝试。
+  var individualLimit: CodexSpendControlLimit? {
+    spendControl?.individualLimit
+      ?? rateLimit?.individualLimit
+      ?? topLevelIndividualLimit
+  }
+
+  /// 官方口径的剩余百分比：优先使用 `individual_limit.remainingPercent`
+  ///（OpenAI 直接下发，如 27）；缺失时用 `limit`/`used` 推算；再缺失时
+  /// 回退到每周窗口的 `100 - usedPercent`。
+  var creditRemainingPercent: Int? {
+    if let official = individualLimit?.remainingPercent, official.isFinite {
+      return max(0, min(100, Int(official.rounded())))
+    }
+    if let limit = individualLimit?.limit, limit > 0 {
+      if let used = individualLimit?.used, used.isFinite {
+        return max(0, min(100, Int((100 - used / limit * 100).rounded())))
+      }
+    }
+    return remainingPercent
+  }
+
+  /// 每周窗口剩余百分比：0...100。周窗口缺失时为 nil。
   var remainingPercent: Int? {
-    guard let used = primaryWindow?.usedPercent else { return nil }
+    guard let used = weeklyWindow?.usedPercent else { return nil }
     return max(0, min(100, 100 - used))
+  }
+
+  /// 5 小时窗口剩余百分比：0...100。查不到该限制时视为可用量始终 100%。
+  var fiveHourRemainingPercent: Int {
+    fiveHourWindow?.remainingPercent ?? 100
   }
 
   /// 整体剩余百分比：取 5 小时与每周窗口中更严格（更小）的值。
@@ -54,53 +124,11 @@ struct CodexUsageResponse: Codable, Equatable, Sendable {
     return min(weekly, fiveHourRemainingPercent)
   }
 
-  /// 基于信用额度的剩余百分比：`credits.balance / monthlyLimit`。
-  /// 优先使用 `spendControl.individualLimit`（OpenAI 下发的月度上限），
-  /// 回退到 `planType` 推断的默认 grant 金额（如 Pro 为 $25/mo）。
-  /// 只在账户有信用额度（`hasCredits == true`）且非无限（`unlimited == false`）
-  /// 时使用此值，否则返回 `nil` 让调用者回退 API 请求配额百分比。
-  var creditBasedRemainingPercent: Int? {
-    guard let credits, credits.hasCredits, !credits.unlimited,
-      let balanceString = credits.balance
-    else { return nil }
-    // 优先 API 下发的上限，其次按套餐类型推断
-    let limit: Double
-    if let apiLimit = spendControl?.individualLimit, apiLimit > 0 {
-      limit = apiLimit
-    } else if let planType, let inferred = Self.monthlyLimit(for: planType) {
-      limit = inferred
-    } else {
-      return nil
-    }
-    // "¥7.00" → "7.00", "$25.00" → "25.00"
-    let numeric = balanceString.filter { $0.isASCII && ($0.isNumber || $0 == ".") }
-    guard let balance = Double(numeric), balance >= 0 else { return nil }
-    return max(0, min(100, Int((balance / limit * 100).rounded())))
-  }
-
-  /// 根据 Codex 套餐类型返回对应的月度 grant 金额（美元）。
-  /// 套餐 grant 金额是已知公开信息；未知套餐返回 `nil`。
-  /// 服务端可能返回 snake_case (`pro_lite`)、连写 (`prolite`)、
-  /// 空格 (`Pro Lite`) 等变体，逐一尝试。
-  static func monthlyLimit(for planType: String) -> Double? {
-    let normalized = planType.lowercased()
-      .replacingOccurrences(of: "_", with: "")
-      .replacingOccurrences(of: "-", with: "")
-      .replacingOccurrences(of: " ", with: "")
-    switch normalized {
-    case "pro":    return 25
-    case "plus":   return 20
-    case "free":   return 5
-    case "prolite": return 15
-    default:       return nil
-    }
-  }
-
-  /// 与理想用量（刷新周期内线性消耗、重置时恰好用完）的差距：
+  /// 与理想用量（每周窗口内线性消耗、重置时恰好用完）的差距：
   /// 实际已用 − 理想已用，正数表示消耗快于理想、负数表示慢于理想。
-  /// 无主窗口信息或当前时间不在窗口内时为 nil（不显示差距）。
+  /// 无周窗口信息或当前时间不在窗口内时为 nil（不显示差距）。
   var usageGapPercent: Int? {
-    guard let window = primaryWindow else { return nil }
+    guard let window = weeklyWindow else { return nil }
     guard let expected = CodexUsageFormatter.expectedUsedPercent(
       resetAt: window.resetAt,
       limitWindowSeconds: window.limitWindowSeconds
@@ -110,22 +138,50 @@ struct CodexUsageResponse: Codable, Equatable, Sendable {
 }
 
 /// 单个限额（整体用量或附加模型限额）。
-struct CodexRateLimit: Codable, Equatable, Sendable {
+struct CodexRateLimit: Decodable, Equatable, Sendable {
   let allowed: Bool
   let limitReached: Bool
   let primaryWindow: CodexUsageWindow?
   let secondaryWindow: CodexUsageWindow?
+  let individualLimit: CodexSpendControlLimit?
 
   enum CodingKeys: String, CodingKey {
     case allowed
     case limitReached = "limit_reached"
     case primaryWindow = "primary_window"
     case secondaryWindow = "secondary_window"
+    case individualLimit = "individual_limit"
+    case individualLimitCamel = "individualLimit"
+  }
+
+  init(
+    allowed: Bool = true,
+    limitReached: Bool = false,
+    primaryWindow: CodexUsageWindow? = nil,
+    secondaryWindow: CodexUsageWindow? = nil,
+    individualLimit: CodexSpendControlLimit? = nil
+  ) {
+    self.allowed = allowed
+    self.limitReached = limitReached
+    self.primaryWindow = primaryWindow
+    self.secondaryWindow = secondaryWindow
+    self.individualLimit = individualLimit
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    allowed = try container.decodeIfPresent(Bool.self, forKey: .allowed) ?? true
+    limitReached = try container.decodeIfPresent(Bool.self, forKey: .limitReached) ?? false
+    primaryWindow = try? container.decodeIfPresent(CodexUsageWindow.self, forKey: .primaryWindow)
+    secondaryWindow = try? container.decodeIfPresent(CodexUsageWindow.self, forKey: .secondaryWindow)
+    individualLimit =
+      (try? container.decodeIfPresent(CodexSpendControlLimit.self, forKey: .individualLimit))
+      ?? (try? container.decodeIfPresent(CodexSpendControlLimit.self, forKey: .individualLimitCamel))
   }
 }
 
 /// 附加模型限额，例如 GPT-5.3-Codex-Spark。
-struct CodexAdditionalRateLimit: Codable, Equatable, Sendable {
+struct CodexAdditionalRateLimit: Decodable, Equatable, Sendable {
   let limitName: String?
   let meteredFeature: String?
   let rateLimit: CodexRateLimit?
@@ -141,13 +197,11 @@ struct CodexAdditionalRateLimit: Codable, Equatable, Sendable {
 struct CodexUsageWindow: Codable, Equatable, Sendable {
   let usedPercent: Int
   let limitWindowSeconds: Int
-  let resetAfterSeconds: Int
   let resetAt: Int?
 
   enum CodingKeys: String, CodingKey {
     case usedPercent = "used_percent"
     case limitWindowSeconds = "limit_window_seconds"
-    case resetAfterSeconds = "reset_after_seconds"
     case resetAt = "reset_at"
   }
 
@@ -196,24 +250,91 @@ struct CodexCredits: Codable, Equatable, Sendable {
 }
 
 /// 费用控制（spend control）。
-struct CodexSpendControl: Codable, Equatable, Sendable {
+/// 参考 CodexBar（steipete/CodexBar）的实现：`individual_limit` 是一个对象
+/// （`SpendControlLimitSnapshot`），包含官方直接下发的 `remainingPercent`、
+/// `used`、`limit`——这是 OpenAI 官方计算的剩余百分比口径，
+/// 比从 used_percent 推算更准确。字段名有 snake_case 与 camelCase 两种，
+/// 金额可能以数字或字符串下发，全部兼容。
+struct CodexSpendControl: Decodable, Equatable, Sendable {
   let reached: Bool
-  let individualLimit: Double?
+  let individualLimit: CodexSpendControlLimit?
 
   enum CodingKeys: String, CodingKey {
     case reached
     case individualLimit = "individual_limit"
+    case individualLimitCamel = "individualLimit"
+  }
+
+  init(reached: Bool, individualLimit: CodexSpendControlLimit?) {
+    self.reached = reached
+    self.individualLimit = individualLimit
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    reached = try container.decodeIfPresent(Bool.self, forKey: .reached) ?? false
+    individualLimit = (try? container.decodeIfPresent(CodexSpendControlLimit.self, forKey: .individualLimit))
+      ?? (try? container.decodeIfPresent(CodexSpendControlLimit.self, forKey: .individualLimitCamel))
   }
 }
 
-/// 限速重置点数（rate_limit_reset_credits）。
-struct CodexResetCredits: Codable, Equatable, Sendable {
-  let availableCount: Int
-  let applicableAvailableCount: Int
+/// 官方下发的额度限制快照：`remainingPercent` 由 OpenAI 直接计算。
+struct CodexSpendControlLimit: Decodable, Equatable, Sendable {
+  let limit: Double?
+  let used: Double?
+  let remainingPercent: Double?
 
   enum CodingKeys: String, CodingKey {
-    case availableCount = "available_count"
-    case applicableAvailableCount = "applicable_available_count"
+    case limit
+    case used
+    case remainingPercent
+    case remainingPercentSnake = "remaining_percent"
+  }
+
+  init(limit: Double?, used: Double?, remainingPercent: Double?) {
+    self.limit = limit
+    self.used = used
+    self.remainingPercent = remainingPercent
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    limit = Self.decodeFlexibleDouble(container, forKey: .limit)
+    used = Self.decodeFlexibleDouble(container, forKey: .used)
+    remainingPercent = Self.decodeFlexibleDouble(container, forKey: .remainingPercent)
+      ?? Self.decodeFlexibleDouble(container, forKey: .remainingPercentSnake)
+  }
+
+  private static func decodeFlexibleDouble(
+    _ container: KeyedDecodingContainer<CodingKeys>,
+    forKey key: CodingKeys
+  ) -> Double? {
+    if let value = try? container.decodeIfPresent(Double.self, forKey: key) {
+      return value
+    }
+    if let value = try? container.decodeIfPresent(Int.self, forKey: key) {
+      return Double(value)
+    }
+    if let value = try? container.decodeIfPresent(String.self, forKey: key) {
+      return Double(value.trimmingCharacters(in: .whitespacesAndNewlines))
+    }
+    return nil
+  }
+
+  private static func decodeFlexibleInt(
+    _ container: KeyedDecodingContainer<CodingKeys>,
+    forKey key: CodingKeys
+  ) -> Int? {
+    if let value = try? container.decodeIfPresent(Int.self, forKey: key) {
+      return value
+    }
+    if let value = try? container.decodeIfPresent(Double.self, forKey: key) {
+      return Int(value)
+    }
+    if let value = try? container.decodeIfPresent(String.self, forKey: key) {
+      return Int(value.trimmingCharacters(in: .whitespacesAndNewlines))
+    }
+    return nil
   }
 }
 

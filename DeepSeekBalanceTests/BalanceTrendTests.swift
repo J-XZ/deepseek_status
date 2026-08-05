@@ -42,7 +42,7 @@ final class BalanceTrendTests: XCTestCase {
     let summary = BalanceTrendProcessor.summary(samples: samples, currency: "CNY")
     XCTAssertEqual(
       summary.text(language: .simplifiedChinese),
-      "近14天用量变化：-¥10.00（-9.1%）"
+      "近 14 天用量变化：-¥10.00（-9.1%）"
     )
   }
 
@@ -54,7 +54,7 @@ final class BalanceTrendTests: XCTestCase {
     let summary = BalanceTrendProcessor.summary(samples: samples, currency: "CNY")
     XCTAssertEqual(
       summary.text(language: .simplifiedChinese),
-      "近14天用量变化：+¥10.00（+10.0%）"
+      "近 14 天用量变化：+¥10.00（+10.0%）"
     )
   }
 
@@ -63,7 +63,7 @@ final class BalanceTrendTests: XCTestCase {
     let summary = BalanceTrendProcessor.summary(samples: samples, currency: "CNY")
     XCTAssertEqual(
       summary.text(language: .simplifiedChinese),
-      "近14天用量变化：样本不足"
+      "近 14 天用量变化：样本不足"
     )
   }
 
@@ -80,7 +80,7 @@ final class BalanceTrendTests: XCTestCase {
     }
     XCTAssertEqual(
       summary.text(language: .simplifiedChinese),
-      "近14天用量变化：+¥10.00"
+      "近 14 天用量变化：+¥10.00"
     )
   }
 

@@ -82,17 +82,104 @@ final class CodexUsageTests: XCTestCase {
     XCTAssertEqual(usage.overallRemainingPercent, 10)
   }
 
+  /// 文档示例中周窗口可能位于 secondary_window（primary=5 小时）：
+  /// 按窗口秒数识别，而不是按位置，两种结构都取对周用量。
+  func testWeeklyWindowRecognizedBySecondsRegardlessOfPosition() throws {
+    let data = Data("""
+      {"plan_type":"pro","rate_limit":{
+        "allowed":true,"limit_reached":false,
+        "primary_window":{"used_percent":90,"limit_window_seconds":18000,
+                          "reset_after_seconds":100,"reset_at":1786165992},
+        "secondary_window":{"used_percent":30,"limit_window_seconds":604800,
+                            "reset_after_seconds":200,"reset_at":1786165992}
+      }}
+      """.utf8)
+    let usage = try JSONDecoder().decode(CodexUsageResponse.self, from: data)
+    // 周窗口在 secondary：每周剩余 70%，5 小时剩余 10%。
+    XCTAssertEqual(usage.weeklyWindow?.usedPercent, 30)
+    XCTAssertEqual(usage.fiveHourWindow?.usedPercent, 90)
+    XCTAssertEqual(usage.remainingPercent, 70)
+    XCTAssertEqual(usage.fiveHourRemainingPercent, 10)
+    XCTAssertEqual(usage.overallRemainingPercent, 10)
+  }
+
+  /// 官方下发 `individual_limit.remainingPercent`（OpenAI 直接计算的剩余百分比）
+  /// 应被解析并优先显示；snake_case 与 camelCase 都要兼容。
+  func testOfficialRemainingPercentFromTopLevelIndividualLimit() throws {
+    let data = Data("""
+      {"plan_type":"prolite","rate_limit":{
+        "allowed":true,"limit_reached":false,
+        "primary_window":{"used_percent":40,"limit_window_seconds":604800,
+                          "reset_after_seconds":100,"reset_at":1786165992}
+      },
+      "individual_limit":{"limit":15.0,"used":10.95,"remaining_percent":27,"resets_at":1786165992}}
+      """.utf8)
+    let usage = try JSONDecoder().decode(CodexUsageResponse.self, from: data)
+    let limit = try XCTUnwrap(usage.individualLimit)
+    XCTAssertEqual(limit.limit, 15.0)
+    XCTAssertEqual(limit.used, 10.95)
+    XCTAssertEqual(limit.remainingPercent, 27)
+    XCTAssertEqual(usage.creditRemainingPercent, 27)
+  }
+
+  /// `individual_limit` 也可能出现在 `rate_limit` 内部；剩余百分比为字符串时
+  /// 也要能解析。
+  func testOfficialRemainingPercentInsideRateLimitAndStringValues() throws {
+    let data = Data("""
+      {"plan_type":"pro","rate_limit":{
+        "allowed":true,"limit_reached":false,
+        "primary_window":{"used_percent":50,"limit_window_seconds":604800,
+                          "reset_after_seconds":100,"reset_at":1786165992},
+        "individual_limit":{"limit":"25","used":"18.25","remaining_percent":"27",
+                            "resets_at":"1786165992"}
+      }}
+      """.utf8)
+    let usage = try JSONDecoder().decode(CodexUsageResponse.self, from: data)
+    let limit = try XCTUnwrap(usage.individualLimit)
+    XCTAssertEqual(limit.limit, 25)
+    XCTAssertEqual(limit.used, 18.25)
+    XCTAssertEqual(limit.remainingPercent, 27)
+    XCTAssertEqual(usage.creditRemainingPercent, 27)
+  }
+
+  /// 官方 `remainingPercent` 缺失时，用 `limit`/`used` 推算剩余百分比。
+  func testRemainingPercentComputedFromLimitAndUsed() throws {
+    let data = Data("""
+      {"plan_type":"pro","rate_limit":{
+        "allowed":true,"limit_reached":false,
+        "primary_window":{"used_percent":50,"limit_window_seconds":604800,
+                          "reset_after_seconds":100,"reset_at":1786165992},
+        "individual_limit":{"limit":15.0,"used":10.95,"resets_at":1786165992}
+      }}
+      """.utf8)
+    let usage = try JSONDecoder().decode(CodexUsageResponse.self, from: data)
+    // 10.95 / 15 → 73% 已用 → 27% 剩余
+    XCTAssertEqual(usage.creditRemainingPercent, 27)
+  }
+
+  /// `individual_limit` 完全缺失时回退到每周窗口的 `100 - usedPercent`。
+  func testRemainingPercentFallsBackToWeeklyWindow() throws {
+    let data = Data("""
+      {"plan_type":"pro","rate_limit":{
+        "allowed":true,"limit_reached":false,
+        "primary_window":{"used_percent":73,"limit_window_seconds":604800,
+                          "reset_after_seconds":100,"reset_at":1786165992}
+      }}
+      """.utf8)
+    let usage = try JSONDecoder().decode(CodexUsageResponse.self, from: data)
+    XCTAssertNil(usage.individualLimit)
+    XCTAssertEqual(usage.creditRemainingPercent, 27)
+  }
+
   func testRemainingPercentClamped() {
     XCTAssertEqual(CodexUsageWindow(
       usedPercent: 150,
       limitWindowSeconds: 604800,
-      resetAfterSeconds: 0,
       resetAt: nil
     ).remainingPercent, 0)
     XCTAssertEqual(CodexUsageWindow(
       usedPercent: -5,
       limitWindowSeconds: 604800,
-      resetAfterSeconds: 0,
       resetAt: nil
     ).remainingPercent, 100)
   }

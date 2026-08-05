@@ -31,7 +31,7 @@ struct SettingsView: View {
             HStack {
               Text(L10n.string(.settingsLanguage, language: language))
               Spacer()
-              Button(L10n.string(.languageSwitchButton, language: language)) {
+              Button(L10n.string(.settingsLanguageSwitch, language: language)) {
                 store.setLanguage(language == .simplifiedChinese ? .english : .simplifiedChinese)
               }
               .controlSize(.small)

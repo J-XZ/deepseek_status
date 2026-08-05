@@ -1,6 +1,5 @@
-import AppKit
-import Combine
 import SwiftUI
+import Combine
 
 /// 通用设置独立小窗：由菜单栏图标右键菜单「设置」打开。
 /// 浮动面板样式，不进入 Dock；关闭窗口即收起，内容随 store 自动刷新。

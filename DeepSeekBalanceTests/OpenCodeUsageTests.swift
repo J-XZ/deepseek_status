@@ -157,6 +157,7 @@ final class OpenCodeUsageTests: XCTestCase {
     let now = Date(timeIntervalSince1970: 1_750_000_000)
     let snapshot = OpenCodeUsageSnapshot(
       workspaceID: "wrk_test123",
+      accountEmail: nil,
       goSubscription: OpenCodeGoSubscription(
         rolling: OpenCodeUsageWindow(kind: .rolling, usedPercent: 12, resetInSec: 100),
         weekly: OpenCodeUsageWindow(kind: .weekly, usedPercent: 34, resetInSec: 200),
@@ -251,7 +252,8 @@ final class OpenCodeUsageTests: XCTestCase {
     XCTAssertEqual(snapshot.workspaceID, "wrk_test123")
     XCTAssertNil(snapshot.goSubscription)
     XCTAssertEqual(snapshot.zenBalanceUSD ?? 0, 5.48407681, accuracy: 0.00000001)
-    XCTAssertEqual(MockURLProtocol.recordedRequestCount, 3)
+    XCTAssertNil(snapshot.accountEmail)
+    XCTAssertEqual(MockURLProtocol.recordedRequestCount, 4)
   }
 
   private func historySample(at offset: TimeInterval, balance: Double) -> OpenCodeUsageSample {

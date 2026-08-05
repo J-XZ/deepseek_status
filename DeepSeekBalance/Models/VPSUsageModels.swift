@@ -21,6 +21,9 @@ struct VPSUsageConfig: Equatable, Sendable {
 struct VPSUsageSnapshot: Equatable, Sendable {
   let instanceID: String
   let instanceLabel: String?
+  let instanceStatus: String?
+  let instanceRegion: String?
+  let accountEmail: String?
   let cycleStart: Date
   let cycleEnd: Date
   let totalBandwidthGB: Double
@@ -119,7 +122,9 @@ enum VPSTrafficForecastEstimator {
     points.sort { $0.date < $1.date }
 
     guard points.count >= 2,
-      points.last!.date.timeIntervalSince(points.first!.date) >= minimumDataSpan
+      let firstDate = points.first?.date,
+      let lastDate = points.last?.date,
+      lastDate.timeIntervalSince(firstDate) >= minimumDataSpan
     else {
       return nil
     }
@@ -138,7 +143,10 @@ enum VPSTrafficForecastEstimator {
 
     guard selectedPoints.count >= 2 else { return nil }
 
-    let selectedSpan = selectedPoints.last!.date.timeIntervalSince(selectedPoints.first!.date)
+    guard let firstSelected = selectedPoints.first?.date,
+      let lastSelected = selectedPoints.last?.date
+    else { return nil }
+    let selectedSpan = lastSelected.timeIntervalSince(firstSelected)
     guard
       let coefficients = fit(
         selectedPoints,
@@ -332,10 +340,6 @@ enum VPSTrafficForecastEstimator {
 
 /// VPS 余额趋势的纯数据处理，避免 SwiftUI 视图直接处理原始历史。
 enum VPSUsageTrendProcessor {
-  enum Metric: String, CaseIterable, Sendable {
-    case traffic
-    case credit
-  }
 
   struct ChartModel: Equatable, Sendable {
     let samples: [VPSUsageSample]

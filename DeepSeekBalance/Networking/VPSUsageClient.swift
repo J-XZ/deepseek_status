@@ -9,6 +9,24 @@ protocol VPSUsageFetching: Sendable {
 /// 带宽沿用 vps_usage 项目的 MTD 口径；额外请求 `/account` 读取账户美元余额，
 /// `/instances/{id}` 只用于实例名称和按创建日期推导当前月度周期。
 struct VultrUsageClient: VPSUsageFetching {
+
+  /// Vultr 地区代码 → 可读名称映射。
+  static let regionNames: [String: String] = [
+    "ams": "Amsterdam, NL", "atl": "Atlanta, US", "bog": "Bogotá, CO",
+    "cdg": "Paris, FR", "dfw": "Dallas, US", "ewr": "New Jersey, US",
+    "fra": "Frankfurt, DE", "gru": "São Paulo, BR", "hkg": "Hong Kong, HK",
+    "icn": "Seoul, KR", "jhv": "Johannesburg, ZA", "lax": "Los Angeles, US",
+    "lhr": "London, GB", "mad": "Madrid, ES", "mex": "Mexico City, MX",
+    "mia": "Miami, US", "nrt": "Tokyo, JP", "ord": "Chicago, US",
+    "sea": "Seattle, US", "sgp": "Singapore, SG", "sjc": "Silicon Valley, US",
+    "sto": "Stockholm, SE", "syd": "Sydney, AU", "wah": "Warsaw, PL",
+    "yul": "Montreal, CA", "yyz": "Toronto, CA",
+  ]
+
+  static func regionDisplayName(_ region: String) -> String {
+    regionNames[region.lowercased()] ?? region.uppercased()
+  }
+
   enum APIError: Error, Equatable, Sendable {
     case missingConfig
     case unauthorized
@@ -55,7 +73,7 @@ struct VultrUsageClient: VPSUsageFetching {
     let bandwidth = try await bandwidthRoot
     let instance = try await instanceRoot
 
-    let balance = try Self.parseAccountBalance(from: account)
+    let accountInfo = try Self.parseAccountInfo(from: account)
     let (totalGB, usedGB) = try Self.parseMonthToDateUsage(from: bandwidth)
     let details = try Self.parseInstanceDetails(from: instance)
     guard let createdAt = details.createdAt else {
@@ -66,16 +84,24 @@ struct VultrUsageClient: VPSUsageFetching {
     return VPSUsageSnapshot(
       instanceID: config.instanceID,
       instanceLabel: details.label,
+      instanceStatus: details.status,
+      instanceRegion: details.region,
+      accountEmail: accountInfo.email,
       cycleStart: cycle.start,
       cycleEnd: cycle.end,
       totalBandwidthGB: totalGB,
       usedBandwidthGB: usedGB,
-      remainingCreditUSD: abs(balance),
+      remainingCreditUSD: abs(accountInfo.balance),
       refreshedAt: now
     )
   }
 
-  static func parseAccountBalance(from object: Any) throws -> Double {
+  struct AccountInfo: Equatable, Sendable {
+    let balance: Double
+    let email: String?
+  }
+
+  static func parseAccountInfo(from object: Any) throws -> AccountInfo {
     guard let root = object as? [String: Any] else {
       throw APIError.invalidResponse
     }
@@ -83,7 +109,8 @@ struct VultrUsageClient: VPSUsageFetching {
     guard let balance = asDouble(account["balance"]) else {
       throw APIError.decodingFailed
     }
-    return balance
+    let email = account["email"] as? String
+    return AccountInfo(balance: balance, email: email)
   }
 
   static func parseMonthToDateUsage(from object: Any) throws -> (totalGB: Double, usedGB: Double) {
@@ -98,14 +125,18 @@ struct VultrUsageClient: VPSUsageFetching {
     return (totalGB, usedGB)
   }
 
-  static func parseInstanceDetails(from object: Any) throws -> (createdAt: Date?, label: String?) {
+  static func parseInstanceDetails(
+    from object: Any
+  ) throws -> (createdAt: Date?, label: String?, status: String?, region: String?) {
     guard let root = object as? [String: Any] else {
       throw APIError.invalidResponse
     }
     let instance = root["instance"] as? [String: Any] ?? root
     return (
       parseISODate(instance["date_created"]),
-      instance["label"] as? String
+      instance["label"] as? String,
+      (instance["server_status"] as? String) ?? (instance["status"] as? String),
+      instance["region"] as? String
     )
   }
 
@@ -221,3 +252,4 @@ struct VultrUsageClient: VPSUsageFetching {
     return plain.date(from: string)
   }
 }
+

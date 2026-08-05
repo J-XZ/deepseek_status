@@ -1,4 +1,3 @@
-import AppKit
 import SwiftUI
 
 /// 弹出面板统一字体层级：正文使用圆体提升可读性，金额使用等宽数字避免刷新时跳动。
@@ -17,6 +16,31 @@ enum UsageProgressStatus: Equatable {
   case onTrack
   case behindIdeal
   case aheadOfIdeal
+}
+
+/// 用量视图共享的纯格式化工具。
+enum UsageFormatting {
+  /// 理想进度标记线的 x 坐标：夹在 [2, 宽度−2] 内，保证 3pt 宽红线不超出轨道左右边缘。
+  static func markerX(width: CGFloat, expected: Double) -> CGFloat {
+    let fraction = CGFloat(min(max(expected / 100, 0), 1))
+    return min(max(width * fraction, 2), max(width - 2, 2))
+  }
+
+  /// 美元金额格式化；locale 用于数字分组与货币符号。
+  static func formattedUSD(_ value: Double, locale: Locale) -> String {
+    let formatter = NumberFormatter()
+    formatter.numberStyle = .currency
+    formatter.currencyCode = "USD"
+    formatter.locale = locale
+    formatter.minimumFractionDigits = 2
+    formatter.maximumFractionDigits = 2
+    return formatter.string(from: NSNumber(value: value)) ?? String(format: "$%.2f", value)
+  }
+
+  /// 流量整数 GB 格式化。
+  static func formattedGB(_ value: Double) -> String {
+    String(format: "%.0f GB", value)
+  }
 }
 
 enum UsageProgressEvaluator {
@@ -88,7 +112,7 @@ struct BalancePopoverView: View {
   @ObservedObject var codexStatusStore: StatusPageStatusStore
   @ObservedObject var cursorStatusStore: StatusPageStatusStore
   let visibility: MenuBarVendorVisibility
-  let tabSelection: PopoverTabSelection
+  @ObservedObject var tabSelection: PopoverTabSelection
   let onPageHeightsChange: ([UsageTab: CGFloat]) -> Void
 
   @State private var apiKeyInput = ""
@@ -151,6 +175,19 @@ struct BalancePopoverView: View {
               )
             }
           }
+      }
+      .overlay(alignment: .topTrailing) {
+        Button { tabSelection.isPinned.toggle() } label: {
+          Image(systemName: tabSelection.isPinned ? "pin.fill" : "pin")
+            .font(.system(size: 11, weight: .medium))
+            .frame(width: 22, height: 22)
+            .contentShape(Rectangle())
+            .foregroundStyle(tabSelection.isPinned ? Color.accentColor : .secondary)
+        }
+        .buttonStyle(.plain)
+        .help(tabSelection.isPinned ? "Unpin" : "Pin")
+        .padding(.trailing, 8)
+        .padding(.top, 4)
       }
     }
     .frame(width: PopoverSizing.width)
@@ -426,11 +463,6 @@ struct BalancePopoverView: View {
       }
   }
 
-  private func sectionTitle(_ key: L10nKey, systemImage: String) -> some View {
-    Label(L10n.string(key, language: language), systemImage: systemImage)
-      .font(AppTypography.section)
-      .foregroundStyle(.primary)
-  }
 
   // MARK: - 标题区
 
@@ -547,7 +579,7 @@ struct BalancePopoverView: View {
     }
   }
 
-  private func row(title: String, value: String) -> some View {
+  private func row(title: String, value: String, foregroundStyle: Color? = nil) -> some View {
     HStack {
       Text(title)
         .foregroundStyle(.secondary)
@@ -557,7 +589,7 @@ struct BalancePopoverView: View {
         // SwiftUI's default primary color is not reliably updated for content
         // hosted inside an NSPopover. Follow the macOS control active state so
         // amounts become secondary when the popover loses focus.
-        .foregroundStyle(amountForegroundStyle)
+        .foregroundStyle(foregroundStyle ?? amountForegroundStyle)
     }
   }
 
@@ -839,7 +871,7 @@ struct BalancePopoverView: View {
 
       TextEditor(text: $openCodeCookieInput)
         .font(AppTypography.caption.monospaced())
-        .frame(minHeight: 86, maxHeight: 120)
+        .frame(height: 30)
         .padding(4)
         .overlay {
           RoundedRectangle(cornerRadius: 8, style: .continuous)

@@ -63,9 +63,15 @@ struct OpenCodeUsageClient: OpenCodeUsageFetching {
     guard let zenBalanceUSD = Self.parseZenBalance(text: zenText) else {
       throw APIError.decodingFailed
     }
+    let membersText = try? await fetchMembersPage(
+      workspaceID: workspaceID,
+      cookieHeader: normalizedCookie
+    )
+    let accountEmail = membersText.flatMap(Self.parseEmail(text:))
 
     return OpenCodeUsageSnapshot(
       workspaceID: workspaceID,
+      accountEmail: accountEmail,
       goSubscription: goSubscription,
       zenBalanceUSD: zenBalanceUSD,
       updatedAt: now
@@ -589,6 +595,40 @@ struct OpenCodeUsageClient: OpenCodeUsageFetching {
           return nested
         }
       }
+    }
+    return nil
+  }
+
+  private func fetchMembersPage(workspaceID: String, cookieHeader: String) async throws -> String {
+    let url = Self.baseURL.appendingPathComponent("workspace")
+      .appendingPathComponent(workspaceID)
+      .appendingPathComponent("members")
+    var request = URLRequest(url: url)
+    request.httpMethod = "GET"
+    request.timeoutInterval = timeoutInterval
+    request.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
+    request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
+    request.setValue(
+      "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      forHTTPHeaderField: "Accept"
+    )
+    return try await fetchText(request: request)
+  }
+
+  /// 从 workspace members 页面的 HTML 或 JSON 中提取注册邮箱。
+  /// 先尝试 JSON 中 `"email":"xxx"`，再尝试纯文本邮箱模式。
+  static func parseEmail(text: String) -> String? {
+    // JSON 中的 email 字段：`"email":"user@example.com"`
+    let jsonPattern = ##""email"\s*:\s*"([^"]+)""## + "i"
+    if let jsonEmail = Self.extractString(pattern: jsonPattern, capture: 1, text: text) {
+      let trimmed = jsonEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+      if !trimmed.isEmpty, trimmed.contains("@") { return trimmed }
+    }
+    // 纯文本邮箱模式
+    let emailPattern = #"([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})"#
+    if let raw = Self.extractString(pattern: emailPattern, capture: 1, text: text) {
+      let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+      if !trimmed.isEmpty { return trimmed }
     }
     return nil
   }

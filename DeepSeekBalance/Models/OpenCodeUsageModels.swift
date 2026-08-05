@@ -97,6 +97,7 @@ struct OpenCodeGoSubscription: Codable, Equatable, Sendable {
 /// 一次 OpenCode 查询的归一化结果。
 struct OpenCodeUsageSnapshot: Equatable, Sendable {
   let workspaceID: String
+  let accountEmail: String?
   let goSubscription: OpenCodeGoSubscription?
   let zenBalanceUSD: Double?
   let updatedAt: Date

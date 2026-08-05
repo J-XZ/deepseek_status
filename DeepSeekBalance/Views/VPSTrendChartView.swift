@@ -136,7 +136,7 @@ struct VPSTrendChartView: View {
       return L10n.string(
         .vpsTrendEstimateCycleEnd,
         language: language,
-        formattedGB(max(projected, 0))
+        UsageFormatting.formattedGB(max(projected, 0))
       )
     }
     return L10n.string(.vpsTrendEstimateUnavailable, language: language)
@@ -220,7 +220,7 @@ struct VPSTrendChartView: View {
         AxisGridLine().foregroundStyle(.quaternary)
         AxisValueLabel {
           if let normalized = value.as(Double.self) {
-            Text(formattedGB(denormalized(normalized, in: model.trafficDomain)))
+            Text(UsageFormatting.formattedGB(denormalized(normalized, in: model.trafficDomain)))
               .font(AppTypography.caption)
           }
         }
@@ -248,9 +248,6 @@ struct VPSTrendChartView: View {
     domain.lowerBound + value * (domain.upperBound - domain.lowerBound)
   }
 
-  private func formattedGB(_ value: Double) -> String {
-    String(format: "%.0f GB", value)
-  }
 
   private func formattedUSD(_ value: Double) -> String {
     String(format: "$%.2f", value)
@@ -271,7 +268,7 @@ struct VPSTrendChartView: View {
       values: [
         TrendChartSelectionDetail.valueText(
           label: trafficTitle,
-          value: formattedGB(sample.remainingBandwidthGB),
+          value: UsageFormatting.formattedGB(sample.remainingBandwidthGB),
           language: language
         ),
         TrendChartSelectionDetail.valueText(

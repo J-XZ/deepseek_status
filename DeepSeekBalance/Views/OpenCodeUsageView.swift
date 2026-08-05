@@ -1,4 +1,3 @@
-import AppKit
 import SwiftUI
 
 /// OpenCode 标签页：同时展示 Go 订阅窗口和 Zen 余额。
@@ -16,6 +15,15 @@ struct OpenCodeUsageView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
       headerCard
+      if let email = store.snapshot?.accountEmail, !email.isEmpty {
+        Label(
+          L10n.string(.openCodeAccount, language: language, email),
+          systemImage: "person.crop.circle"
+        )
+        .font(AppTypography.caption)
+        .foregroundStyle(.secondary)
+        .padding(.leading, 10)
+      }
       if let snapshot = store.snapshot {
         zenCard(snapshot)
         goCard(snapshot)
@@ -109,7 +117,7 @@ struct OpenCodeUsageView: View {
         )
         Spacer()
         if let balance = snapshot.zenBalanceUSD {
-          Text(formattedUSD(balance))
+          Text(UsageFormatting.formattedUSD(balance, locale: language.locale))
             .font(AppTypography.value)
             .foregroundStyle(amountForegroundStyle)
         } else {
@@ -331,15 +339,6 @@ struct OpenCodeUsageView: View {
     return MenuBarUsageColor.progressColor(forGap: gap).map(Color.init(nsColor:)) ?? .blue
   }
 
-  private func formattedUSD(_ value: Double) -> String {
-    let formatter = NumberFormatter()
-    formatter.numberStyle = .currency
-    formatter.currencyCode = "USD"
-    formatter.locale = language.locale
-    formatter.minimumFractionDigits = 2
-    formatter.maximumFractionDigits = 2
-    return formatter.string(from: NSNumber(value: value)) ?? String(format: "$%.2f", value)
-  }
 }
 
 struct OpenCodeProgressBar: View {
@@ -372,7 +371,7 @@ struct OpenCodeProgressBar: View {
           Rectangle()
             .fill(.red)
             .frame(width: 3, height: 8)
-            .position(x: markerX(width: proxy.size.width, expected: expected), y: 4)
+            .position(x: UsageFormatting.markerX(width: proxy.size.width, expected: expected), y: 4)
             .accessibilityLabel(expectedAccessibilityLabel)
         }
       }
@@ -381,8 +380,4 @@ struct OpenCodeProgressBar: View {
     .accessibilityValue("\(Int(max(0, min(1, progress)) * 100))%")
   }
 
-  private func markerX(width: CGFloat, expected: Double) -> CGFloat {
-    let fraction = CGFloat(min(max(expected / 100, 0), 1))
-    return min(max(width * fraction, 2), max(width - 2, 2))
-  }
 }

@@ -1,4 +1,3 @@
-import AppKit
 import SwiftUI
 
 /// Codex 用量标签页：订阅方案、用量窗口、额外额度与账号信息。
@@ -9,13 +8,6 @@ struct CodexUsageView: View {
 
   @Environment(\.controlActiveState) private var controlActiveState
 
-  private var cardBackground: Color {
-    appearance == .dark ? Color(white: 0.14) : Color(white: 0.96)
-  }
-
-  private var cardBorder: Color {
-    appearance == .dark ? Color.primary.opacity(0.28) : Color.primary.opacity(0.16)
-  }
 
   private var amountForegroundStyle: Color {
     controlActiveState == .inactive ? .secondary : .primary
@@ -151,8 +143,8 @@ struct CodexUsageView: View {
             .foregroundStyle(.secondary)
         }
       } else {
-        if let primary = usage.rateLimit?.primaryWindow {
-          windowRow(primary, isPrimary: true)
+        if let weekly = usage.weeklyWindow {
+          windowRow(weekly)
         }
         fiveHourRow(for: usage)
       }
@@ -192,12 +184,12 @@ struct CodexUsageView: View {
     }
   }
 
-  /// 5 小时窗口：官方目前未下发该限制，预留展示——未下发时按
+  /// 5 小时窗口：官方通常未下发该限制，预留展示——未下发时按
   /// “已用 0% · 剩余 100%”显示并标注当前无限制；将来下发后自动显示真实数据。
   @ViewBuilder
   private func fiveHourRow(for usage: CodexUsageResponse) -> some View {
-    if let secondary = usage.rateLimit?.secondaryWindow {
-      windowRow(secondary, isPrimary: false)
+    if let fiveHour = usage.fiveHourWindow {
+      windowRow(fiveHour)
     } else {
       VStack(alignment: .leading, spacing: 4) {
         HStack {
@@ -240,7 +232,7 @@ struct CodexUsageView: View {
           Rectangle()
             .fill(.red)
             .frame(width: 3, height: 6)
-            .position(x: markerX(width: geo.size.width, expected: expected), y: 3)
+            .position(x: UsageFormatting.markerX(width: geo.size.width, expected: expected), y: 3)
             .accessibilityLabel(L10n.string(.codexExpectedMarker, language: language))
         }
       }
@@ -267,11 +259,6 @@ struct CodexUsageView: View {
     return MenuBarUsageColor.progressColor(forGap: gap).map(Color.init(nsColor:)) ?? .blue
   }
 
-  /// 红线中心 x：夹在 [2, 宽度−2] 内，保证 3pt 宽红线不超出轨道左右边缘。
-  private func markerX(width: CGFloat, expected: Double) -> CGFloat {
-    let fraction = CGFloat(min(max(expected / 100, 0), 1))
-    return min(max(width * fraction, 2), max(width - 2, 2))
-  }
 
   /// 进度条文案：有差距（实际已用 − 理想已用）时显示“已用 X% · 剩余 Y%（±Z%）”，
   /// 与 OpenCode 详情页保持一致；无差距信息时不带括号。
@@ -298,7 +285,7 @@ struct CodexUsageView: View {
     )
   }
 
-  private func windowRow(_ window: CodexUsageWindow, isPrimary: Bool = false, title: String? = nil) -> some View {
+  private func windowRow(_ window: CodexUsageWindow, title: String? = nil) -> some View {
     let expected = CodexUsageFormatter.expectedUsedPercent(
       resetAt: window.resetAt,
       limitWindowSeconds: window.limitWindowSeconds

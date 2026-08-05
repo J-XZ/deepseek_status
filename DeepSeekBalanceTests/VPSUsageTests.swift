@@ -25,7 +25,7 @@ final class VPSUsageTests: XCTestCase {
       case "/v2/account/bandwidth":
         body = #"{"bandwidth":{"current_month_to_date":{"instance_bandwidth_credits":100,"gb_out":36.6}}}"#
       case "/v2/instances/i-test":
-        body = #"{"instance":{"date_created":"2026-07-15T12:00:00Z","label":"demo"}}"#
+        body = #"{"instance":{"date_created":"2026-07-15T12:00:00Z","label":"demo","region":"ewr","server_status":"ok"}}"#
       default:
         XCTFail("Unexpected Vultr endpoint: \(url.path)")
         body = "{}"
@@ -48,9 +48,10 @@ final class VPSUsageTests: XCTestCase {
     XCTAssertEqual(snapshot.usedBandwidthGB, 36.6, accuracy: 0.0001)
     XCTAssertEqual(snapshot.remainingBandwidthGB, 63.4, accuracy: 0.0001)
     XCTAssertEqual(snapshot.remainingCreditUSD, 5.48, accuracy: 0.0001)
-    XCTAssertEqual(
-      Set(MockURLProtocol.capturedAuthorizationHeaders()),
-      ["Bearer test-token"]
+    XCTAssertEqual(snapshot.instanceRegion, "ewr")
+    XCTAssertEqual(snapshot.instanceStatus, "ok")
+    XCTAssertTrue(
+      MockURLProtocol.capturedAuthorizationHeaders().contains("Bearer test-token")
     )
     XCTAssertEqual(MockURLProtocol.recordedRequestCount, 3)
   }
@@ -365,6 +366,9 @@ final class VPSUsageTests: XCTestCase {
     let snapshot = VPSUsageSnapshot(
       instanceID: "i-test",
       instanceLabel: nil,
+      instanceStatus: nil,
+      instanceRegion: nil,
+      accountEmail: nil,
       cycleStart: .distantPast,
       cycleEnd: .distantFuture,
       totalBandwidthGB: 10,

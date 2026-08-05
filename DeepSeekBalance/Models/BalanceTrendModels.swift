@@ -1,5 +1,6 @@
 import CoreGraphics
 import Foundation
+import SwiftUI
 
 /// Shared cadence for background provider and service-status requests.
 enum DataRefreshPolicy {
@@ -15,6 +16,34 @@ enum UsageHistoryWindow {
   static func chartDomain(now: Date) -> ClosedRange<Date> {
     now.addingTimeInterval(-seconds)...now
   }
+
+  /// 过去 24 小时内数值变化量。正值=上涨，负值=下跌；数据不足时 nil。
+  static func change24h<Sample>(
+    samples: [Sample],
+    value: (Sample) -> Double?,
+    date: (Sample) -> Date
+  ) -> Double? {
+    let sorted = samples
+      .compactMap { s -> (Date, Double)? in
+        guard let v = value(s) else { return nil }
+        return (date(s), v)
+      }
+      .sorted { $0.0 < $1.0 }
+    guard let current = sorted.last else { return nil }
+    let threshold = Date().addingTimeInterval(-86400)
+    guard let earliest = sorted.first else { return nil }
+    let previous = sorted.last(where: { $0.0 <= threshold }) ?? earliest
+    return current.1 - previous.1
+  }
+
+  /// 根据 24 小时余额下跌量返回渐变颜色（连续插值，白 → 黄 → 红）：
+  /// $0（无下跌）→ nil（默认色），$2 → 完全黄色，$5 → 完全红色。
+  static func dropColor(changeUSD: Double?) -> Color? {
+    guard let changeUSD, changeUSD < -0.5 else { return nil }
+    let t = max(0, min(1, (-changeUSD - 0.5) / 4.5))
+    return .orange.opacity(t * 0.85)
+  }
+
 }
 
 /// 用于估算额度耗尽时间的剩余量样本。
@@ -225,26 +254,31 @@ enum BalanceTrendProcessor {
     }
     return newestByBucket.values
       .sorted { $0.bucketStart < $1.bucketStart }
-      .flatMap { sample in
+      .flatMap { sample -> [TrendPoint] in
+        guard
+          let total = decimal(from: sample.totalBalance),
+          let toppedUp = decimal(from: sample.toppedUpBalance),
+          let granted = decimal(from: sample.grantedBalance)
+        else { return [] }
         let bucket = sample.bucketStart
         return [
           TrendPoint(
             id: sample.id + "-total",
             date: bucket,
             metric: .total,
-            value: double(from: decimal(from: sample.totalBalance)!)
+            value: double(from: total)
           ),
           TrendPoint(
             id: sample.id + "-toppedUp",
             date: bucket,
             metric: .toppedUp,
-            value: double(from: decimal(from: sample.toppedUpBalance)!)
+            value: double(from: toppedUp)
           ),
           TrendPoint(
             id: sample.id + "-granted",
             date: bucket,
             metric: .granted,
-            value: double(from: decimal(from: sample.grantedBalance)!)
+            value: double(from: granted)
           ),
         ]
       }
@@ -256,7 +290,8 @@ enum BalanceTrendProcessor {
     var result: [[TrendPoint]] = []
     var current = [first]
     for point in points.dropFirst() {
-      let gap = point.date.timeIntervalSince(current.last!.date)
+      guard let lastDate = current.last?.date else { return [] }
+      let gap = point.date.timeIntervalSince(lastDate)
       if gap > gapThreshold {
         result.append(current)
         current = [point]

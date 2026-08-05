@@ -87,6 +87,13 @@ enum MenuBarUsageColor {
     )
   }
 
+  /// 余额下跌颜色：$0.5 ↓ → 无色，$2 ↓ → 黄，$5 ↓ → 红，连续插值。
+  static func color(forBalanceDrop dropUSD: Double?, isDark: Bool) -> NSColor? {
+    guard let dropUSD, dropUSD > 0.5 else { return nil }
+    let gap = min(30, max(0, CGFloat(dropUSD - 0.5) / 4.5 * 30))
+    return color(for: Int(gap.rounded()), isDark: isDark)
+  }
+
   /// 进度条渐变与菜单栏共用阈值（-10 完全绿 / +10 完全黄 / +30 完全红），
   /// 但把 0 点的中间色从菜单栏的系统白/标签色替换为蓝色，
   /// 并把绿色替换为低饱和度暗绿以适配进度条配色。
@@ -379,6 +386,8 @@ enum PopoverSizing {
 @MainActor
 final class PopoverTabSelection: ObservableObject {
   @Published var selectedTab: UsageTab = .deepseek
+  /// 固定弹窗：为 true 时失焦不自动关闭弹窗。
+  @Published var isPinned = false
 }
 
 /// 菜单栏供应商可见性：UserDefaults 持久化，至少保留一个可见。
@@ -607,6 +616,20 @@ final class StatusItemController: NSObject {
       self.shrinkSettleTask = nil
     }
     .store(in: &cancellables)
+    // 图钉状态订阅：固定时切换为 .applicationDefined，系统不再因点击外部/
+    // 失活自动关闭弹窗（.transient 的系统级关闭会绕过 closePopover 的
+    // pin 守卫，导致固定失效）；取消固定时恢复 .transient 正常行为。
+    tabSelection.$isPinned.dropFirst().sink { [weak self] pinned in
+      self?.applyPinBehavior(pinned)
+    }
+    .store(in: &cancellables)
+  }
+
+  /// 根据固定状态设置弹窗行为：
+  /// - 固定：.applicationDefined，系统不自动关闭，只受手动关闭逻辑控制
+  /// - 未固定：.transient，保留原有失焦自动关闭
+  private func applyPinBehavior(_ pinned: Bool) {
+    popover.behavior = pinned ? .applicationDefined : .transient
   }
 
   deinit {
@@ -717,6 +740,24 @@ final class StatusItemController: NSObject {
         ?? monthly.usageGapPercent(now: now, windowEnd: subscription.renewsAt)
     }()
 
+    // 过去 24 小时 OpenCode Zen 余额下跌量（正值表示下跌）。
+    let openCodeZenDrop24h: Double? = {
+      UsageHistoryWindow.change24h(
+        samples: openCodeStore.historySamples,
+        value: { $0.zenBalanceUSD },
+        date: \.bucketStart
+      ).map { -$0 }
+    }()
+
+    // 过去 24 小时 Vultr 信用额度下跌量（正值表示下跌）。
+    let vpsCreditDrop24h: Double? = {
+      UsageHistoryWindow.change24h(
+        samples: vpsStore.historySamples,
+        value: { $0.availableCreditUSD },
+        date: \.bucketStart
+      ).map { -$0 }
+    }()
+
     var segments: [MenuBarStatusContentView.Segment] = []
     if visibility.showsDeepSeek {
       segments.append(
@@ -793,7 +834,7 @@ final class StatusItemController: NSObject {
           verticalInset: MenuBarDisplayLayout.cursorVerticalInset,
           lineColors: [
             MenuBarUsageColor.color(for: openCodeMonthlyGap, isDark: isDark),
-            nil
+            MenuBarUsageColor.color(forBalanceDrop: openCodeZenDrop24h, isDark: isDark)
           ]
         )
       )
@@ -814,7 +855,7 @@ final class StatusItemController: NSObject {
               forTrafficRisk: vpsStore.trafficForecast?.riskScore,
               isDark: isDark
             ),
-            nil
+            MenuBarUsageColor.color(forBalanceDrop: vpsCreditDrop24h, isDark: isDark)
           ]
         )
       )
@@ -982,6 +1023,7 @@ final class StatusItemController: NSObject {
   }
 
   private func closePopover() {
+    guard !tabSelection.isPinned else { return }
     shrinkSettleTask?.cancel()
     shrinkSettleTask = nil
     if popover.isShown {
@@ -1230,6 +1272,7 @@ final class StatusItemController: NSObject {
     if popover.isShown {
       closePopover()
     } else {
+      applyPinBehavior(tabSelection.isPinned)
       applyPopoverSize(for: sender)
       // LSUIElement 应用展示 NSPopover 时不会自动激活；本地键盘监听（Tab
       // 切换）只在应用激活后收得到事件，先激活再展示，用户无需先点击页面。

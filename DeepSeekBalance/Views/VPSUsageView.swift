@@ -1,4 +1,3 @@
-import AppKit
 import SwiftUI
 
 /// Vultr 标签页：显示实例剩余流量和账户剩余额度，不显示百分比。
@@ -13,17 +12,29 @@ struct VPSUsageView: View {
     controlActiveState == .inactive ? .secondary : .primary
   }
 
-  private var trafficForegroundStyle: Color {
-    let color = MenuBarUsageColor.color(
-      forTrafficRisk: store.trafficForecast?.riskScore,
-      isDark: appearance == .dark
-    ).map(Color.init(nsColor:)) ?? amountForegroundStyle
-    return controlActiveState == .inactive ? color.opacity(0.72) : color
+  /// 过去 24 小时信用额度下跌颜色：‑5 红、‑2 黄，否则默认。
+  private var creditDropColor: Color? {
+    guard let change = UsageHistoryWindow.change24h(
+      samples: store.historySamples,
+      value: { $0.availableCreditUSD },
+      date: \.bucketStart
+    ) else { return nil }
+    return UsageHistoryWindow.dropColor(changeUSD: change)
   }
+
 
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
       headerCard
+      if let email = store.snapshot?.accountEmail, !email.isEmpty {
+        Label(
+          L10n.string(.vpsAccount, language: language, email),
+          systemImage: "person.crop.circle"
+        )
+        .font(AppTypography.caption)
+        .foregroundStyle(.secondary)
+        .padding(.leading, 10)
+      }
       if let snapshot = store.snapshot {
         usageCard(snapshot)
         cycleCard()
@@ -73,11 +84,8 @@ struct VPSUsageView: View {
   private func usageCard(_ snapshot: VPSUsageSnapshot) -> some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack {
-        Label(
-          L10n.string(.vpsInstance, language: language),
-          systemImage: "server.rack"
-        )
-        .font(AppTypography.section)
+        Text(L10n.string(.vpsInstance, language: language))
+          .font(AppTypography.section)
         Spacer()
         Text(snapshot.instanceLabel ?? snapshot.instanceID)
           .font(AppTypography.caption.monospaced())
@@ -88,12 +96,12 @@ struct VPSUsageView: View {
 
       valueRow(
         title: L10n.string(.vpsRemainingTraffic, language: language),
-        value: formattedGB(snapshot.remainingBandwidthGB),
-        foregroundStyle: trafficForegroundStyle
+        value: UsageFormatting.formattedGB(snapshot.remainingBandwidthGB)
       )
       valueRow(
         title: L10n.string(.vpsRemainingCredit, language: language),
-        value: formattedUSD(snapshot.availableCreditUSD)
+        value: UsageFormatting.formattedUSD(snapshot.availableCreditUSD, locale: language.locale),
+        foregroundStyle: creditDropColor
       )
     }
     .padding(10)
@@ -102,7 +110,7 @@ struct VPSUsageView: View {
 
   private func cycleCard() -> some View {
     VStack(alignment: .leading, spacing: 6) {
-      Label(L10n.string(.vpsBillingCycle, language: language), systemImage: "calendar")
+      Text(L10n.string(.vpsBillingCycle, language: language))
         .font(AppTypography.section)
       if let remainingText = store.currentCycleRemainingText(language: language) {
         Text(remainingText)
@@ -181,18 +189,6 @@ struct VPSUsageView: View {
     }
   }
 
-  private func formattedGB(_ value: Double) -> String {
-    String(format: "%.0f GB", value)
-  }
-
-  private func formattedUSD(_ value: Double) -> String {
-    let formatter = NumberFormatter()
-    formatter.numberStyle = .currency
-    formatter.currencyCode = "USD"
-    formatter.locale = language.locale
-    formatter.minimumFractionDigits = 2
-    formatter.maximumFractionDigits = 2
-    return formatter.string(from: NSNumber(value: value)) ?? String(format: "$%.2f", value)
-  }
 
 }
+

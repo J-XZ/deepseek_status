@@ -268,14 +268,13 @@ final class CodexUsageStore: ObservableObject {
 
   // MARK: - 菜单栏文字
 
-  /// 菜单栏 Codex 部分：信用额度剩余百分比（`credits.balance / limit`），
-  /// 例如 `28%`——反映月度 grant 的实际消耗比例，比 API 请求配额百分比更直观。
-  /// 可同时显示与理想用量（刷新周期内线性消耗恰好用完）的差距，
-  /// 例如 `28% (+5%)`、`28% (-3%)` 或 `28% (+0%)`。信用额度数据不可用时
-  /// 回退到整体窗口剩余百分比。5 小时窗口未下发时视为 100%，不影响显示；
-  /// 窗口信息缺失或时间不在窗口内时不显示差距。
+  /// 菜单栏 Codex 部分：剩余百分比，优先使用 OpenAI 官方下发的
+  /// `individual_limit.remainingPercent`（如 `27%`），缺失时回退到每周用量
+  /// 窗口的 `100 - weeklyWindow.used_percent`。可同时显示与理想用量
+  /// （每周窗口内线性消耗恰好用完）的差距，例如 `27% (+5%)`、`27% (-3%)`
+  /// 或 `27% (+0%)`。周窗口缺失或时间不在窗口内时不显示差距。
   var menuBarText: String {
-    if let usage, let remaining = usage.creditBasedRemainingPercent ?? usage.overallRemainingPercent {
+    if let usage, let remaining = usage.creditRemainingPercent {
       var text = "\(remaining)%"
       if let gap = usage.usageGapPercent {
         text += " (\(gap >= 0 ? "+" : "")\(gap)%)"
