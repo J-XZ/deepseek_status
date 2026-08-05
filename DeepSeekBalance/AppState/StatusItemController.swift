@@ -1,5 +1,6 @@
 import AppKit
 import Combine
+import QuartzCore
 import SwiftUI
 
 /// 菜单栏供应商。
@@ -502,6 +503,7 @@ final class StatusItemController: NSObject {
   private var titleUpdateTask: Task<Void, Never>?
   private var popoverDismissObservations: [NotificationObservation] = []
   private var outsideClickMonitor: Any?
+  private var pendingPopoverSizeTask: Task<Void, Never>?
 
   init(
     store: BalanceStore,
@@ -536,6 +538,7 @@ final class StatusItemController: NSObject {
 
   deinit {
     titleUpdateTask?.cancel()
+    pendingPopoverSizeTask?.cancel()
     for observation in popoverDismissObservations {
       observation.remove()
     }
@@ -894,11 +897,19 @@ final class StatusItemController: NSObject {
   private func updatePopoverSize(for pageHeights: [UsageTab: CGFloat]) {
     guard pageHeights != vendorPageHeights else { return }
     vendorPageHeights = pageHeights
-    guard let button = statusItem.button else { return }
-    applyPopoverSize(for: button)
+    // 数据到达会让页面自然高度在短时间内连续变化多次（图表 loading → 完成、
+    // 多供应商并发刷新）；合并成一次平滑调整，避免弹窗尺寸反复跳变。
+    pendingPopoverSizeTask?.cancel()
+    pendingPopoverSizeTask = Task { @MainActor [weak self] in
+      try? await Task.sleep(for: .milliseconds(160))
+      guard !Task.isCancelled else { return }
+      self?.applyPopoverSize()
+    }
   }
 
-  private func applyPopoverSize(for button: NSStatusBarButton) {
+  private func applyPopoverSize(for button: NSStatusBarButton? = nil) {
+    let button = button ?? statusItem.button
+    guard let button else { return }
     let visibleFrameHeight = button.window?.screen?.visibleFrame.height
       ?? NSScreen.main?.visibleFrame.height
     let height = PopoverSizing.constrainedHeight(
@@ -914,8 +925,28 @@ final class StatusItemController: NSObject {
       }
     )
     let size = NSSize(width: PopoverSizing.width, height: stableHeight)
-    popover.contentSize = size
+    guard size != popover.contentSize else { return }
     popover.contentViewController?.preferredContentSize = size
+    guard popover.isShown, let window = popover.contentViewController?.view.window else {
+      popover.contentSize = size
+      return
+    }
+    // 弹窗已展示时平滑伸缩窗口高度：顶部（箭头侧）固定在菜单栏下方，
+    // 只向底部生长/收缩，避免标签切换或数据到达时窗口瞬间跳变。
+    let currentFrame = window.frame
+    let targetFrame = NSRect(
+      x: currentFrame.minX,
+      y: currentFrame.maxY - size.height,
+      width: size.width,
+      height: size.height
+    )
+    NSAnimationContext.runAnimationGroup { context in
+      context.duration = 0.16
+      context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+      window.animator().setFrame(targetFrame, display: true)
+    } completionHandler: {
+      self.popover.contentSize = size
+    }
   }
 
   private func togglePopover(_ sender: NSStatusBarButton) {
