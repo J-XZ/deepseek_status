@@ -282,8 +282,39 @@ struct CodexUsageView: View {
     return min(max(width * fraction, 2), max(width - 2, 2))
   }
 
+  /// 进度条文案：有差距（实际已用 − 理想已用）时显示“已用 X% · 剩余 Y%（±Z%）”，
+  /// 与 OpenCode 详情页保持一致；无差距信息时不带括号。
+  private func windowProgressText(
+    usedPercent: Int,
+    remainingPercent: Int,
+    gap: Int?
+  ) -> String {
+    guard let gap else {
+      return L10n.string(
+        .codexWindowUsedRemaining,
+        language: language,
+        usedPercent,
+        remainingPercent
+      )
+    }
+    let signedGap = "\(gap >= 0 ? "+" : "")\(gap)%"
+    return L10n.string(
+      .codexWindowUsedRemainingWithGap,
+      language: language,
+      usedPercent,
+      remainingPercent,
+      signedGap
+    )
+  }
+
   private func windowRow(_ window: CodexUsageWindow, isPrimary: Bool = false, title: String? = nil) -> some View {
-    VStack(alignment: .leading, spacing: 4) {
+    let expected = CodexUsageFormatter.expectedUsedPercent(
+      resetAt: window.resetAt,
+      limitWindowSeconds: window.limitWindowSeconds
+    )
+    let gap = expected.map { window.usedPercent - Int($0.rounded()) }
+
+    return VStack(alignment: .leading, spacing: 4) {
       HStack {
         Text(title ?? CodexUsageFormatter.windowTitle(
           limitWindowSeconds: window.limitWindowSeconds,
@@ -292,11 +323,10 @@ struct CodexUsageView: View {
         .font(AppTypography.caption.weight(.semibold))
         .foregroundStyle(.secondary)
         Spacer()
-        Text(L10n.string(
-          .codexWindowUsedRemaining,
-          language: language,
-          window.usedPercent,
-          window.remainingPercent
+        Text(windowProgressText(
+          usedPercent: window.usedPercent,
+          remainingPercent: window.remainingPercent,
+          gap: gap
         ))
         .font(AppTypography.caption.monospacedDigit())
         .foregroundStyle(amountForegroundStyle)

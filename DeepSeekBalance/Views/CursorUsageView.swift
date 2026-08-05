@@ -155,7 +155,8 @@ struct CursorUsageView: View {
           billingCycleStart: billingCycleStart,
           billingCycleEnd: billingCycleEnd,
           usedPercent: usage.usedPercent,
-          remainingPercent: usage.remainingPercent
+          remainingPercent: usage.remainingPercent,
+          gap: usage.usageGapPercent
         )
       }
 
@@ -165,11 +166,10 @@ struct CursorUsageView: View {
             .font(AppTypography.caption.weight(.semibold))
             .foregroundStyle(.secondary)
           Spacer()
-          Text(L10n.string(
-            .cursorWindowUsedRemaining,
-            language: language,
-            apiUsed,
-            max(0, min(100, 100 - apiUsed))
+          Text(windowProgressText(
+            usedPercent: apiUsed,
+            remainingPercent: max(0, min(100, 100 - apiUsed)),
+            gap: usage.apiUsageGapPercent
           ))
           .font(AppTypography.caption.monospacedDigit())
           .foregroundStyle(amountForegroundStyle)
@@ -197,12 +197,38 @@ struct CursorUsageView: View {
     }
   }
 
+  /// 进度条文案：有差距（实际已用 − 理想已用）时显示“已用 X% · 剩余 Y%（±Z%）”，
+  /// 与 OpenCode 详情页保持一致；无差距信息时不带括号。
+  private func windowProgressText(
+    usedPercent: Int,
+    remainingPercent: Int,
+    gap: Int?
+  ) -> String {
+    guard let gap else {
+      return L10n.string(
+        .cursorWindowUsedRemaining,
+        language: language,
+        usedPercent,
+        remainingPercent
+      )
+    }
+    let signedGap = "\(gap >= 0 ? "+" : "")\(gap)%"
+    return L10n.string(
+      .cursorWindowUsedRemainingWithGap,
+      language: language,
+      usedPercent,
+      remainingPercent,
+      signedGap
+    )
+  }
+
   /// 计费周期窗口：已用/剩余进度条 + 理想用量红线 + 重置时间。
   private func windowRow(
     billingCycleStart: Date,
     billingCycleEnd: Date,
     usedPercent: Int?,
-    remainingPercent: Int?
+    remainingPercent: Int?,
+    gap: Int?
   ) -> some View {
     VStack(alignment: .leading, spacing: 4) {
       HStack {
@@ -210,11 +236,10 @@ struct CursorUsageView: View {
           .font(AppTypography.caption.weight(.semibold))
           .foregroundStyle(.secondary)
         Spacer()
-        Text(L10n.string(
-          .cursorWindowUsedRemaining,
-          language: language,
-          usedPercent ?? 0,
-          remainingPercent ?? 0
+        Text(windowProgressText(
+          usedPercent: usedPercent ?? 0,
+          remainingPercent: remainingPercent ?? 0,
+          gap: gap
         ))
         .font(AppTypography.caption.monospacedDigit())
         .foregroundStyle(amountForegroundStyle)

@@ -2321,6 +2321,22 @@
         }
       }
     },
+    "codex.windowUsedRemainingWithGap": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Used %lld%% · %lld%% remaining (%@)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已用 %lld%% · 剩余 %lld%%（%@）"
+          }
+        }
+      }
+    },
     "codex.expectedMarker": {
       "localizations": {
         "en": {
@@ -2781,6 +2797,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "已用 %lld%% · 剩余 %lld%%"
+          }
+        }
+      }
+    },
+    "cursor.windowUsedRemainingWithGap": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Used %lld%% · %lld%% remaining (%@)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已用 %lld%% · 剩余 %lld%%（%@）"
           }
         }
       }
