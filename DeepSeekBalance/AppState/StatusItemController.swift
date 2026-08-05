@@ -53,6 +53,12 @@ enum MenuBarUsageColor {
     blue: 0.64,
     alpha: 1.0
   )
+  private static let progressBlue = NSColor(
+    srgbRed: 0.0,
+    green: 0.478,
+    blue: 1.0,
+    alpha: 1.0
+  )
 
   static func color(for gap: Int?, isDark: Bool) -> NSColor? {
     guard let gap else { return nil }
@@ -64,6 +70,21 @@ enum MenuBarUsageColor {
       stops: [
         (-greenPeakGap, brightGreen),
         (0, baseColor),
+        (yellowPeakGap, brightYellow),
+        (redPeakGap, brightRed),
+      ]
+    )
+  }
+
+  /// 进度条渐变与菜单栏共用阈值（-10 完全绿 / +10 完全黄 / +30 完全红），
+  /// 但把 0 点的中间色从菜单栏的系统白/标签色替换为蓝色。
+  static func progressColor(forGap gap: Double?) -> NSColor? {
+    guard let gap, gap.isFinite else { return nil }
+    return interpolated(
+      value: CGFloat(gap),
+      stops: [
+        (-greenPeakGap, brightGreen),
+        (0, progressBlue),
         (yellowPeakGap, brightYellow),
         (redPeakGap, brightRed),
       ]
@@ -477,6 +498,8 @@ final class StatusItemController: NSObject {
   )
   private var cancellables: Set<AnyCancellable> = []
   private var titleUpdateTask: Task<Void, Never>?
+  private var popoverDismissObservations: [NotificationObservation] = []
+  private var outsideClickMonitor: Any?
 
   init(
     store: BalanceStore,
@@ -511,6 +534,12 @@ final class StatusItemController: NSObject {
 
   deinit {
     titleUpdateTask?.cancel()
+    for observation in popoverDismissObservations {
+      observation.remove()
+    }
+    if let outsideClickMonitor {
+      NSEvent.removeMonitor(outsideClickMonitor)
+    }
   }
 
   // MARK: - 按钮
@@ -770,6 +799,94 @@ final class StatusItemController: NSObject {
     )
     popover.animates = false
     popover.behavior = .transient
+    observePopoverDismissal()
+  }
+
+  // MARK: - 失焦自动关闭
+
+  /// 菜单栏辅助应用（LSUIElement）在展示 NSPopover 时不会自动激活自身，
+  /// 系统对 .transient 的“点击外部关闭”与“应用失活关闭”都不会可靠触发。
+  /// 这里显式补齐三类失焦路径，保证详情页失焦后自动关闭：
+  /// - 点击其它应用窗口/桌面：全局事件监控（应用未激活时触发）
+  /// - Cmd-Tab 切换、点按 Dock 等导致应用失活：didResignActive
+  /// - 弹窗窗口失去 key 状态：didResignKey
+  private func observePopoverDismissal() {
+    let center = NotificationCenter.default
+    popoverDismissObservations.append(
+      NotificationObservation(
+        center: center,
+        token: center.addObserver(
+          forName: NSApplication.didResignActiveNotification,
+          object: nil,
+          queue: .main
+        ) { [weak self] _ in
+          Task { @MainActor [weak self] in
+            self?.closePopover()
+          }
+        }
+      )
+    )
+    popoverDismissObservations.append(
+      NotificationObservation(
+        center: center,
+        token: center.addObserver(
+          forName: NSWindow.didResignKeyNotification,
+          object: nil,
+          queue: .main
+        ) { [weak self] notification in
+          Task { @MainActor [weak self] in
+            guard let self else { return }
+            guard let window = notification.object as? NSWindow,
+              window === self.popover.contentViewController?.view.window
+            else {
+              return
+            }
+            self.closePopover()
+          }
+        }
+      )
+    )
+    // 全局监控仅在应用未激活时收到事件；点击位置落在弹窗窗口或状态栏按钮
+    // 内时不关闭（分别由弹窗自身激活与按钮 toggle 处理），其余情况全部关闭。
+    outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(
+      matching: [.leftMouseDown, .rightMouseDown]
+    ) { [weak self] event in
+      Task { @MainActor [weak self] in
+        self?.handleOutsideClick(event)
+      }
+    }
+  }
+
+  @MainActor
+  private func handleOutsideClick(_ event: NSEvent) {
+    guard popover.isShown else { return }
+    // 全局事件可能来自其它窗口/屏幕，坐标空间容易混淆；
+    // NSEvent.mouseLocation 与 NSWindow.frame 同为屏幕坐标（左下原点）。
+    let point = NSEvent.mouseLocation
+    if let window = popover.contentViewController?.view.window, window.frame.contains(point) {
+      return
+    }
+    if let button = statusItem.button {
+      // AX frame 为左上原点，转换到与 point 一致的左下原点。
+      let axFrame = button.accessibilityFrame()
+      let screenHeight = NSScreen.main?.frame.height ?? 0
+      let buttonFrame = CGRect(
+        x: axFrame.minX,
+        y: screenHeight - axFrame.maxY,
+        width: axFrame.width,
+        height: axFrame.height
+      )
+      if buttonFrame.contains(point) {
+        return
+      }
+    }
+    closePopover()
+  }
+
+  private func closePopover() {
+    if popover.isShown {
+      popover.performClose(nil)
+    }
   }
 
   private func updatePopoverSize(for pageHeights: [UsageTab: CGFloat]) {
@@ -801,7 +918,7 @@ final class StatusItemController: NSObject {
 
   private func togglePopover(_ sender: NSStatusBarButton) {
     if popover.isShown {
-      popover.performClose(nil)
+      closePopover()
     } else {
       applyPopoverSize(for: sender)
       popover.show(relativeTo: sender.bounds, of: sender, preferredEdge: .minY)

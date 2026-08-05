@@ -369,12 +369,23 @@ enum L10n {
     return String(format: template, locale: language.locale, arguments: arguments)
   }
 
-  static func bundle(for language: AppLanguage) -> Bundle {
+  /// 语言包按语言缓存：趋势图会在每次布局时为每个数据点解析文案，
+  /// 若每次都走 Bundle.main.path(forResource:) 的文件系统查找，开销会非常可观。
+  private static let bundleCache: [AppLanguage: Bundle] = [
+    .simplifiedChinese: loadBundle(for: .simplifiedChinese),
+    .english: loadBundle(for: .english),
+  ]
+
+  private static func loadBundle(for language: AppLanguage) -> Bundle {
     if let path = Bundle.main.path(forResource: language.rawValue, ofType: "lproj"),
       let bundle = Bundle(path: path)
     {
       return bundle
     }
     return .main
+  }
+
+  static func bundle(for language: AppLanguage) -> Bundle {
+    bundleCache[language] ?? .main
   }
 }

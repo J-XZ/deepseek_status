@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// OpenCode 标签页：同时展示 Go 订阅窗口和 Zen 余额。
@@ -289,17 +290,8 @@ struct OpenCodeUsageView: View {
     for window: OpenCodeUsageWindow,
     expected: Double?
   ) -> Color {
-    switch UsageProgressEvaluator.status(
-      usedPercent: window.usedPercent,
-      idealPercent: expected
-    ) {
-    case .noIdeal, .onTrack:
-      return .blue
-    case .behindIdeal:
-      return .green
-    case .aheadOfIdeal:
-      return .orange
-    }
+    let gap = expected.map { Double(window.usedPercent) - $0 }
+    return MenuBarUsageColor.progressColor(forGap: gap).map(Color.init(nsColor:)) ?? .blue
   }
 
   private func formattedUSD(_ value: Double) -> String {

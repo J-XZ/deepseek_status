@@ -20,11 +20,12 @@ struct OpenCodeTrendChartView: View {
     return OpenCodeTrendProcessor.nearestSample(to: selectedDate, samples: samples)
   }
 
+  /// 图表数据与订阅状态不变时无需重新准备；不再把当前分钟纳入 ID，
+  /// 否则每次刷新/跨分钟都会把整张图重置为等待状态再重建，造成可见闪烁。
   private var preparationID: String {
     let latest = samples.last
     let observedAt = latest?.observedAt.timeIntervalSince1970 ?? -1
-    let minute = Int(now.timeIntervalSince1970 / 60)
-    return "\(showGoTrend)-\(samples.count)-\(latest?.id ?? "empty")-\(observedAt)-\(minute)"
+    return "\(showGoTrend)-\(samples.count)-\(latest?.id ?? "empty")-\(observedAt)"
   }
 
   private var xDomain: ClosedRange<Date> {

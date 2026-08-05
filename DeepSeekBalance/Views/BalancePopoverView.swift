@@ -115,28 +115,22 @@ struct BalancePopoverView: View {
       // ScrollView 的内容在横向没有天然的收缩约束。英文长文案会让内容层
       // 按理想宽度展开，随后被弹窗左右边缘裁掉；这里明确给内容层分配弹窗
       // 的可用内宽，让所有子视图都在同一宽度下换行和压缩。
+      // fixedSize(vertical: true) 让内容按自然高度布局（而不是填满滚动视口），
+      // 后台的 GeometryReader 因此能持续报告页面真实高度用于弹窗定高。
       contentStack(for: selectedTab)
         .frame(width: PopoverSizing.contentWidth, alignment: .leading)
         .padding(PopoverSizing.horizontalPadding)
+        .fixedSize(horizontal: false, vertical: true)
         .background {
           GeometryReader { proxy in
             Color.clear.preference(
               key: VendorPageHeightPreferenceKey.self,
-              value: [selectedTab: proxy.size.height]
+              value: [selectedTab: proxy.size.height.rounded(.up)]
             )
           }
         }
     }
     .frame(width: PopoverSizing.width)
-    // 在 ScrollView 外持续测量所有可见供应商页，避免当前页的滚动约束反过来
-    // 把其它页面的自然高度压缩成固定值。测量层只参与布局，不显示隐藏内容；
-    // 异步趋势图完成加载后，仍可通过 GeometryReader 更新页面自然高度。
-    .overlay(alignment: .topLeading) {
-      pageHeightMeasurements
-        .hidden()
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
-    }
     // MenuBarExtra 窗口按视图的固有尺寸定高，ScrollView 没有固有高度，
     // 必须给出明确的高度，否则窗口会塌成一条窄条。
     .frame(
@@ -254,28 +248,6 @@ struct BalancePopoverView: View {
       card { footer }
     }
     .font(AppTypography.body)
-  }
-
-  /// 以实际弹窗宽度持续测量所有可见页面的完整自然高度。
-  /// 保持所有页面在测量层中，使异步图表从 loading 状态变为完整图表后仍能更新高度。
-  private var pageHeightMeasurements: some View {
-    VStack(spacing: 0) {
-      ForEach(visibleTabs) { tab in
-        contentStack(for: tab)
-          .frame(width: PopoverSizing.contentWidth, alignment: .leading)
-          .padding(PopoverSizing.horizontalPadding)
-          .fixedSize(horizontal: false, vertical: true)
-          .background {
-            GeometryReader { proxy in
-              Color.clear.preference(
-                key: VendorPageHeightPreferenceKey.self,
-                value: [tab: proxy.size.height]
-              )
-            }
-          }
-      }
-    }
-    .fixedSize(horizontal: false, vertical: true)
   }
 
   /// 让首帧先完成布局，再启动各供应商的网络刷新；网络请求本身并行，

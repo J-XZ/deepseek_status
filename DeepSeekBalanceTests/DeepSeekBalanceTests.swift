@@ -339,6 +339,50 @@ final class MenuBarUsageColorTests: XCTestCase {
     XCTAssertGreaterThan(threeQuarter.red, quarter.red)
   }
 
+  func testProgressColorUsesBlueAsMiddleInsteadOfWhite() throws {
+    XCTAssertNil(MenuBarUsageColor.progressColor(forGap: nil))
+
+    let green = try rgba(XCTUnwrap(MenuBarUsageColor.progressColor(forGap: -10)))
+    let blue = try rgba(XCTUnwrap(MenuBarUsageColor.progressColor(forGap: 0)))
+    let yellow = try rgba(XCTUnwrap(MenuBarUsageColor.progressColor(forGap: 10)))
+    let red = try rgba(XCTUnwrap(MenuBarUsageColor.progressColor(forGap: 30)))
+    let clamped = try rgba(XCTUnwrap(MenuBarUsageColor.progressColor(forGap: 99)))
+
+    XCTAssertGreaterThanOrEqual(green.alpha, 0.95)
+    XCTAssertGreaterThan(green.green, green.red)
+    XCTAssertGreaterThan(green.green, green.blue)
+    XCTAssertLessThan(green.red, 0.65)
+    XCTAssertLessThan(green.blue, 0.65)
+    // 0 点为蓝色（区别于菜单栏的白色中间色）。
+    XCTAssertGreaterThan(blue.blue, blue.red)
+    XCTAssertGreaterThan(blue.blue, blue.green)
+    XCTAssertGreaterThan(blue.blue, green.blue)
+    XCTAssertGreaterThan(yellow.green, 0.85)
+    XCTAssertGreaterThan(yellow.blue, 0.45)
+    XCTAssertGreaterThanOrEqual(red.red, yellow.red)
+    XCTAssertGreaterThan(red.red, blue.red)
+    XCTAssertGreaterThan(red.red, green.red)
+    // 超界钳制到端点颜色。
+    XCTAssertEqual(red.red, clamped.red, accuracy: 0.0001)
+    XCTAssertEqual(red.green, clamped.green, accuracy: 0.0001)
+    XCTAssertEqual(red.blue, clamped.blue, accuracy: 0.0001)
+  }
+
+  func testProgressGradientIsContinuousAcrossWholeRange() throws {
+    var previous: (red: CGFloat, green: CGFloat, blue: CGFloat, alpha: CGFloat)?
+    for gap in -10...30 {
+      let current = try rgba(XCTUnwrap(MenuBarUsageColor.progressColor(forGap: Double(gap))))
+      if let previous {
+        XCTAssertFalse(
+          abs(previous.red - current.red) < 0.0001
+            && abs(previous.green - current.green) < 0.0001
+            && abs(previous.blue - current.blue) < 0.0001
+        )
+      }
+      previous = current
+    }
+  }
+
   private func rgba(_ color: NSColor) throws -> (red: CGFloat, green: CGFloat, blue: CGFloat, alpha: CGFloat) {
     let rgb = try XCTUnwrap(color.usingColorSpace(.deviceRGB))
     var red: CGFloat = 0

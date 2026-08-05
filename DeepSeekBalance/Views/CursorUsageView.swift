@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// Cursor 用量标签页：订阅方案、计费周期用量、费用明细与账号信息。
@@ -302,17 +303,8 @@ struct CursorUsageView: View {
   }
 
   private func barColor(_ usedPercent: Int, idealPercent: Double?) -> Color {
-    switch UsageProgressEvaluator.status(
-      usedPercent: usedPercent,
-      idealPercent: idealPercent
-    ) {
-    case .noIdeal, .onTrack:
-      return .blue
-    case .behindIdeal:
-      return .green
-    case .aheadOfIdeal:
-      return .orange
-    }
+    let gap = idealPercent.map { Double(usedPercent) - $0 }
+    return MenuBarUsageColor.progressColor(forGap: gap).map(Color.init(nsColor:)) ?? .blue
   }
 
   /// 红线中心 x：夹在 [2, 宽度−2] 内，保证 3pt 宽红线不超出轨道左右边缘。
