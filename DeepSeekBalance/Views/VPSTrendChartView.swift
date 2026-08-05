@@ -27,6 +27,12 @@ struct VPSTrendChartView: View {
     self.currentRemainingGB = currentRemainingGB
     self.cycleStart = cycleStart
     self.cycleEnd = cycleEnd
+    // 样本集未变化时直接用缓存渲染，切回本页不会闪等待文案。
+    _preparedModel = State(
+      initialValue: VPSUsageTrendProcessor.cachedChartModel(
+        for: VPSUsageTrendProcessor.chartModelCacheKey(samples: samples, now: now)
+      )
+    )
   }
 
   /// 图表数据与样本集不变时无需重新准备；不把当前分钟纳入 ID，
@@ -84,13 +90,24 @@ struct VPSTrendChartView: View {
       }.value
       guard !Task.isCancelled else { return }
       preparedModel = model
+      VPSUsageTrendProcessor.storeChartModel(
+        model,
+        for: VPSUsageTrendProcessor.chartModelCacheKey(samples: capturedSamples, now: capturedNow)
+      )
     }
   }
 
+  /// 等待期间与图表保持相同的高度（180pt 图表 + 图例），
+  /// 避免页面高度在等待与就绪之间来回跳动。
   private var waitingText: some View {
-    Text(L10n.string(.vpsTrendWaiting, language: language))
-      .font(AppTypography.caption)
-      .foregroundStyle(.secondary)
+    ZStack {
+      Rectangle().fill(.clear)
+      Text(L10n.string(.vpsTrendWaiting, language: language))
+        .font(AppTypography.caption)
+        .foregroundStyle(.secondary)
+    }
+    .frame(height: 180)
+    .frame(maxWidth: .infinity)
   }
 
   private var exhaustionEstimate: some View {

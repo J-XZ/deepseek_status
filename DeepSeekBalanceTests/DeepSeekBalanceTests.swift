@@ -469,3 +469,95 @@ final class UsageProgressEvaluatorTests: XCTestCase {
     )
   }
 }
+
+final class TrendChartModelCacheTests: XCTestCase {
+  func testBalanceCacheRoundTripAndSameHourKey() {
+    let t0 = Date(timeIntervalSince1970: 1_700_000_000)
+    let samples = [
+      BalanceSample(
+        credentialID: "c", bucketStart: t0, observedAt: t0,
+        currency: "CNY", totalBalance: "100", grantedBalance: "0",
+        toppedUpBalance: "10", isAvailable: true
+      ),
+      BalanceSample(
+        credentialID: "c", bucketStart: t0 + 600, observedAt: t0 + 600,
+        currency: "CNY", totalBalance: "90", grantedBalance: "0",
+        toppedUpBalance: "10", isAvailable: true
+      ),
+    ]
+    let now = Date(timeIntervalSince1970: 1_700_000_100)
+    let key = BalanceTrendProcessor.chartModelCacheKey(
+      samples: samples, currency: "CNY", now: now
+    )
+    XCTAssertNil(BalanceTrendProcessor.cachedChartModel(for: key))
+    let model = BalanceTrendProcessor.chartModel(samples: samples, currency: "CNY", now: now)
+    XCTAssertEqual(model.segments.count, 3)
+    BalanceTrendProcessor.storeChartModel(model, for: key)
+    XCTAssertEqual(BalanceTrendProcessor.cachedChartModel(for: key), model)
+    // 同一小时内重访问命中同一缓存项。
+    let laterSameHour = Date(timeIntervalSince1970: 1_700_000_300)
+    XCTAssertEqual(
+      BalanceTrendProcessor.chartModelCacheKey(
+        samples: samples, currency: "CNY", now: laterSameHour
+      ),
+      key
+    )
+  }
+
+  func testBalanceCacheKeyChangesWithSamplesAndCurrency() {
+    let t0 = Date(timeIntervalSince1970: 1_700_000_000)
+    let samples = [
+      BalanceSample(
+        credentialID: "c", bucketStart: t0, observedAt: t0,
+        currency: "CNY", totalBalance: "100", grantedBalance: "0",
+        toppedUpBalance: "10", isAvailable: true
+      )
+    ]
+    let now = Date(timeIntervalSince1970: 1_700_000_100)
+    let key = BalanceTrendProcessor.chartModelCacheKey(
+      samples: samples, currency: "CNY", now: now
+    )
+    XCTAssertNotEqual(
+      BalanceTrendProcessor.chartModelCacheKey(
+        samples: samples, currency: "USD", now: now
+      ),
+      key
+    )
+    XCTAssertNotEqual(
+      BalanceTrendProcessor.chartModelCacheKey(
+        samples: samples + [
+          BalanceSample(
+            credentialID: "c", bucketStart: t0 + 600, observedAt: t0 + 600,
+            currency: "CNY", totalBalance: "95", grantedBalance: "0",
+            toppedUpBalance: "10", isAvailable: true
+          )
+        ],
+        currency: "CNY", now: now
+      ),
+      key
+    )
+  }
+
+  func testVPSCacheRoundTripAndKeyChangesWithSamples() {
+    let t0 = Date(timeIntervalSince1970: 1_700_000_000)
+    let s1 = VPSUsageSample(
+      credentialID: "c", bucketStart: t0, observedAt: t0,
+      remainingBandwidthGB: 100, remainingCreditUSD: 5
+    )
+    let s2 = VPSUsageSample(
+      credentialID: "c", bucketStart: t0 + 600, observedAt: t0 + 600,
+      remainingBandwidthGB: 90, remainingCreditUSD: 4
+    )
+    let now = Date(timeIntervalSince1970: 1_700_000_100)
+    let key = VPSUsageTrendProcessor.chartModelCacheKey(samples: [s1, s2], now: now)
+    XCTAssertNil(VPSUsageTrendProcessor.cachedChartModel(for: key))
+    let model = VPSUsageTrendProcessor.chartModel(samples: [s1, s2], now: now)
+    XCTAssertTrue(model.canDraw)
+    VPSUsageTrendProcessor.storeChartModel(model, for: key)
+    XCTAssertEqual(VPSUsageTrendProcessor.cachedChartModel(for: key), model)
+    XCTAssertNotEqual(
+      VPSUsageTrendProcessor.chartModelCacheKey(samples: [s1], now: now),
+      key
+    )
+  }
+}

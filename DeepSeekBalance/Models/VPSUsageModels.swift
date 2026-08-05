@@ -348,6 +348,29 @@ enum VPSUsageTrendProcessor {
     }
   }
 
+  /// 图表模型缓存：样本集不变时切回该页面可以立即渲染，避免每次
+  /// 访问都先闪一下等待文案、再等后台任务重建图表。
+  /// key 覆盖样本数量、最新样本和小时级时间戳；读写都在主线程。
+  nonisolated(unsafe) private static var chartModelCache: [String: ChartModel] = [:]
+
+  static func chartModelCacheKey(
+    samples: [VPSUsageSample],
+    now: Date
+  ) -> String {
+    let latest = samples.last
+    let observedAt = latest?.observedAt.timeIntervalSince1970 ?? -1
+    let hour = Int(now.timeIntervalSince1970 / 3_600)
+    return "\(samples.count)-\(latest?.id ?? "empty")-\(observedAt)-\(hour)"
+  }
+
+  static func cachedChartModel(for key: String) -> ChartModel? {
+    chartModelCache[key]
+  }
+
+  static func storeChartModel(_ model: ChartModel, for key: String) {
+    chartModelCache[key] = model
+  }
+
   static func chartModel(
     samples: [VPSUsageSample],
     now: Date

@@ -12,6 +12,28 @@ struct BalanceTrendChartView: View {
   @State private var preparedModel: BalanceTrendProcessor.ChartModel?
   @State private var selectedDate: Date?
 
+  init(
+    samples: [BalanceSample],
+    currency: String,
+    language: AppLanguage,
+    now: Date
+  ) {
+    self.samples = samples
+    self.currency = currency
+    self.language = language
+    self.now = now
+    // 样本集未变化时直接用缓存渲染，切回本页不会闪加载占位。
+    _preparedModel = State(
+      initialValue: BalanceTrendProcessor.cachedChartModel(
+        for: BalanceTrendProcessor.chartModelCacheKey(
+          samples: samples,
+          currency: currency,
+          now: now
+        )
+      )
+    )
+  }
+
   /// 图表数据与样本集不变时无需重新准备；不把当前分钟纳入 ID，
   /// 否则每次刷新/跨分钟都会把整张图重置为等待状态再重建，造成可见闪烁。
   private var preparationID: String {
@@ -76,6 +98,14 @@ struct BalanceTrendChartView: View {
       }.value
       guard !Task.isCancelled else { return }
       preparedModel = model
+      BalanceTrendProcessor.storeChartModel(
+        model,
+        for: BalanceTrendProcessor.chartModelCacheKey(
+          samples: capturedSamples,
+          currency: capturedCurrency,
+          now: capturedNow
+        )
+      )
     }
   }
 

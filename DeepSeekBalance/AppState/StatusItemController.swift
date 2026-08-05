@@ -512,6 +512,10 @@ final class StatusItemController: NSObject {
   private var vendorPageHeights: [UsageTab: CGFloat] = [:]
   private var selectedUsageTab: UsageTab = .deepseek
   private var lastSizedTab: UsageTab?
+  private var lastAppliedPopoverSize = NSSize(
+    width: PopoverSizing.width,
+    height: PopoverSizing.fallbackHeight
+  )
   private lazy var settingsWindow = SettingsWindow(
     store: store,
     loginItemStore: loginItemStore
@@ -960,18 +964,21 @@ final class StatusItemController: NSObject {
       allowsShrink: allowsShrink
     )
     let size = NSSize(width: PopoverSizing.width, height: stableHeight)
-    guard size != popover.contentSize else {
+    guard size != lastAppliedPopoverSize else {
       lastSizedTab = selectedUsageTab
       return
     }
-    popover.contentViewController?.preferredContentSize = size
     guard popover.isShown, let window = popover.contentViewController?.view.window else {
       popover.contentSize = size
+      popover.contentViewController?.preferredContentSize = size
+      lastAppliedPopoverSize = size
       lastSizedTab = selectedUsageTab
       return
     }
-    // 弹窗已展示时平滑伸缩窗口高度：顶部（箭头侧）固定在菜单栏下方，
-    // 只向底部生长/收缩，避免标签切换或数据到达时窗口瞬间跳变。
+    // 弹窗已展示时只动画窗口 frame，完全不改 contentSize/preferredContentSize：
+    // NSPopover 看到这两个属性变化会用自己的转场（从箭头处缩放）重排窗口，
+    // 和这里的窗口动画叠加成可见闪烁。hosting view 会随窗口自动重新布局，
+    // 因此内容始终填满窗口；下次关闭再打开时再按最新尺寸同步这两个属性。
     let currentFrame = window.frame
     let targetFrame = NSRect(
       x: currentFrame.minX,
@@ -984,7 +991,7 @@ final class StatusItemController: NSObject {
       context.timingFunction = CAMediaTimingFunction(name: .easeOut)
       window.animator().setFrame(targetFrame, display: true)
     } completionHandler: {
-      self.popover.contentSize = size
+      self.lastAppliedPopoverSize = size
       self.lastSizedTab = self.selectedUsageTab
     }
   }
