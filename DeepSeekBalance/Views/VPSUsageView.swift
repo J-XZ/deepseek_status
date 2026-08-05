@@ -51,7 +51,6 @@ struct VPSUsageView: View {
         .aspectRatio(contentMode: .fit)
         .frame(width: 24, height: 24)
         .padding(8)
-        .background(Color.accentColor.opacity(0.12), in: Circle())
         .accessibilityLabel(L10n.string(.a11yVPSIcon, language: language))
 
       VStack(alignment: .leading, spacing: 2) {

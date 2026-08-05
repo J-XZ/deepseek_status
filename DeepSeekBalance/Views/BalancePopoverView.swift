@@ -361,7 +361,6 @@ struct BalancePopoverView: View {
         .aspectRatio(contentMode: .fit)
         .frame(width: 24, height: 24)
         .padding(8)
-        .background(Color.accentColor.opacity(0.12), in: Circle())
         .accessibilityLabel(L10n.string(.a11yDeepSeekIcon, language: language))
       VStack(alignment: .leading, spacing: 2) {
         Text(L10n.string(.tabDeepSeek, language: language))
