@@ -358,6 +358,27 @@ enum PopoverSizing {
     let boundedCurrent = maximumHeight.map { min(currentHeight, max(1, $0)) } ?? currentHeight
     return max(boundedTarget, boundedCurrent)
   }
+
+  /// 弹窗内容区域尺寸换算成窗口尺寸：加上箭头/边框差值后窗口才能完整容纳内容。
+  static func windowHeight(contentHeight: CGFloat, chromeHeight: CGFloat) -> CGFloat {
+    max(1, contentHeight + chromeHeight)
+  }
+
+  /// 屏幕可用高度减去安全边距与箭头/边框差值后，内容高度允许的上限。
+  static func contentHeightLimit(
+    visibleFrameHeight: CGFloat?,
+    chromeHeight: CGFloat
+  ) -> CGFloat? {
+    visibleFrameHeight.map { max(1, $0 - verticalSafetyMargin - chromeHeight) }
+  }
+}
+
+/// Tab 键切换供应商页的共享状态。视图与控制器共同观察此对象：
+/// - 控制器 (StatusItemController) 的键盘监听写入此处，切换窗口高度；
+/// - 视图 (BalancePopoverView) 的 @ObservedObject 驱动视图重渲染。
+@MainActor
+final class PopoverTabSelection: ObservableObject {
+  @Published var selectedTab: UsageTab = .deepseek
 }
 
 /// 菜单栏供应商可见性：UserDefaults 持久化，至少保留一个可见。
@@ -509,13 +530,22 @@ final class StatusItemController: NSObject {
   private let popover: NSPopover
   private let visibility: MenuBarVendorVisibility
   private var menuBarContentView: MenuBarStatusContentView?
+  private let tabSelection = PopoverTabSelection()
   private var vendorPageHeights: [UsageTab: CGFloat] = [:]
-  private var selectedUsageTab: UsageTab = .deepseek
+  /// 当前选中页（由 tabSelection 驱动，视图层与控制器层统一来源）。
+  private var selectedUsageTab: UsageTab { tabSelection.selectedTab }
+  private var previousTab: UsageTab = .deepseek
   private var lastSizedTab: UsageTab?
+  /// 标签切换后等待新选中页的首个实测值：实测值一到（即使与旧值相同）就
+  /// 重算窗口高度；切换瞬间不用旧值/回退值调整，避免窗口先跳错再校正。
+  private var awaitingFreshPageHeight = false
   private var lastAppliedPopoverSize = NSSize(
     width: PopoverSizing.width,
     height: PopoverSizing.fallbackHeight
   )
+  /// 弹窗窗口相对内容区域的箭头/边框差值，首次展示时在窗口自然排布状态下测量。
+  /// 手工窗口动画必须按“内容 + 差值”换算，否则窗口会比内容小，裁掉底部和边缘内容。
+  private var popoverChromeHeight: CGFloat = 0
   private lazy var settingsWindow = SettingsWindow(
     store: store,
     loginItemStore: loginItemStore
@@ -524,7 +554,17 @@ final class StatusItemController: NSObject {
   private var titleUpdateTask: Task<Void, Never>?
   private var popoverDismissObservations: [NotificationObservation] = []
   private var outsideClickMonitor: Any?
+  /// Tab 键本地键盘监听（应用激活后接收事件）。
+  private var tabKeyLocalMonitor: Any?
+  /// Tab 键全局键盘监听（应用未激活时兜底，事件管道不受激活状态影响）。
+  private var tabKeyGlobalMonitor: Any?
   private var pendingPopoverSizeTask: Task<Void, Never>?
+  /// 同页内容回缩（收起服务状态卡片）时，等高度稳定后放行一次窗口收缩的任务。
+  private var shrinkSettleTask: Task<Void, Never>?
+  /// 弹窗高度动画任务与代次号：代次号保证只有最新一次动画结束时才清空
+  /// 任务引用，避免旧动画结束后误清新动画的引用。
+  private var popoverSizeAnimationTask: Task<Void, Never>?
+  private var popoverSizeAnimationGeneration = 0
 
   init(
     store: BalanceStore,
@@ -555,16 +595,36 @@ final class StatusItemController: NSObject {
     configureButton()
     configurePopover()
     subscribeToStore()
+    installTabKeyMonitors()
+    // 标签切换订阅：视图（按钮、Tab 键）与控制器（键盘监听）共用同一
+    // tabSelection；任何路径的切换都会触发窗口高度重算。
+    tabSelection.$selectedTab.dropFirst().sink { [weak self] tab in
+      guard let self, tab != self.previousTab else { return }
+      self.previousTab = tab
+      self.awaitingFreshPageHeight = true
+      self.pendingPopoverSizeTask?.cancel()
+      self.shrinkSettleTask?.cancel()
+      self.shrinkSettleTask = nil
+    }
+    .store(in: &cancellables)
   }
 
   deinit {
     titleUpdateTask?.cancel()
     pendingPopoverSizeTask?.cancel()
+    shrinkSettleTask?.cancel()
+    popoverSizeAnimationTask?.cancel()
     for observation in popoverDismissObservations {
       observation.remove()
     }
     if let outsideClickMonitor {
       NSEvent.removeMonitor(outsideClickMonitor)
+    }
+    if let tabKeyLocalMonitor {
+      NSEvent.removeMonitor(tabKeyLocalMonitor)
+    }
+    if let tabKeyGlobalMonitor {
+      NSEvent.removeMonitor(tabKeyGlobalMonitor)
     }
   }
 
@@ -813,22 +873,27 @@ final class StatusItemController: NSObject {
       codexStatusStore: codexStatusStore,
       cursorStatusStore: cursorStatusStore,
       visibility: visibility,
+      tabSelection: tabSelection,
       onPageHeightsChange: { [weak self] pageHeights in
         self?.updatePopoverSize(for: pageHeights)
-      },
-      onSelectedTabChange: { [weak self] tab in
-        self?.popoverSelectionChanged(to: tab)
       }
     )
     .environment(\.locale, store.language.locale)
-    popover.contentViewController = NSHostingController(rootView: rootView)
+    let hostingController = NSHostingController(rootView: rootView)
+    // NSPopover 每次布局都会按 popover.contentSize 重排窗口，setFrame 会被
+    // 顶回旧高度；窗口尺寸由 applyPopoverSize/动画逐帧写 contentSize 与
+    // preferredContentSize 独占控制（见 applyPopoverSize 与 animatePopoverHeight）。
+    hostingController.sizingOptions = [.intrinsicContentSize]
+    popover.contentViewController = hostingController
     popover.contentSize = NSSize(
       width: PopoverSizing.width,
       height: PopoverSizing.fallbackHeight
     )
-    // 弹出时使用系统自带的淡入/缩放过渡；标签切换的高度变化由
-    // applyPopoverSize 里的窗口动画平滑过渡。
-    popover.animates = true
+    // 关闭系统自带缩放过渡：过渡期间整个窗口（含顶部切换栏）会从箭头处
+    // 缩放漂移，视觉上就是切换栏在上下乱动。关闭后弹窗原地瞬时出现，
+    // 切换栏从第一帧起就钉在最终位置；标签切换的高度变化仍由
+    // applyPopoverSize 里的窗口动画平滑过渡（顶部始终固定）。
+    popover.animates = false
     popover.behavior = .transient
     observePopoverDismissal()
   }
@@ -891,9 +956,11 @@ final class StatusItemController: NSObject {
   @MainActor
   private func handleOutsideClick(_ event: NSEvent) {
     guard popover.isShown else { return }
-    // 全局事件可能来自其它窗口/屏幕，坐标空间容易混淆；
-    // NSEvent.mouseLocation 与 NSWindow.frame 同为屏幕坐标（左下原点）。
-    let point = NSEvent.mouseLocation
+    // 用事件自带的点击位置（全局事件已是屏幕坐标、左下原点），而不是
+    // NSEvent.mouseLocation：光标可能停在任何地方（甚至就在弹窗内），
+    // 与这次点击的位置无关；用光标位置判断会把弹窗内的点击误判为外部点击
+    // 而随机关闭弹窗。
+    let point = event.locationInWindow
     if let window = popover.contentViewController?.view.window, window.frame.contains(point) {
       return
     }
@@ -915,14 +982,31 @@ final class StatusItemController: NSObject {
   }
 
   private func closePopover() {
+    shrinkSettleTask?.cancel()
+    shrinkSettleTask = nil
     if popover.isShown {
       popover.performClose(nil)
     }
   }
 
-  private func updatePopoverSize(for pageHeights: [UsageTab: CGFloat]) {
-    guard pageHeights != vendorPageHeights else { return }
-    vendorPageHeights = pageHeights
+  private func updatePopoverSize(for measured: [UsageTab: CGFloat]) {
+    var merged = vendorPageHeights
+    var changed = false
+    for (tab, height) in measured where height.isFinite && height > 0 {
+      if merged[tab] != height {
+        merged[tab] = height
+        changed = true
+      }
+    }
+    // 标签切换后即使实测值与旧值相同也要重算一次窗口高度（此时窗口还是
+    // 上一页的高度）；其余情况只在数值真正变化时处理。
+    guard changed
+      || (awaitingFreshPageHeight && measured.keys.contains(selectedUsageTab))
+    else { return }
+    if measured.keys.contains(selectedUsageTab) {
+      awaitingFreshPageHeight = false
+    }
+    vendorPageHeights = merged
     // 数据到达会让页面自然高度在短时间内连续变化多次（图表 loading → 完成、
     // 多供应商并发刷新）；合并成一次平滑调整，避免弹窗尺寸反复跳变。
     pendingPopoverSizeTask?.cancel()
@@ -931,68 +1015,214 @@ final class StatusItemController: NSObject {
       guard !Task.isCancelled else { return }
       self?.applyPopoverSize()
     }
+    scheduleShrinkSettleIfNeeded()
   }
 
-  /// 标签切换：立即按新页面高度重算并动画调整，不等 160ms 防抖。
-  private func popoverSelectionChanged(to tab: UsageTab) {
-    guard tab != selectedUsageTab else { return }
-    selectedUsageTab = tab
-    pendingPopoverSizeTask?.cancel()
-    applyPopoverSize()
+  /// 同页内容回缩（如收起服务状态卡片）时，常规路径只允许窗口变大，窗口会
+  /// 停留在展开时的最大高度。展开/收起动画期间高度逐帧变化，这里等高度稳定
+  /// （期间无新测量、动画已结束）后再放行一次收缩，把窗口缩回新的自然高度；
+  /// 任何新测量都会取消并重置这个等待，动画中间帧不会触发收缩。
+  private func scheduleShrinkSettleIfNeeded() {
+    guard popover.isShown,
+      let pageHeight = vendorPageHeights[selectedUsageTab],
+      let window = popover.contentViewController?.view.window
+    else { return }
+    let currentContentHeight = max(0, window.frame.height - popoverChromeHeight)
+    guard pageHeight < currentContentHeight - 0.5 else { return }
+    shrinkSettleTask?.cancel()
+    shrinkSettleTask = Task { @MainActor [weak self] in
+      try? await Task.sleep(for: .milliseconds(400))
+      guard !Task.isCancelled, let self, self.popover.isShown else { return }
+      self.applyPopoverSize(allowsShrinkOverride: true)
+    }
   }
 
-  private func applyPopoverSize(for button: NSStatusBarButton? = nil) {
+  // MARK: - Tab 键切换供应商页（控制器级监听）
+
+  /// 当前可见的供应商标签页列表（与视图层 visibleTabs 保持一致的排序逻辑）。
+  private var visibleTabs: [UsageTab] {
+    UsageTab.allCases.filter { visibility.isVisible($0.vendor) }
+  }
+
+  /// 弹窗展示期间监听 Tab 键的本地与全局监听。在应用初始化时安装一次，
+  /// 持续到应用退出；弹窗关闭时 guard popover.isShown 跳过处理，避免
+  /// 干扰其他应用或自身设置窗口。本地监听只在应用激活后收到事件，全局
+  /// 监听兜底首次打开弹窗时短暂的激活空窗。
+  private func installTabKeyMonitors() {
+    guard tabKeyLocalMonitor == nil else { return }
+    tabKeyLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+      self?.handleTabKeyDown(event) ?? event
+    }
+    tabKeyGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
+      guard let self else { return }
+      handleTabKeyDown(event)
+    }
+  }
+
+  /// 处理 Tab 键切换供应商页。应用激活时本地监听调用此方法并消费事件
+  ///（返回 nil）；应用未激活时全局监听调用此方法，事件无法拦截，继续
+  /// 送至前台应用（风险仅在首次打开的几十毫秒空窗，可接受）。
+  private func handleTabKeyDown(_ event: NSEvent) -> NSEvent? {
+    guard popover.isShown, event.keyCode == 48 else { return event }
+    // 应用激活且有文本输入框聚焦时放行 Tab（保留焦点移动行为）。
+    if NSApp.isActive,
+      let firstResponder = NSApp.keyWindow?.firstResponder,
+      firstResponder is NSText
+    { return event }
+    let tabs = visibleTabs
+    guard tabs.count > 1, let currentIndex = tabs.firstIndex(of: selectedUsageTab)
+    else { return event }
+    let backward = event.modifierFlags.contains(.shift)
+    let nextIndex = backward
+      ? (currentIndex - 1 + tabs.count) % tabs.count
+      : (currentIndex + 1) % tabs.count
+    tabSelection.selectedTab = tabs[nextIndex]
+    return nil
+  }
+
+  private func applyPopoverSize(
+    for button: NSStatusBarButton? = nil,
+    allowsShrinkOverride: Bool = false
+  ) {
     let button = button ?? statusItem.button
     guard let button else { return }
     let visibleFrameHeight = button.window?.screen?.visibleFrame.height
       ?? NSScreen.main?.visibleFrame.height
     let pageHeight = PopoverSizing.pageHeight(vendorPageHeights, for: selectedUsageTab)
-    let height = PopoverSizing.constrainedHeight(
-      pageHeight: pageHeight,
-      visibleFrameHeight: visibleFrameHeight
-    )
-    // 只有切换标签页这一条路径允许窗口收缩到新页面高度；
-    // 同一页面内数据到达导致的测量变化仍只允许变大。
-    let allowsShrink = lastSizedTab != nil && lastSizedTab != selectedUsageTab
-    let stableHeight = PopoverSizing.stableHeight(
-      targetHeight: height,
-      currentHeight: popover.contentSize.height,
-      isPopoverShown: popover.isShown,
-      maximumHeight: visibleFrameHeight.map {
-        max(1, $0 - PopoverSizing.verticalSafetyMargin)
-      },
-      allowsShrink: allowsShrink
-    )
-    let size = NSSize(width: PopoverSizing.width, height: stableHeight)
-    guard size != lastAppliedPopoverSize else {
-      lastSizedTab = selectedUsageTab
-      return
-    }
     guard popover.isShown, let window = popover.contentViewController?.view.window else {
+      // 未展示：同步 contentSize，NSPopover 打开时会按此自然排布窗口。
+      let height = PopoverSizing.constrainedHeight(
+        pageHeight: pageHeight,
+        visibleFrameHeight: visibleFrameHeight
+      )
+      let size = NSSize(width: PopoverSizing.width, height: height)
+      guard size != lastAppliedPopoverSize else {
+        lastSizedTab = selectedUsageTab
+        return
+      }
       popover.contentSize = size
       popover.contentViewController?.preferredContentSize = size
       lastAppliedPopoverSize = size
       lastSizedTab = selectedUsageTab
       return
     }
-    // 弹窗已展示时只动画窗口 frame，完全不改 contentSize/preferredContentSize：
-    // NSPopover 看到这两个属性变化会用自己的转场（从箭头处缩放）重排窗口，
-    // 和这里的窗口动画叠加成可见闪烁。hosting view 会随窗口自动重新布局，
-    // 因此内容始终填满窗口；下次关闭再打开时再按最新尺寸同步这两个属性。
-    let currentFrame = window.frame
-    let targetFrame = NSRect(
-      x: currentFrame.minX,
-      y: currentFrame.maxY - size.height,
-      width: size.width,
-      height: size.height
+    // 弹窗已展示：目标内容尺寸计算完成后进入逐帧动画。NSPopover 每次布局
+    // 都会按 popover.contentSize 重排窗口（顶部贴箭头、底部方向伸缩），
+    // 动画每帧同步写 contentSize/preferredContentSize，重排结果即插值高度，
+    // 顶部（maxY）始终不变，窗口只从底部方向伸缩，切换栏所在位置固定。
+    let chromeHeight = popoverChromeHeight
+    let maximumContentHeight = PopoverSizing.contentHeightLimit(
+      visibleFrameHeight: visibleFrameHeight,
+      chromeHeight: chromeHeight
     )
-    NSAnimationContext.runAnimationGroup { context in
-      context.duration = 0.16
-      context.timingFunction = CAMediaTimingFunction(name: .easeOut)
-      window.animator().setFrame(targetFrame, display: true)
-    } completionHandler: {
-      self.lastAppliedPopoverSize = size
-      self.lastSizedTab = self.selectedUsageTab
+    let constrained = maximumContentHeight.map {
+      min(pageHeight, max(1, $0))
+    } ?? pageHeight
+    // 页面内容超出屏幕上限（需在弹窗内滚动）：窗口只能到封顶高度，用短动画
+    // 快速落定，避免对巨大内容做长时间逐帧同步布局（展开服务状态时抖动）。
+    let capped = constrained < pageHeight
+    // 只有切换标签页这一条路径允许窗口收缩到新页面高度；
+    // 同一页面内数据到达导致的测量变化仍只允许变大。收起服务状态卡片等
+    // "内容回缩且已稳定"的场景由 shrinkSettleTask 放行收缩。
+    let allowsShrink =
+      allowsShrinkOverride || (lastSizedTab != nil && lastSizedTab != selectedUsageTab)
+    let currentContentHeight = max(0, window.frame.height - chromeHeight)
+    let stableHeight = PopoverSizing.stableHeight(
+      targetHeight: constrained,
+      currentHeight: currentContentHeight,
+      isPopoverShown: true,
+      maximumHeight: maximumContentHeight,
+      allowsShrink: allowsShrink
+    )
+    let contentSize = NSSize(width: PopoverSizing.width, height: stableHeight)
+    // 已到位判断以窗口实际 frame 为准（不依赖 lastAppliedPopoverSize）：
+    // 该值只记录隐藏态的 contentSize，与展示后的真实窗口高度可能脱节，
+    // 一旦脱节窗口会永远卡在旧高度上，页面内容溢出并把顶部切换栏挤出。
+    let targetHeight = PopoverSizing.windowHeight(
+      contentHeight: contentSize.height,
+      chromeHeight: chromeHeight
+    )
+    guard abs(window.frame.height - targetHeight) >= 0.5 else {
+      lastSizedTab = selectedUsageTab
+      return
+    }
+    let targetFrame = NSRect(
+      x: window.frame.minX,
+      y: window.frame.maxY - targetHeight,
+      // 宽度保持 NSPopover 打开时的自然宽度（内容 + 两侧箭头/边框），
+      // 手工动画只动高度；强行改宽会把边缘内容裁掉。
+      width: window.frame.width,
+      height: targetHeight
+    )
+    // 高度变化用逐帧同步动画平滑过渡：animator() 动画由窗口服务器驱动，
+    // 主线程的视图布局不与之逐帧同步，内容重排滞后于窗口帧，切换栏在动画
+    // 期间漂移；这里改为在主线程逐帧 setFrame 并强制同步布局，每一帧窗口
+    // 与内容严格一致。顶部与左缘锁定动画开始时的值，窗口只从底部方向伸缩，
+    // 切换栏位置全程固定。
+    animatePopoverHeight(to: targetFrame, duration: capped ? 0.12 : 0.22)
+    lastSizedTab = selectedUsageTab
+  }
+
+  // MARK: - 弹窗高度动画
+
+  /// 逐帧同步动画窗口高度。NSPopover 在每次布局后都会按 popover.contentSize
+  /// 重排窗口 frame（顶部贴箭头、从底部方向伸缩），只 setFrame 会在下一次
+  /// 布局时被顶回旧高度——上一版“只动 setFrame”的逐帧动画因此完全无效。
+  /// 这里每帧先写 popover.contentSize / preferredContentSize 再 setFrame：
+  /// NSPopover 重排时用的就是本帧的目标高度，窗口每帧都被放到插值高度上，
+  /// 实现底部方向平滑伸缩；顶部（切换栏）始终固定。
+  private func animatePopoverHeight(to targetFrame: NSRect, duration: TimeInterval = 0.22) {
+    guard popover.isShown, let window = popover.contentViewController?.view.window else {
+      return
+    }
+    let startFrame = window.frame
+    guard abs(startFrame.height - targetFrame.height) >= 0.5 else { return }
+    popoverSizeAnimationTask?.cancel()
+    popoverSizeAnimationGeneration += 1
+    let generation = popoverSizeAnimationGeneration
+    let startTime = CACurrentMediaTime()
+    let chromeHeight = popoverChromeHeight
+    let setContentSize: @MainActor (CGFloat) -> Void = { [weak self] height in
+      guard let self else { return }
+      let contentSize = NSSize(
+        width: PopoverSizing.width,
+        height: max(1, height - chromeHeight)
+      )
+      self.popover.contentSize = contentSize
+      self.popover.contentViewController?.preferredContentSize = contentSize
+    }
+    popoverSizeAnimationTask = Task { @MainActor [weak self] in
+      guard let self else { return }
+      while !Task.isCancelled {
+        guard popover.isShown, let window = self.popover.contentViewController?.view.window else {
+          break
+        }
+        let progress = min(1, (CACurrentMediaTime() - startTime) / duration)
+        let eased = 1 - pow(1 - progress, 3)
+        let height = startFrame.height + (targetFrame.height - startFrame.height) * eased
+        setContentSize(height)
+        window.setFrame(
+          NSRect(
+            x: startFrame.minX,
+            y: startFrame.maxY - height,
+            width: startFrame.width,
+            height: height
+          ),
+          display: true
+        )
+        // 触发布局让 NSPopover 按本帧 contentSize 重排窗口。
+        window.contentView?.layoutSubtreeIfNeeded()
+        if progress >= 1 {
+          setContentSize(targetFrame.height)
+          window.setFrame(targetFrame, display: true)
+          window.contentView?.layoutSubtreeIfNeeded()
+          break
+        }
+        try? await Task.sleep(for: .milliseconds(16))
+      }
+      if self.popoverSizeAnimationGeneration == generation {
+        self.popoverSizeAnimationTask = nil
+      }
     }
   }
 
@@ -1001,8 +1231,30 @@ final class StatusItemController: NSObject {
       closePopover()
     } else {
       applyPopoverSize(for: sender)
+      // LSUIElement 应用展示 NSPopover 时不会自动激活；本地键盘监听（Tab
+      // 切换）只在应用激活后收得到事件，先激活再展示，用户无需先点击页面。
+      NSApp.activate(ignoringOtherApps: true)
       popover.show(relativeTo: sender.bounds, of: sender, preferredEdge: .minY)
+      // 弹窗刚显示时窗口可能还没完成自然排布；等一帧再测量箭头/边框差值，
+      // 保证测到的 contentView 尺寸是 NSPopover 按 contentSize 排布的最终值。
+      Task { @MainActor [weak self] in
+        try? await Task.sleep(for: .milliseconds(150))
+        guard let self, popover.isShown else { return }
+        self.measurePopoverChrome()
+      }
     }
+  }
+
+  /// 弹窗刚显示时窗口由 NSPopover 按 contentSize 自然排布；此刻窗口与
+  /// 内容区域的差值（箭头 + 边框）就是所有手工窗口动画需要补上的余量。
+  /// 每次展示都重新测量，窗口重新打开时必然回到自然排布状态。
+  private func measurePopoverChrome() {
+    guard let window = popover.contentViewController?.view.window,
+      let contentView = window.contentView
+    else {
+      return
+    }
+    popoverChromeHeight = max(0, window.frame.height - contentView.frame.height)
   }
 
   // MARK: - 右键菜单
@@ -1016,9 +1268,7 @@ final class StatusItemController: NSObject {
   }
 
   private func showContextMenu() {
-    if popover.isShown {
-      popover.performClose(nil)
-    }
+    closePopover()
 
     let menu = NSMenu()
     menu.autoenablesItems = false
@@ -1137,9 +1387,7 @@ final class StatusItemController: NSObject {
   }
 
   @objc private func openSettings() {
-    if popover.isShown {
-      popover.performClose(nil)
-    }
+    closePopover()
     settingsWindow.show()
   }
 

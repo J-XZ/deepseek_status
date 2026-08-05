@@ -273,6 +273,25 @@ enum BalanceTrendProcessor {
     now.addingTimeInterval(-chartWindowHours * 3600)...now
   }
 
+  /// 0 起点 Y 轴上限：把数据最大值向上取整到 1/2/5×10ⁿ 的“漂亮”刻度，
+  /// 金额折线图从 0 开始画，避免仅显示数据区间的放大错觉。
+  static func yCeiling(for maxValue: Double) -> Double {
+    guard maxValue.isFinite, maxValue > 0 else { return 1 }
+    let exponent = floor(log10(maxValue))
+    let base = pow(10, exponent)
+    let mantissa = maxValue / base
+    let nice: Double
+    switch mantissa {
+    case ...2:
+      nice = 2
+    case ...5:
+      nice = 5
+    default:
+      nice = 10
+    }
+    return nice * base
+  }
+
   /// 按 metric 独立分段；只有连续段（>=2 点）进入折线。
   static func chartModel(
     samples: [BalanceSample],

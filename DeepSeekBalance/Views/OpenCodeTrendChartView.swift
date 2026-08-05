@@ -651,16 +651,13 @@ enum OpenCodeTrendProcessor {
   }
 
   private static func zenDomain(for points: [Point]) -> (Double, Double) {
+    // 金额折线图 Y 轴从 0 开始画；上限在最大值之上留 10% 余量。
     let values = points.map(\.value)
-    guard let minValue = values.min(), let maxValue = values.max() else {
+    guard let maxValue = values.max() else {
       return (0, 1)
     }
-    if abs(maxValue - minValue) < 0.000001 {
-      let padding = max(0.5, abs(maxValue) * 0.1)
-      return (max(0, minValue - padding), maxValue + padding)
-    }
-    let padding = max(0.1, (maxValue - minValue) * 0.1)
-    return (max(0, minValue - padding), maxValue + padding)
+    let padding = max(0.1, abs(maxValue) * 0.1)
+    return (0, maxValue + padding)
   }
 
   private static func zenNormalized(

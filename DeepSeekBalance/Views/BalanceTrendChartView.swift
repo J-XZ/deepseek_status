@@ -168,6 +168,12 @@ struct BalanceTrendChartView: View {
       }
     }
     .chartXScale(domain: model.xDomain)
+    // 金额折线图 Y 轴从 0 开始，上限取 1/2/5×10ⁿ 的漂亮刻度。
+    .chartYScale(
+      domain: 0...BalanceTrendProcessor.yCeiling(
+        for: model.segments.flatMap(\.points).map(\.value).max() ?? 1
+      )
+    )
     .chartXAxis {
       AxisMarks(values: .automatic(desiredCount: 4)) { value in
         AxisGridLine().foregroundStyle(.quaternary)

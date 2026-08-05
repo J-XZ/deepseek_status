@@ -140,7 +140,7 @@ struct CodexAuthProvider: CodexAuthProviding {
       throw CodexAuthError.refreshFailed
     }
     // 尽力写回本地 auth.json：即使响应未带回新的 refresh_token，也要持久化 access_token。
-    try? saveTokens(accessToken: accessToken, refreshToken: token.refreshToken ?? refreshToken)
+    saveTokens(accessToken: accessToken, refreshToken: token.refreshToken ?? refreshToken)
     return accessToken
   }
 

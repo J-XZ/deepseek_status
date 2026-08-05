@@ -54,6 +54,48 @@ struct CodexUsageResponse: Codable, Equatable, Sendable {
     return min(weekly, fiveHourRemainingPercent)
   }
 
+  /// 基于信用额度的剩余百分比：`credits.balance / monthlyLimit`。
+  /// 优先使用 `spendControl.individualLimit`（OpenAI 下发的月度上限），
+  /// 回退到 `planType` 推断的默认 grant 金额（如 Pro 为 $25/mo）。
+  /// 只在账户有信用额度（`hasCredits == true`）且非无限（`unlimited == false`）
+  /// 时使用此值，否则返回 `nil` 让调用者回退 API 请求配额百分比。
+  var creditBasedRemainingPercent: Int? {
+    guard let credits, credits.hasCredits, !credits.unlimited,
+      let balanceString = credits.balance
+    else { return nil }
+    // 优先 API 下发的上限，其次按套餐类型推断
+    let limit: Double
+    if let apiLimit = spendControl?.individualLimit, apiLimit > 0 {
+      limit = apiLimit
+    } else if let planType, let inferred = Self.monthlyLimit(for: planType) {
+      limit = inferred
+    } else {
+      return nil
+    }
+    // "¥7.00" → "7.00", "$25.00" → "25.00"
+    let numeric = balanceString.filter { $0.isASCII && ($0.isNumber || $0 == ".") }
+    guard let balance = Double(numeric), balance >= 0 else { return nil }
+    return max(0, min(100, Int((balance / limit * 100).rounded())))
+  }
+
+  /// 根据 Codex 套餐类型返回对应的月度 grant 金额（美元）。
+  /// 套餐 grant 金额是已知公开信息；未知套餐返回 `nil`。
+  /// 服务端可能返回 snake_case (`pro_lite`)、连写 (`prolite`)、
+  /// 空格 (`Pro Lite`) 等变体，逐一尝试。
+  static func monthlyLimit(for planType: String) -> Double? {
+    let normalized = planType.lowercased()
+      .replacingOccurrences(of: "_", with: "")
+      .replacingOccurrences(of: "-", with: "")
+      .replacingOccurrences(of: " ", with: "")
+    switch normalized {
+    case "pro":    return 25
+    case "plus":   return 20
+    case "free":   return 5
+    case "prolite": return 15
+    default:       return nil
+    }
+  }
+
   /// 与理想用量（刷新周期内线性消耗、重置时恰好用完）的差距：
   /// 实际已用 − 理想已用，正数表示消耗快于理想、负数表示慢于理想。
   /// 无主窗口信息或当前时间不在窗口内时为 nil（不显示差距）。
@@ -119,6 +161,8 @@ struct CodexCredits: Codable, Equatable, Sendable {
   let hasCredits: Bool
   let unlimited: Bool
   let overageLimitReached: Bool
+  /// 当前信用额度余额。服务端可能返回字符串（`"7.00"`、`"$7.00"`）或
+  /// 数字（`7.0`）；统统接受。
   let balance: String?
 
   enum CodingKeys: String, CodingKey {
@@ -126,6 +170,28 @@ struct CodexCredits: Codable, Equatable, Sendable {
     case unlimited
     case overageLimitReached = "overage_limit_reached"
     case balance
+  }
+
+  init(hasCredits: Bool, unlimited: Bool, overageLimitReached: Bool, balance: String?) {
+    self.hasCredits = hasCredits
+    self.unlimited = unlimited
+    self.overageLimitReached = overageLimitReached
+    self.balance = balance
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    hasCredits = try container.decode(Bool.self, forKey: .hasCredits)
+    unlimited = try container.decodeIfPresent(Bool.self, forKey: .unlimited) ?? false
+    overageLimitReached = try container.decodeIfPresent(Bool.self, forKey: .overageLimitReached) ?? false
+    // 兼容字符串和数字两种格式
+    if let stringValue = try? container.decode(String.self, forKey: .balance) {
+      balance = stringValue
+    } else if let numberValue = try? container.decode(Double.self, forKey: .balance) {
+      balance = String(numberValue)
+    } else {
+      balance = nil
+    }
   }
 }
 

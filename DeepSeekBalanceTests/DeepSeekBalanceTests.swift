@@ -278,6 +278,53 @@ final class PopoverSizingTests: XCTestCase {
       668
     )
   }
+
+  func testWindowHeightAddsArrowAndBorderChromeToTheContent() {
+    XCTAssertEqual(
+      PopoverSizing.windowHeight(contentHeight: 846, chromeHeight: 13),
+      859
+    )
+    XCTAssertEqual(
+      PopoverSizing.windowHeight(contentHeight: 1, chromeHeight: 0),
+      1
+    )
+  }
+
+  func testContentHeightLimitAccountsForChrome() {
+    XCTAssertEqual(
+      PopoverSizing.contentHeightLimit(visibleFrameHeight: 1_000, chromeHeight: 13),
+      955
+    )
+    XCTAssertEqual(
+      PopoverSizing.contentHeightLimit(visibleFrameHeight: 20, chromeHeight: 13),
+      1
+    )
+    XCTAssertNil(
+      PopoverSizing.contentHeightLimit(visibleFrameHeight: nil, chromeHeight: 13)
+    )
+  }
+}
+
+final class BalanceTrendYAxisTests: XCTestCase {
+  func testCeilingRoundsUpToNiceScale() {
+    XCTAssertEqual(BalanceTrendProcessor.yCeiling(for: 1_234.56), 2_000)
+    XCTAssertEqual(BalanceTrendProcessor.yCeiling(for: 846), 1_000)
+    XCTAssertEqual(BalanceTrendProcessor.yCeiling(for: 45.6), 50)
+    XCTAssertEqual(BalanceTrendProcessor.yCeiling(for: 0.42), 0.5, accuracy: 0.0001)
+  }
+
+  func testCeilingNeverShrinksTheDomain() {
+    XCTAssertEqual(BalanceTrendProcessor.yCeiling(for: 2_000), 2_000)
+    XCTAssertEqual(BalanceTrendProcessor.yCeiling(for: 5), 5)
+    XCTAssertEqual(BalanceTrendProcessor.yCeiling(for: 1), 2)
+  }
+
+  func testCeilingHandlesNonPositiveAndNonFiniteValues() {
+    XCTAssertEqual(BalanceTrendProcessor.yCeiling(for: 0), 1)
+    XCTAssertEqual(BalanceTrendProcessor.yCeiling(for: -3), 1)
+    XCTAssertEqual(BalanceTrendProcessor.yCeiling(for: .infinity), 1)
+    XCTAssertEqual(BalanceTrendProcessor.yCeiling(for: .nan), 1)
+  }
 }
 
 final class MenuBarUsageColorTests: XCTestCase {

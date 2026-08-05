@@ -437,17 +437,12 @@ enum VPSUsageTrendProcessor {
   }
 
   private static func axisDomain(_ values: [Double]) -> ClosedRange<Double> {
+    // Y 轴从 0 开始画；上限在最大值之上留 8% 余量。
     let finite = values.filter { $0.isFinite }
-    guard let minimum = finite.min(), let maximum = finite.max() else {
+    guard let maximum = finite.max() else {
       return 0...1
     }
-
-    let span = maximum - minimum
-    let padding = max(span * 0.08, max(abs(maximum), abs(minimum)) * 0.02, 0.01)
-    if span == 0 {
-      let safePadding = max(abs(maximum) * 0.12, 1)
-      return (minimum - safePadding)...(maximum + safePadding)
-    }
-    return (minimum - padding)...(maximum + padding)
+    let padding = max(abs(maximum) * 0.08, 0.01)
+    return 0...(maximum + padding)
   }
 }

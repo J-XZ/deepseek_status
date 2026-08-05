@@ -27,12 +27,10 @@ struct OpenCodeUsageView: View {
             .fixedSize(horizontal: false, vertical: true)
         }
       } else if store.isRefreshing || store.status == .loading {
-        HStack(spacing: 8) {
-          ProgressView()
-            .controlSize(.small)
-          Text(L10n.string(.openCodeLoading, language: language))
-            .foregroundStyle(.secondary)
-        }
+        // 加载占位卡与真实卡等高：加载期间页面高度不塌缩，窗口不会先缩后涨、
+        // 也不会在卡片下方留下一大块空白。
+        loadingZenCard
+        loadingGoCard
       } else {
         emptyView
       }
@@ -175,6 +173,46 @@ struct OpenCodeUsageView: View {
           .foregroundStyle(.secondary)
       }
     }
+    .padding(10)
+    .background(cardBackground, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+  }
+
+  private var loadingZenCard: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      HStack {
+        serviceTitle(
+          imageName: "OpenCodeZenIcon",
+          title: L10n.string(.openCodeZenTitle, language: language)
+        )
+        Spacer()
+        ProgressView()
+          .controlSize(.small)
+      }
+      Text(L10n.string(.openCodeLoading, language: language))
+        .font(AppTypography.caption)
+        .foregroundStyle(.secondary)
+    }
+    .frame(minHeight: 84)
+    .padding(10)
+    .background(cardBackground, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+  }
+
+  private var loadingGoCard: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      HStack {
+        serviceTitle(
+          imageName: "OpenCodeGoIcon",
+          title: L10n.string(.openCodeGoTitle, language: language)
+        )
+        Spacer()
+        ProgressView()
+          .controlSize(.small)
+      }
+      OpenCodeProgressBar(progress: 0.45, color: .blue)
+      OpenCodeProgressBar(progress: 0.3, color: .blue)
+      OpenCodeProgressBar(progress: 0.15, color: .blue)
+    }
+    .frame(minHeight: 150)
     .padding(10)
     .background(cardBackground, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
   }

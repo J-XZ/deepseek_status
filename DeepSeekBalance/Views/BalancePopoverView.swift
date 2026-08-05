@@ -88,8 +88,8 @@ struct BalancePopoverView: View {
   @ObservedObject var codexStatusStore: StatusPageStatusStore
   @ObservedObject var cursorStatusStore: StatusPageStatusStore
   let visibility: MenuBarVendorVisibility
+  let tabSelection: PopoverTabSelection
   let onPageHeightsChange: ([UsageTab: CGFloat]) -> Void
-  let onSelectedTabChange: (UsageTab) -> Void
 
   @State private var apiKeyInput = ""
   @State private var openCodeCookieInput = ""
@@ -98,8 +98,8 @@ struct BalancePopoverView: View {
   @State private var validationMessage: String?
   @State private var openCodeCookieValidationMessage: String?
   @State private var vpsValidationMessage: String?
-  @State private var selectedTab: UsageTab = .deepseek
-  @State private var reportedPageHeights: [UsageTab: CGFloat] = [:]
+  /// 切换栏按钮悬停态，仅用于底纹/描边视觉反馈。
+  @State private var hoveredTab: UsageTab?
   @Environment(\.controlActiveState) private var controlActiveState
 
   private var language: AppLanguage {
@@ -111,27 +111,52 @@ struct BalancePopoverView: View {
     UsageTab.allCases.filter { visibility.isVisible($0.vendor) }
   }
 
+  // 切换栏的固定高度与上下内边距，与下方 tabSwitcher 的布局一一对应；
+  // 页面高度测量值 = 滚动内容高度 + 切换栏这一列，窗口才能完整容纳整页。
+  private static let switcherTopPadding: CGFloat = 10
+  private static let switcherBottomPadding: CGFloat = 6
+  private static let switcherControlHeight: CGFloat = 22
+  private static let switcherColumnHeight =
+    switcherTopPadding + switcherControlHeight + switcherBottomPadding
+
   var body: some View {
-    ScrollView(.vertical) {
-      // ScrollView 的内容在横向没有天然的收缩约束。英文长文案会让内容层
-      // 按理想宽度展开，随后被弹窗左右边缘裁掉；这里明确给内容层分配弹窗
-      // 的可用内宽，让所有子视图都在同一宽度下换行和压缩。
-      // fixedSize(vertical: true) 让内容按自然高度布局（而不是填满滚动视口），
-      // 后台的 GeometryReader 因此能持续报告页面真实高度用于弹窗定高。
-      contentStack(for: selectedTab)
-        .frame(width: PopoverSizing.contentWidth, alignment: .leading)
-        .padding(PopoverSizing.horizontalPadding)
-        .fixedSize(horizontal: false, vertical: true)
-        .background {
-          GeometryReader { proxy in
-            Color.clear.preference(
-              key: VendorPageHeightPreferenceKey.self,
-              value: [selectedTab: proxy.size.height.rounded(.up)]
-            )
+    VStack(spacing: 0) {
+      // 切换栏固定在弹窗顶部，不参与 ScrollView 的布局与高度伸缩动画：
+      // 动画期间 SwiftUI 会给滚动内容一系列中间尺寸，分段控件在此过程中
+      // 会被压成零高度且无法恢复，表现为切换详情页后切换栏消失。切换栏
+      // 横向铺满窗口顶部，按钮等宽自适应，两侧留 8pt 内边距。
+      tabSwitcher
+        .padding(.top, Self.switcherTopPadding)
+        .padding(.bottom, Self.switcherBottomPadding)
+      ScrollView(.vertical) {
+        // ScrollView 的内容在横向没有天然的收缩约束。英文长文案会让内容层
+        // 按理想宽度展开，随后被弹窗左右边缘裁掉；这里明确给内容层分配弹窗
+        // 的可用内宽，让所有子视图都在同一宽度下换行和压缩。
+        // fixedSize(vertical: true) 让内容按自然高度布局（而不是填满滚动视口），
+        // 页面真实高度 = 切换栏高度 + 内容自然高度 + 上下内边距；高度测量
+        // GeometryReader 必须挂在滚动内容本身上：挂在最外层 VStack 上测到的
+        // 是滚动视口（= 窗口高度），测量值与窗口互相引用，窗口会锁定在
+        // 错误高度上。
+        pageStack(for: tabSelection.selectedTab)
+          .frame(width: PopoverSizing.contentWidth, alignment: .leading)
+          .padding(.horizontal, PopoverSizing.horizontalPadding)
+          .padding(.top, 4)
+          .padding(.bottom, PopoverSizing.horizontalPadding)
+          .fixedSize(horizontal: false, vertical: true)
+          .background {
+            GeometryReader { proxy in
+              Color.clear.preference(
+                key: VendorPageHeightPreferenceKey.self,
+                value: [tabSelection.selectedTab: (proxy.size.height + Self.switcherColumnHeight).rounded(.up)]
+              )
+            }
           }
-        }
+      }
     }
     .frame(width: PopoverSizing.width)
+    // 不做整棵树的 fixedSize(vertical)：那会让 ScrollView 视口恒等于内容高度，
+    // 页面超出窗口（如展开的服务状态卡片）时永不产生滚动、内容被直接裁掉；
+    // 高度测量挂在滚动内容自身上，不受影响。
     // MenuBarExtra 窗口按视图的固有尺寸定高，ScrollView 没有固有高度，
     // 必须给出明确的高度，否则窗口会塌成一条窄条。
     .frame(
@@ -140,45 +165,38 @@ struct BalancePopoverView: View {
       maxWidth: PopoverSizing.width,
       minHeight: 1,
       idealHeight: PopoverSizing.fallbackHeight,
-      maxHeight: .infinity
+      maxHeight: .infinity,
+      // 内容高于窗口（测量到达前或动画中间帧）时固定贴顶布局：切换栏永远
+      // 保持在窗口顶部，溢出只向下走，避免居中导致切换栏被挤出可视区域。
+      alignment: .top
     )
     // 纯色背景：浅色为白色、深色为黑色，不做毛玻璃/半透明。
     .background(windowBackground)
     .preferredColorScheme(store.appearance.colorScheme)
     .onAppear {
       refreshStoresAfterFirstFrame()
-      onSelectedTabChange(selectedTab)
-    }
-    .onChange(of: selectedTab) { newTab in
-      onSelectedTabChange(newTab)
     }
     .onPreferenceChange(VendorPageHeightPreferenceKey.self) { pageHeights in
       guard !pageHeights.isEmpty else { return }
 
+      // 偏好值只含当前选中页的实测高度；原样转发给 StatusItemController，
+      // 合并与变更判断由它完成。视图侧不写任何 State：展开/收起动画期间
+      // 逐帧的测量变化不会触发 body 重渲染（抖动来源之一）。
       let visibleSet = Set(visibleTabs)
-      var updatedHeights = reportedPageHeights.filter { visibleSet.contains($0.key) }
-      var didChange = updatedHeights.count != reportedPageHeights.count
-      for (tab, height) in pageHeights where visibleSet.contains(tab) && height.isFinite && height > 0 {
-        // GeometryReader 可能在 SwiftUI 重排期间短暂报告一个较小值。
-        // 只保留本次打开期间观察到的最大自然高度，避免内容刚出现就把窗口缩小。
-        let stableHeight = max(updatedHeights[tab] ?? 0, height)
-        if updatedHeights[tab] != stableHeight {
-          updatedHeights[tab] = stableHeight
-          didChange = true
-        }
+      var measured: [UsageTab: CGFloat] = [:]
+      for (tab, height) in pageHeights
+      where visibleSet.contains(tab) && height.isFinite && height > 0 {
+        measured[tab] = height
       }
-
-      guard didChange else { return }
-      reportedPageHeights = updatedHeights
-      onPageHeightsChange(updatedHeights)
+      guard !measured.isEmpty else { return }
+      onPageHeightsChange(measured)
     }
   }
 
-  /// 每个供应商页都包含顶部切换栏、供应商内容和底部操作区，测量口径与实际页一致。
+  /// 每个供应商页的滚动内容：供应商卡片 + 底部操作区；切换栏固定在 ScrollView 之外。
   @ViewBuilder
-  private func contentStack(for tab: UsageTab) -> some View {
+  private func pageStack(for tab: UsageTab) -> some View {
     VStack(alignment: .leading, spacing: 10) {
-      tabSwitcher
       switch tab {
       case .deepseek:
         deepSeekQuotaCard
@@ -274,26 +292,74 @@ struct BalancePopoverView: View {
 
   // MARK: - 顶部切换栏
 
+  /// 顶部切换栏：只显示供应商 logo，不显示冗长的“xxx 用量”文字；
+  /// 多个按钮等宽铺满窗口顶部，选中项高亮，常态带底纹、悬停加深。
   private var tabSwitcher: some View {
-    Picker("", selection: $selectedTab) {
+    HStack(spacing: 4) {
       ForEach(visibleTabs) { tab in
-        Text(L10n.string(tabLabelKey(tab), language: language))
-          .font(AppTypography.caption)
-          .lineLimit(1)
-          .minimumScaleFactor(0.7)
-          .allowsTightening(true)
-          .tag(tab)
+        Button {
+          tabSelection.selectedTab = tab
+        } label: {
+          Image(vendorLogoName(tab))
+            .renderingMode(.template)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(height: 13)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(tabSelection.selectedTab == tab ? Color.accentColor : Color.secondary)
+        .background {
+          RoundedRectangle(cornerRadius: 6, style: .continuous)
+            .fill(
+              tabSelection.selectedTab == tab
+                ? Color.accentColor.opacity(0.16)
+                : (hoveredTab == tab ? tabHoverBackground : tabBackground)
+            )
+        }
+        .overlay {
+          if tabSelection.selectedTab == tab || hoveredTab == tab {
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+              .stroke(
+                tabSelection.selectedTab == tab ? Color.accentColor.opacity(0.5) : cardBorder,
+                lineWidth: 1
+              )
+          }
+        }
+        .onHover { hovering in
+          hoveredTab = hovering ? tab : nil
+        }
+        .accessibilityLabel(L10n.string(tabLabelKey(tab), language: language))
+        .accessibilityAddTraits(tabSelection.selectedTab == tab ? .isSelected : [])
       }
     }
-    .pickerStyle(.segmented)
-    .controlSize(.small)
     .frame(maxWidth: .infinity)
-    .labelsHidden()
-    .accessibilityLabel(L10n.string(.a11yProviderPicker, language: language))
+    // 左右各留与卡片等宽的边距，按钮列与详情卡片左右对齐。
+    .padding(.horizontal, PopoverSizing.horizontalPadding)
+    // 固定高度：SwiftUI 在宿主窗口做高度动画时会不断重排内容，切换栏
+    // 曾在重排中被压成零高度且无法恢复（切换详情页后切换栏消失）；显式
+    // 高度让它在任何动画中间帧都保持完整，切换栏位置也因此稳定。
+    .frame(height: Self.switcherControlHeight)
     .onAppear {
-      if !visibleTabs.contains(selectedTab), let first = visibleTabs.first {
-        selectedTab = first
+      if !visibleTabs.contains(tabSelection.selectedTab), let first = visibleTabs.first {
+        tabSelection.selectedTab = first
       }
+    }
+  }
+
+  private func vendorLogoName(_ tab: UsageTab) -> String {
+    switch tab {
+    case .deepseek:
+      return "DeepSeekIcon"
+    case .codex:
+      return "CodexIcon"
+    case .cursor:
+      return "CursorIcon"
+    case .openCode:
+      return "OpenCodeIcon"
+    case .vps:
+      return "VultrIcon"
     }
   }
 
@@ -336,6 +402,16 @@ struct BalancePopoverView: View {
   /// 卡片描边：加深以提升对比度，替代毛玻璃分隔。
   private var cardBorder: Color {
     store.appearance == .dark ? Color.primary.opacity(0.28) : Color.primary.opacity(0.16)
+  }
+
+  /// 切换栏按钮常态底纹：与卡片底色同系，让按钮在纯色窗口背景上可辨识。
+  private var tabBackground: Color {
+    store.appearance == .dark ? Color(white: 0.14) : Color(white: 0.96)
+  }
+
+  /// 切换栏按钮悬停底纹：比常态加深一档，给出鼠标反馈。
+  private var tabHoverBackground: Color {
+    store.appearance == .dark ? Color(white: 0.20) : Color(white: 0.90)
   }
 
   @ViewBuilder
