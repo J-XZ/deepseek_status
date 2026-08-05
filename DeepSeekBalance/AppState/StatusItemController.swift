@@ -53,9 +53,11 @@ enum MenuBarUsageColor {
     blue: 0.64,
     alpha: 1.0
   )
+  /// 进度条中间色：浅天蓝，明度与绿/黄/红三色一致（约 0.72），
+  /// 避免系统蓝（明度 0.5）在渐变中显得过于浓烈、与其他颜色不协调。
   private static let progressBlue = NSColor(
-    srgbRed: 0.0,
-    green: 0.478,
+    srgbRed: 0.45,
+    green: 0.75,
     blue: 1.0,
     alpha: 1.0
   )

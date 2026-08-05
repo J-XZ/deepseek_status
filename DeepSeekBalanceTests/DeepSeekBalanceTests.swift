@@ -357,6 +357,9 @@ final class MenuBarUsageColorTests: XCTestCase {
     XCTAssertGreaterThan(blue.blue, blue.red)
     XCTAssertGreaterThan(blue.blue, blue.green)
     XCTAssertGreaterThan(blue.blue, green.blue)
+    // 浅天蓝而非高饱和系统蓝：绿分量应明显高于纯蓝的 0.0。
+    XCTAssertGreaterThan(blue.green, 0.6)
+    XCTAssertGreaterThan(blue.alpha, 0.95)
     XCTAssertGreaterThan(yellow.green, 0.85)
     XCTAssertGreaterThan(yellow.blue, 0.45)
     XCTAssertGreaterThanOrEqual(red.red, yellow.red)
