@@ -10,11 +10,12 @@ struct CommandCodeTrendPoint: Identifiable {
 }
 
 /// Command Code 用量趋势折线图：最近 14 天剩余百分比（Apple Swift Charts）。
-/// 缺口超过 20 分钟会断开连线。
+/// 缺口超过 20 分钟会断开连线。图表下方附带 5 小时/每周窗口限制状态。
 struct CommandCodeTrendChartView: View {
   let samples: [CommandCodeUsageSample]
   let language: AppLanguage
   let now: Date
+  var windowLimits: CommandCodeWindowLimits? = nil
 
   @State private var selectedDate: Date?
 
@@ -69,6 +70,7 @@ struct CommandCodeTrendChartView: View {
     VStack(alignment: .leading, spacing: 8) {
       exhaustionEstimate
       chartView
+      windowLimitsSummary
       if let selectedSample {
         selectionDetail(selectedSample)
       }
@@ -152,6 +154,86 @@ struct CommandCodeTrendChartView: View {
     formatter.calendar = Calendar(identifier: .gregorian)
     formatter.dateFormat = language == .simplifiedChinese ? "M/d HH:mm" : "MMM d HH:mm"
     return formatter.string(from: date)
+  }
+
+  // MARK: - 窗口限制状态
+
+  /// 5 小时 / 每周窗口状态：已用金额、上限、进度与重置时间。
+  /// 命中限制（exceeded）时整行红色高亮；API 未返回窗口数据时不显示。
+  @ViewBuilder
+  private var windowLimitsSummary: some View {
+    let fiveHour = windowLimits?.fiveHour
+    let weekly = windowLimits?.weekly
+    if fiveHour != nil || weekly != nil {
+      VStack(alignment: .leading, spacing: 4) {
+        if let fiveHour {
+          windowLimitRow(
+            title: L10n.string(.commandCodeWindowFiveHour, language: language),
+            limit: fiveHour
+          )
+        }
+        if let weekly {
+          windowLimitRow(
+            title: L10n.string(.commandCodeWindowWeekly, language: language),
+            limit: weekly
+          )
+        }
+      }
+      .padding(.top, 2)
+    }
+  }
+
+  private func windowLimitRow(title: String, limit: CommandCodeWindowLimit) -> some View {
+    VStack(alignment: .leading, spacing: 3) {
+      HStack(spacing: 6) {
+        Text(title)
+          .font(AppTypography.caption.weight(.semibold))
+          .foregroundStyle(.secondary)
+        if limit.isExceeded {
+          Text(L10n.string(.commandCodeTrendWindowExceeded, language: language))
+            .font(AppTypography.badge)
+            .foregroundStyle(.red)
+        }
+        Spacer()
+        Text(windowLimitText(limit))
+          .font(AppTypography.caption.monospacedDigit())
+          .foregroundStyle(limit.isExceeded ? .red : .secondary)
+      }
+      windowLimitBar(limit)
+      if let resetAt = limit.resetAtDate {
+        Text(
+          L10n.string(
+            .commandCodeWindowResetAt,
+            language: language,
+            resetAt.formatted(
+              Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
+            )
+          )
+        )
+        .font(AppTypography.caption)
+        .foregroundStyle(.secondary)
+      }
+    }
+  }
+
+  private func windowLimitText(_ limit: CommandCodeWindowLimit) -> String {
+    let used = CommandCodeUsageFormatter.formatUSD(limit.used, locale: language.locale) ?? "—"
+    let cap = CommandCodeUsageFormatter.formatUSD(limit.cap, locale: language.locale) ?? "—"
+    return L10n.string(.commandCodeTrendWindowUsed, language: language, used, cap)
+  }
+
+  /// 窗口已用进度条：低于 100% 蓝色，超出上限红色。
+  private func windowLimitBar(_ limit: CommandCodeWindowLimit) -> some View {
+    GeometryReader { geo in
+      ZStack(alignment: .leading) {
+        Capsule()
+          .fill(Color.secondary.opacity(0.25))
+        Capsule()
+          .fill(limit.isExceeded ? Color.red : Color.blue)
+          .frame(width: geo.size.width * CGFloat(min(max(limit.usedPercent ?? 0, 0), 100)) / 100)
+      }
+    }
+    .frame(height: 5)
   }
 }
 

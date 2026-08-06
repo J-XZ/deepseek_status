@@ -5313,6 +5313,38 @@
         }
       }
     },
+    "commandCode.trendWindowUsed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ used of %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已用 %@ / %@"
+          }
+        }
+      }
+    },
+    "commandCode.trendWindowExceeded": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limit exceeded"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已达上限"
+          }
+        }
+      }
+    },
     "commandCode.summaryTitle": {
       "localizations": {
         "en": {

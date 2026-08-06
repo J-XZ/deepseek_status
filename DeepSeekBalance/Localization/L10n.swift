@@ -254,6 +254,8 @@ enum L10nKey: String, CaseIterable, Sendable {
   case commandCodeWindowWeekly = "commandCode.windowWeekly"
   case commandCodeWindowUsedOfCap = "commandCode.windowUsedOfCap"
   case commandCodeWindowResetAt = "commandCode.windowResetAt"
+  case commandCodeTrendWindowUsed = "commandCode.trendWindowUsed"
+  case commandCodeTrendWindowExceeded = "commandCode.trendWindowExceeded"
   case commandCodeSummaryTitle = "commandCode.summaryTitle"
   case commandCodeSummaryCount = "commandCode.summaryCount"
   case commandCodeSummaryCost = "commandCode.summaryCost"

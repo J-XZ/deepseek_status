@@ -829,7 +829,8 @@ struct BalancePopoverView: View {
       let chart = CommandCodeTrendChartView(
         samples: commandCodeStore.historySamples,
         language: language,
-        now: commandCodeStore.clock.now()
+        now: commandCodeStore.clock.now(),
+        windowLimits: commandCodeStore.usage?.windowLimits
       )
       usageTrendSummary(chart.usageChangeValue)
 

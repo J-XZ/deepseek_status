@@ -1086,7 +1086,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 3.0.4;
+				MARKETING_VERSION = 3.0.5;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lc++",
@@ -1118,7 +1118,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 3.0.4;
+				MARKETING_VERSION = 3.0.5;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lc++",
@@ -1148,7 +1148,7 @@
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 3.0.4;
+				MARKETING_VERSION = 3.0.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jxz.deepseekbalance.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -1173,7 +1173,7 @@
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 3.0.4;
+				MARKETING_VERSION = 3.0.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jxz.deepseekbalance.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
