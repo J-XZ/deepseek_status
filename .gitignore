@@ -35,3 +35,6 @@ SHA256SUMS
 .env
 .env.*
 !.env.example
+
+# Command Code local session configuration (taste, settings)
+.commandcode/

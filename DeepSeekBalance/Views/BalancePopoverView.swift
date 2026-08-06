@@ -62,13 +62,14 @@ enum UsageProgressEvaluator {
   }
 }
 
-/// 弹出窗口顶部切换栏：DeepSeek / Codex / Cursor / OpenCode / Vultr 用量。
+/// 弹出窗口顶部切换栏：DeepSeek / Codex / Cursor / OpenCode / Vultr / Command Code 用量。
 enum UsageTab: String, CaseIterable, Identifiable, Hashable {
   case deepseek
   case codex
   case cursor
   case openCode
   case vps
+  case commandCode
 
   var id: String { rawValue }
 
@@ -85,6 +86,8 @@ enum UsageTab: String, CaseIterable, Identifiable, Hashable {
       return .openCode
     case .vps:
       return .vps
+    case .commandCode:
+      return .commandCode
     }
   }
 }
@@ -109,6 +112,7 @@ struct BalancePopoverView: View {
   @ObservedObject var cursorStore: CursorUsageStore
   @ObservedObject var openCodeStore: OpenCodeUsageStore
   @ObservedObject var vpsStore: VPSUsageStore
+  @ObservedObject var commandCodeStore: CommandCodeUsageStore
   @ObservedObject var codexStatusStore: StatusPageStatusStore
   @ObservedObject var cursorStatusStore: StatusPageStatusStore
   let visibility: MenuBarVendorVisibility
@@ -130,9 +134,11 @@ struct BalancePopoverView: View {
     store.language
   }
 
-  /// 仅显示菜单栏可见的供应商页。
+  /// 仅显示菜单栏可见的供应商页，按菜单栏显示顺序排列。
   private var visibleTabs: [UsageTab] {
-    UsageTab.allCases.filter { visibility.isVisible($0.vendor) }
+    visibility.orderedVisibleVendors.compactMap { vendor in
+      UsageTab.allCases.first { $0.vendor == vendor }
+    }
   }
 
   // 切换栏的固定高度与上下内边距，与下方 tabSwitcher 的布局一一对应；
@@ -189,6 +195,9 @@ struct BalancePopoverView: View {
         .padding(.trailing, 8)
         .padding(.top, 4)
       }
+      // 隐藏滚动条指示器：切换供应商页时内容高度变化会让滚动条瞬时出现/
+      // 消失，覆盖在内容边缘造成“左右抖动”的视觉干扰。滚动功能不受影响。
+      .scrollIndicators(.hidden)
     }
     .frame(width: PopoverSizing.width)
     // 不做整棵树的 fixedSize(vertical)：那会让 ScrollView 视口恒等于内容高度，
@@ -304,6 +313,20 @@ struct BalancePopoverView: View {
         }
         card { vpsTrendSection }
         card { vpsConfigurationSection }
+      case .commandCode:
+        CommandCodeUsageView(
+          store: commandCodeStore,
+          language: language,
+          appearance: store.appearance
+        )
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(cardBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay {
+          RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .stroke(cardBorder, lineWidth: 1)
+        }
+        card { commandCodeTrendSection }
       }
       card { footer }
     }
@@ -321,9 +344,13 @@ struct BalancePopoverView: View {
       async let cursor = cursorStore.refreshIfNeeded()
       async let openCode = openCodeStore.refreshIfNeeded()
       async let vps = vpsStore.refreshIfNeeded()
+      async let commandCode = commandCodeStore.refreshIfNeeded()
       async let codexStatus = codexStatusStore.refreshIfNeeded()
       async let cursorStatus = cursorStatusStore.refreshIfNeeded()
-      _ = await (balance, deepSeekStatus, codex, cursor, openCode, vps, codexStatus, cursorStatus)
+      _ = await (
+        balance, deepSeekStatus, codex, cursor, openCode, vps, commandCode, codexStatus,
+        cursorStatus
+      )
     }
   }
 
@@ -397,6 +424,8 @@ struct BalancePopoverView: View {
       return "OpenCodeIcon"
     case .vps:
       return "VultrIcon"
+    case .commandCode:
+      return "CommandCodeIcon"
     }
   }
 
@@ -412,6 +441,8 @@ struct BalancePopoverView: View {
       return .tabOpenCode
     case .vps:
       return .tabVPS
+    case .commandCode:
+      return .tabCommandCode
     }
   }
 
@@ -788,6 +819,32 @@ struct BalancePopoverView: View {
     }
   }
 
+  // MARK: - Command Code 趋势区
+
+  private var commandCodeTrendSection: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Text(L10n.string(.trendTitle, language: language))
+        .font(AppTypography.section)
+
+      let chart = CommandCodeTrendChartView(
+        samples: commandCodeStore.historySamples,
+        language: language,
+        now: commandCodeStore.clock.now()
+      )
+      usageTrendSummary(chart.usageChangeValue)
+
+      if commandCodeStore.historySamples.count >= 2 {
+        chart
+      } else {
+        BalanceTrendEmptyView(historyUnavailable: false, language: language)
+      }
+
+      Text(L10n.string(.trendLocalNote, language: language))
+        .font(AppTypography.caption)
+        .foregroundStyle(.secondary)
+    }
+  }
+
   // MARK: - 错误提示
 
   @ViewBuilder
@@ -1027,6 +1084,7 @@ struct BalancePopoverView: View {
     HStack(spacing: 8) {
       if store.isRefreshing || statusStore.loadState == .loading || codexStore.isRefreshing
         || cursorStore.isRefreshing || openCodeStore.isRefreshing || vpsStore.isRefreshing
+        || commandCodeStore.isRefreshing
         || codexStatusStore.loadState == .loading
         || cursorStatusStore.loadState == .loading
       {
@@ -1040,6 +1098,7 @@ struct BalancePopoverView: View {
           await cursorStore.refreshIfNeeded(maximumAge: 0)
           await openCodeStore.refreshIfNeeded(maximumAge: 0)
           await vpsStore.refreshIfNeeded(maximumAge: 0)
+          await commandCodeStore.refreshIfNeeded(maximumAge: 0)
           await codexStatusStore.refreshIfNeeded(maximumAge: 0)
           await cursorStatusStore.refreshIfNeeded(maximumAge: 0)
         }
@@ -1047,6 +1106,7 @@ struct BalancePopoverView: View {
       .disabled(
         store.isRefreshing || statusStore.loadState == .loading || codexStore.isRefreshing
         || cursorStore.isRefreshing || openCodeStore.isRefreshing || vpsStore.isRefreshing
+        || commandCodeStore.isRefreshing
         || codexStatusStore.loadState == .loading
           || cursorStatusStore.loadState == .loading
       )

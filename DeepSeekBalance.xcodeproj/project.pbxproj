@@ -120,6 +120,14 @@
 		AA0000000000000000000414 /* LevelDBCursorHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000214 /* LevelDBCursorHistoryStore.swift */; };
 		AA0000000000000000000415 /* CursorHistoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000215 /* CursorHistoryService.swift */; };
 		AA0000000000000000000416 /* CursorTrendChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000216 /* CursorTrendChartView.swift */; };
+		AA0000000000000000000430 /* CommandCodeUsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000230 /* CommandCodeUsageModels.swift */; };
+		AA0000000000000000000431 /* CommandCodeUsageSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000231 /* CommandCodeUsageSample.swift */; };
+		AA0000000000000000000432 /* CommandCodeUsageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000232 /* CommandCodeUsageClient.swift */; };
+		AA0000000000000000000433 /* CommandCodeAuthProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000233 /* CommandCodeAuthProvider.swift */; };
+		AA0000000000000000000434 /* CommandCodeUsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000234 /* CommandCodeUsageStore.swift */; };
+		AA0000000000000000000435 /* CommandCodeHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000235 /* CommandCodeHistory.swift */; };
+		AA0000000000000000000436 /* CommandCodeUsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000236 /* CommandCodeUsageView.swift */; };
+		AA0000000000000000000437 /* CommandCodeTrendChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000237 /* CommandCodeTrendChartView.swift */; };
 		AA0000000000000000000417 /* OpenCodeUsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000217 /* OpenCodeUsageModels.swift */; };
 		AA0000000000000000000418 /* OpenCodeUsageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000218 /* OpenCodeUsageClient.swift */; };
 		AA0000000000000000000419 /* OpenCodeUsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000219 /* OpenCodeUsageStore.swift */; };
@@ -142,6 +150,7 @@
 		AA0000000000000000000213 /* CursorHistoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000010E /* CursorHistoryTests.swift */; };
 		AA0000000000000000000214 /* OpenCodeUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000010F /* OpenCodeUsageTests.swift */; };
 		AA0000000000000000000215 /* VPSUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000110 /* VPSUsageTests.swift */; };
+		AA0000000000000000000216 /* CommandCodeUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000111 /* CommandCodeUsageTests.swift */; };
 		FF0000000000000000000101 /* TimeBucketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000001 /* TimeBucketTests.swift */; };
 		FF0000000000000000000102 /* InMemoryHistoryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000002 /* InMemoryHistoryStoreTests.swift */; };
 		FF0000000000000000000103 /* LevelDBBalanceHistoryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000003 /* LevelDBBalanceHistoryStoreTests.swift */; };
@@ -219,6 +228,14 @@
 		BB0000000000000000000214 /* LevelDBCursorHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelDBCursorHistoryStore.swift; sourceTree = "<group>"; };
 		BB0000000000000000000215 /* CursorHistoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorHistoryService.swift; sourceTree = "<group>"; };
 		BB0000000000000000000216 /* CursorTrendChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorTrendChartView.swift; sourceTree = "<group>"; };
+		BB0000000000000000000230 /* CommandCodeUsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCodeUsageModels.swift; sourceTree = "<group>"; };
+		BB0000000000000000000231 /* CommandCodeUsageSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCodeUsageSample.swift; sourceTree = "<group>"; };
+		BB0000000000000000000232 /* CommandCodeUsageClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCodeUsageClient.swift; sourceTree = "<group>"; };
+		BB0000000000000000000233 /* CommandCodeAuthProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCodeAuthProvider.swift; sourceTree = "<group>"; };
+		BB0000000000000000000234 /* CommandCodeUsageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCodeUsageStore.swift; sourceTree = "<group>"; };
+		BB0000000000000000000235 /* CommandCodeHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCodeHistory.swift; sourceTree = "<group>"; };
+		BB0000000000000000000236 /* CommandCodeUsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCodeUsageView.swift; sourceTree = "<group>"; };
+		BB0000000000000000000237 /* CommandCodeTrendChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCodeTrendChartView.swift; sourceTree = "<group>"; };
 		BB0000000000000000000217 /* OpenCodeUsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenCodeUsageModels.swift; sourceTree = "<group>"; };
 		BB0000000000000000000218 /* OpenCodeUsageClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenCodeUsageClient.swift; sourceTree = "<group>"; };
 		BB0000000000000000000219 /* OpenCodeUsageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenCodeUsageStore.swift; sourceTree = "<group>"; };
@@ -255,6 +272,7 @@
 		CC000000000000000000010E /* CursorHistoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorHistoryTests.swift; sourceTree = "<group>"; };
 		CC000000000000000000010F /* OpenCodeUsageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenCodeUsageTests.swift; sourceTree = "<group>"; };
 		CC0000000000000000000110 /* VPSUsageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPSUsageTests.swift; sourceTree = "<group>"; };
+		CC0000000000000000000111 /* CommandCodeUsageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCodeUsageTests.swift; sourceTree = "<group>"; };
 		DD0000000000000000000101 /* builder.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/builder.cc"; sourceTree = "<group>"; };
 		DD0000000000000000000102 /* c.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/c.cc"; sourceTree = "<group>"; };
 		DD0000000000000000000103 /* db_impl.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/db_impl.cc"; sourceTree = "<group>"; };
@@ -387,6 +405,7 @@
 				BB0000000000000000000105 /* LoginItemManager.swift */,
 				BB000000000000000000010B /* StatusItemController.swift */,
 				BB000000000000000000020B /* SettingsWindow.swift */,
+				BB0000000000000000000234 /* CommandCodeUsageStore.swift */,
 			);
 			path = AppState;
 			sourceTree = "<group>";
@@ -403,6 +422,8 @@
 				BB0000000000000000000212 /* CursorUsageSample.swift */,
 				EE0000000000000000000001 /* BalanceSample.swift */,
 				EE0000000000000000000002 /* BalanceTrendModels.swift */,
+				BB0000000000000000000230 /* CommandCodeUsageModels.swift */,
+				BB0000000000000000000231 /* CommandCodeUsageSample.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -418,6 +439,8 @@
 				BB0000000000000000000221 /* VPSUsageClient.swift */,
 				BB0000000000000000000203 /* CodexAuthProvider.swift */,
 				BB000000000000000000020F /* CursorAuthProvider.swift */,
+				BB0000000000000000000232 /* CommandCodeUsageClient.swift */,
+				BB0000000000000000000233 /* CommandCodeAuthProvider.swift */,
 			);
 			path = Networking;
 			sourceTree = "<group>";
@@ -444,6 +467,8 @@
 				BB000000000000000000021B /* OpenCodeTrendChartView.swift */,
 				BB0000000000000000000225 /* VPSUsageView.swift */,
 				BB0000000000000000000226 /* VPSTrendChartView.swift */,
+				BB0000000000000000000236 /* CommandCodeUsageView.swift */,
+				BB0000000000000000000237 /* CommandCodeTrendChartView.swift */,
 				BB000000000000000000020C /* SettingsView.swift */,
 				EE000000000000000000000C /* BalanceTrendChartView.swift */,
 				EE000000000000000000000D /* BalanceTrendEmptyView.swift */,
@@ -481,6 +506,7 @@
 				CC000000000000000000010E /* CursorHistoryTests.swift */,
 				CC000000000000000000010F /* OpenCodeUsageTests.swift */,
 				CC0000000000000000000110 /* VPSUsageTests.swift */,
+				CC0000000000000000000111 /* CommandCodeUsageTests.swift */,
 			);
 			path = DeepSeekBalanceTests;
 			sourceTree = "<group>";
@@ -511,6 +537,7 @@
 				BB0000000000000000000214 /* LevelDBCursorHistoryStore.swift */,
 				BB0000000000000000000209 /* CodexHistoryService.swift */,
 				BB0000000000000000000215 /* CursorHistoryService.swift */,
+				BB0000000000000000000235 /* CommandCodeHistory.swift */,
 				BB000000000000000000021C /* OpenCodeHistory.swift */,
 				BB0000000000000000000224 /* VPSHistory.swift */,
 			);
@@ -793,6 +820,14 @@
 				AA0000000000000000000414 /* LevelDBCursorHistoryStore.swift in Sources */,
 				AA0000000000000000000415 /* CursorHistoryService.swift in Sources */,
 				AA0000000000000000000416 /* CursorTrendChartView.swift in Sources */,
+				AA0000000000000000000430 /* CommandCodeUsageModels.swift in Sources */,
+				AA0000000000000000000431 /* CommandCodeUsageSample.swift in Sources */,
+				AA0000000000000000000432 /* CommandCodeUsageClient.swift in Sources */,
+				AA0000000000000000000433 /* CommandCodeAuthProvider.swift in Sources */,
+				AA0000000000000000000434 /* CommandCodeUsageStore.swift in Sources */,
+				AA0000000000000000000435 /* CommandCodeHistory.swift in Sources */,
+				AA0000000000000000000436 /* CommandCodeUsageView.swift in Sources */,
+				AA0000000000000000000437 /* CommandCodeTrendChartView.swift in Sources */,
 				AA0000000000000000000417 /* OpenCodeUsageModels.swift in Sources */,
 				AA0000000000000000000418 /* OpenCodeUsageClient.swift in Sources */,
 				AA0000000000000000000419 /* OpenCodeUsageStore.swift in Sources */,
@@ -836,6 +871,7 @@
 				AA0000000000000000000213 /* CursorHistoryTests.swift in Sources */,
 				AA0000000000000000000214 /* OpenCodeUsageTests.swift in Sources */,
 				AA0000000000000000000215 /* VPSUsageTests.swift in Sources */,
+				AA0000000000000000000216 /* CommandCodeUsageTests.swift in Sources */,
 				FF0000000000000000000101 /* TimeBucketTests.swift in Sources */,
 				FF0000000000000000000102 /* InMemoryHistoryStoreTests.swift in Sources */,
 				FF0000000000000000000103 /* LevelDBBalanceHistoryStoreTests.swift in Sources */,
@@ -1030,7 +1066,7 @@
 				CODE_SIGN_ENTITLEMENTS = DeepSeekBalance/DeepSeekBalance.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				HEADER_SEARCH_PATHS = (
@@ -1042,7 +1078,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.0.1;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lc++",
@@ -1062,7 +1098,7 @@
 				CODE_SIGN_ENTITLEMENTS = DeepSeekBalance/DeepSeekBalance.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				HEADER_SEARCH_PATHS = (
@@ -1074,7 +1110,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.0.1;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lc++",
@@ -1092,7 +1128,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1104,7 +1140,7 @@
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jxz.deepseekbalance.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -1117,7 +1153,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1129,7 +1165,7 @@
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jxz.deepseekbalance.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;

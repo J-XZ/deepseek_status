@@ -10,6 +10,7 @@ enum MenuBarVendor: Int, CaseIterable {
   case cursor = 2
   case openCode = 3
   case vps = 4
+  case commandCode = 5
 }
 
 /// 菜单栏数字布局：Cursor 和 OpenCode 的多组用量纵向排列，避免横向挤占空间。
@@ -162,6 +163,7 @@ enum MenuBarIconLayout {
   static let cursorMaxDimension: CGFloat = 13
   static let openCodeMaxDimension: CGFloat = 13
   static let vpsMaxDimension: CGFloat = 13
+  static let commandCodeMaxDimension: CGFloat = 13
 
   static func fittingSize(_ imageSize: NSSize, maxDimension: CGFloat) -> NSSize {
     guard imageSize.width > 0, imageSize.height > 0, maxDimension > 0 else {
@@ -390,18 +392,87 @@ final class PopoverTabSelection: ObservableObject {
   @Published var isPinned = false
 }
 
-/// 菜单栏供应商可见性：UserDefaults 持久化，至少保留一个可见。
-struct MenuBarVendorVisibility {
+/// 菜单栏供应商可见性与顺序：UserDefaults 持久化，至少保留一个可见。
+/// 作为 ObservableObject 供设置页观察，写入后发送 objectWillChange，
+/// 让 SwiftUI 列表随顺序/开关变化立即重绘。
+final class MenuBarVendorVisibility: ObservableObject {
   static let deepseekKey = "menuBar.showDeepSeek"
   static let codexKey = "menuBar.showCodex"
   static let cursorKey = "menuBar.showCursor"
   static let openCodeKey = "menuBar.showOpenCode"
   static let vpsKey = "menuBar.showVPS"
+  static let commandCodeKey = "menuBar.showCommandCode"
+  /// 菜单栏供应商顺序：按 UserDefaults 中保存的 rawValue 序列展开，
+  /// 未保存过或包含未知/重复值时按默认顺序兜底。
+  static let orderKey = "menuBar.order"
 
   let defaults: UserDefaults
 
   init(defaults: UserDefaults = .standard) {
     self.defaults = defaults
+  }
+
+  /// 供应商在菜单栏与弹窗中的显示顺序，按已保存顺序排列。
+  /// 读取时容忍旧版本遗留的不完整/乱序数据：缺失的供应商按声明顺序补在
+  /// 末尾，重复值丢弃，保证返回的列表始终是全部供应商的一次排列。
+  var orderedVendors: [MenuBarVendor] {
+    guard let rawValues = defaults.object(forKey: Self.orderKey) as? [Int] else {
+      return MenuBarVendor.allCases
+    }
+    var result: [MenuBarVendor] = []
+    var seen = Set<MenuBarVendor>()
+    for raw in rawValues {
+      guard let vendor = MenuBarVendor(rawValue: raw), seen.insert(vendor).inserted else {
+        continue
+      }
+      result.append(vendor)
+    }
+    for vendor in MenuBarVendor.allCases where !seen.contains(vendor) {
+      result.append(vendor)
+    }
+    return result
+  }
+
+  /// 可见供应商按菜单栏顺序排列。
+  var orderedVisibleVendors: [MenuBarVendor] {
+    orderedVendors.filter { isVisible($0) }
+  }
+
+  /// 把 visible 供应商顺序作为菜单栏显示顺序保存；隐藏供应商按声明顺序
+  /// 补在末尾，保证存储序列始终包含全部供应商。返回调整后的完整顺序。
+  @discardableResult
+  func move(_ visible: [MenuBarVendor]) -> [MenuBarVendor] {
+    let result = completeOrder(visiblePrefix: visible)
+    defaults.set(result.map(\.rawValue), forKey: Self.orderKey)
+    objectWillChange.send()
+    return result
+  }
+
+  /// 把 vendor 在可见列表中上移/下移一位（before 语义：移到该位置前）。
+  /// 返回调整后的可见顺序；隐藏供应商按声明顺序补在末尾，保证存储完整。
+  @discardableResult
+  func move(_ vendor: MenuBarVendor, before target: MenuBarVendor?) -> [MenuBarVendor] {
+    var list = orderedVisibleVendors
+    guard let fromIndex = list.firstIndex(of: vendor) else { return list }
+    list.remove(at: fromIndex)
+    if let target, let toIndex = list.firstIndex(of: target) {
+      list.insert(vendor, at: toIndex)
+    } else {
+      list.append(vendor)
+    }
+    defaults.set(completeOrder(visiblePrefix: list).map(\.rawValue), forKey: Self.orderKey)
+    objectWillChange.send()
+    return list
+  }
+
+  /// 把可见前缀补全为包含全部供应商的完整顺序（隐藏项按声明顺序补尾）。
+  private func completeOrder(visiblePrefix: [MenuBarVendor]) -> [MenuBarVendor] {
+    var result = visiblePrefix
+    var seen = Set(result)
+    for vendor in MenuBarVendor.allCases where seen.insert(vendor).inserted {
+      result.append(vendor)
+    }
+    return result
   }
 
   var showsDeepSeek: Bool {
@@ -424,6 +495,10 @@ struct MenuBarVendorVisibility {
     defaults.object(forKey: Self.vpsKey) as? Bool ?? true
   }
 
+  var showsCommandCode: Bool {
+    defaults.object(forKey: Self.commandCodeKey) as? Bool ?? true
+  }
+
   func isVisible(_ vendor: MenuBarVendor) -> Bool {
     switch vendor {
     case .deepseek:
@@ -436,6 +511,8 @@ struct MenuBarVendorVisibility {
       return showsOpenCode
     case .vps:
       return showsVPS
+    case .commandCode:
+      return showsCommandCode
     }
   }
 
@@ -445,27 +522,40 @@ struct MenuBarVendorVisibility {
     switch vendor {
     case .deepseek:
       let newValue = !showsDeepSeek
-      guard newValue || showsCodex || showsCursor || showsOpenCode || showsVPS else { return false }
+      guard newValue || showsCodex || showsCursor || showsOpenCode || showsVPS || showsCommandCode
+      else { return false }
       defaults.set(newValue, forKey: Self.deepseekKey)
     case .codex:
       let newValue = !showsCodex
-      guard newValue || showsDeepSeek || showsCursor || showsOpenCode || showsVPS else { return false }
+      guard newValue || showsDeepSeek || showsCursor || showsOpenCode || showsVPS || showsCommandCode
+      else { return false }
       defaults.set(newValue, forKey: Self.codexKey)
     case .cursor:
       let newValue = !showsCursor
-      guard newValue || showsDeepSeek || showsCodex || showsOpenCode || showsVPS else { return false }
+      guard newValue || showsDeepSeek || showsCodex || showsOpenCode || showsVPS || showsCommandCode
+      else { return false }
       defaults.set(newValue, forKey: Self.cursorKey)
     case .openCode:
       let newValue = !showsOpenCode
-      guard newValue || showsDeepSeek || showsCodex || showsCursor || showsVPS else { return false }
+      guard newValue || showsDeepSeek || showsCodex || showsCursor || showsVPS || showsCommandCode
+      else { return false }
       defaults.set(newValue, forKey: Self.openCodeKey)
     case .vps:
       let newValue = !showsVPS
-      guard newValue || showsDeepSeek || showsCodex || showsCursor || showsOpenCode else {
+      guard newValue || showsDeepSeek || showsCodex || showsCursor || showsOpenCode || showsCommandCode
+      else {
         return false
       }
       defaults.set(newValue, forKey: Self.vpsKey)
+    case .commandCode:
+      let newValue = !showsCommandCode
+      guard newValue || showsDeepSeek || showsCodex || showsCursor || showsOpenCode || showsVPS
+      else {
+        return false
+      }
+      defaults.set(newValue, forKey: Self.commandCodeKey)
     }
+    objectWillChange.send()
     return true
   }
 }
@@ -484,6 +574,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let cursorStore = CursorUsageStore()
     let openCodeStore = OpenCodeUsageStore()
     let vpsStore = VPSUsageStore()
+    let commandCodeStore = CommandCodeUsageStore()
     let codexStatusStore = StatusPageStatusStore(
       client: StatusPageClient(
         baseURL: URL(string: "https://status.openai.com")!
@@ -503,6 +594,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     cursorStore.setEnabled(visibility.showsCursor)
     openCodeStore.setEnabled(visibility.showsOpenCode)
     vpsStore.setEnabled(visibility.showsVPS)
+    commandCodeStore.setEnabled(visibility.showsCommandCode)
     codexStatusStore.setEnabled(visibility.showsCodex)
     cursorStatusStore.setEnabled(visibility.showsCursor)
     statusItemController = StatusItemController(
@@ -513,6 +605,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       cursorStore: cursorStore,
       openCodeStore: openCodeStore,
       vpsStore: vpsStore,
+      commandCodeStore: commandCodeStore,
       codexStatusStore: codexStatusStore,
       cursorStatusStore: cursorStatusStore,
       visibility: visibility
@@ -532,6 +625,7 @@ final class StatusItemController: NSObject {
   private let cursorStore: CursorUsageStore
   private let openCodeStore: OpenCodeUsageStore
   private let vpsStore: VPSUsageStore
+  private let commandCodeStore: CommandCodeUsageStore
   private let codexStatusStore: StatusPageStatusStore
   private let cursorStatusStore: StatusPageStatusStore
 
@@ -557,7 +651,11 @@ final class StatusItemController: NSObject {
   private var popoverChromeHeight: CGFloat = 0
   private lazy var settingsWindow = SettingsWindow(
     store: store,
-    loginItemStore: loginItemStore
+    loginItemStore: loginItemStore,
+    visibility: visibility,
+    onVisibilityChange: { [weak self] vendor in
+      self?.applyVendorVisibility(vendor)
+    }
   )
   private var cancellables: Set<AnyCancellable> = []
   private var titleUpdateTask: Task<Void, Never>?
@@ -583,6 +681,7 @@ final class StatusItemController: NSObject {
     cursorStore: CursorUsageStore,
     openCodeStore: OpenCodeUsageStore,
     vpsStore: VPSUsageStore,
+    commandCodeStore: CommandCodeUsageStore,
     codexStatusStore: StatusPageStatusStore,
     cursorStatusStore: StatusPageStatusStore,
     visibility: MenuBarVendorVisibility = MenuBarVendorVisibility()
@@ -594,6 +693,7 @@ final class StatusItemController: NSObject {
     self.cursorStore = cursorStore
     self.openCodeStore = openCodeStore
     self.vpsStore = vpsStore
+    self.commandCodeStore = commandCodeStore
     self.codexStatusStore = codexStatusStore
     self.cursorStatusStore = cursorStatusStore
     self.visibility = visibility
@@ -614,6 +714,11 @@ final class StatusItemController: NSObject {
       self.pendingPopoverSizeTask?.cancel()
       self.shrinkSettleTask?.cancel()
       self.shrinkSettleTask = nil
+      // 切换页面后放弃输入焦点：页面内容已整体替换，让焦点留在窗口根部，
+      // 避免旧输入框的焦点残留到新页面、或让 Tab 键后续被输入框消费。
+      Task { @MainActor [weak self] in
+        self?.popover.contentViewController?.view.window?.makeFirstResponder(nil)
+      }
     }
     .store(in: &cancellables)
     // 图钉状态订阅：固定时切换为 .applicationDefined，系统不再因点击外部/
@@ -759,104 +864,16 @@ final class StatusItemController: NSObject {
     }()
 
     var segments: [MenuBarStatusContentView.Segment] = []
-    if visibility.showsDeepSeek {
+    for vendor in visibility.orderedVisibleVendors {
       segments.append(
-        MenuBarStatusContentView.Segment(
-          icon: menuBarTintedIcon(
-            named: "DeepSeekIcon",
-            size: MenuBarIconLayout.deepSeekMaxDimension,
-            isDark: isDark
-          ),
-          lines: [store.menuBarText],
+        menuBarSegment(
+          for: vendor,
+          isDark: isDark,
+          openCodeMonthlyGap: openCodeMonthlyGap,
+          openCodeZenDrop24h: openCodeZenDrop24h,
+          vpsCreditDrop24h: vpsCreditDrop24h,
           font: font,
-          lineHeight: nil,
-          verticalInset: 0,
-          lineColors: []
-        )
-      )
-    }
-    if visibility.showsCodex {
-      segments.append(
-        MenuBarStatusContentView.Segment(
-          icon: menuBarTintedIcon(
-            named: "CodexIcon",
-            size: MenuBarIconLayout.codexMaxDimension,
-            isDark: isDark
-          ),
-          lines: [codexStore.menuBarText],
-          font: font,
-          lineHeight: nil,
-          verticalInset: 0,
-          lineColors: [
-            MenuBarUsageColor.color(
-              for: codexStore.usage?.usageGapPercent,
-              isDark: isDark
-            )
-          ]
-        )
-      )
-    }
-    if visibility.showsCursor {
-      segments.append(
-        MenuBarStatusContentView.Segment(
-          icon: menuBarTintedIcon(
-            named: "CursorIcon",
-            size: MenuBarIconLayout.cursorMaxDimension,
-            isDark: isDark
-          ),
-          lines: MenuBarDisplayLayout.cursorLines(cursorStore.menuBarText),
-          font: cursorFont,
-          lineHeight: MenuBarDisplayLayout.cursorLineHeight,
-          verticalInset: MenuBarDisplayLayout.cursorVerticalInset,
-          lineColors: [
-            MenuBarUsageColor.color(
-              for: cursorStore.usage?.usageGapPercent,
-              isDark: isDark
-            ),
-            MenuBarUsageColor.color(
-              for: cursorStore.usage?.apiUsageGapPercent,
-              isDark: isDark
-            )
-          ]
-        )
-      )
-    }
-    if visibility.showsOpenCode {
-      segments.append(
-        MenuBarStatusContentView.Segment(
-          icon: menuBarBrandIcon(
-            named: "OpenCodeIcon",
-            size: MenuBarIconLayout.openCodeMaxDimension
-          ),
-          lines: openCodeStore.menuBarLines,
-          font: cursorFont,
-          lineHeight: MenuBarDisplayLayout.cursorLineHeight,
-          verticalInset: MenuBarDisplayLayout.cursorVerticalInset,
-          lineColors: [
-            MenuBarUsageColor.color(for: openCodeMonthlyGap, isDark: isDark),
-            MenuBarUsageColor.color(forBalanceDrop: openCodeZenDrop24h, isDark: isDark)
-          ]
-        )
-      )
-    }
-    if visibility.showsVPS {
-      segments.append(
-        MenuBarStatusContentView.Segment(
-          icon: menuBarBrandIcon(
-            named: "VultrIcon",
-            size: MenuBarIconLayout.vpsMaxDimension
-          ),
-          lines: vpsStore.menuBarLines(language: store.language),
-          font: cursorFont,
-          lineHeight: MenuBarDisplayLayout.cursorLineHeight,
-          verticalInset: MenuBarDisplayLayout.cursorVerticalInset,
-          lineColors: [
-            MenuBarUsageColor.color(
-              forTrafficRisk: vpsStore.trafficForecast?.riskScore,
-              isDark: isDark
-            ),
-            MenuBarUsageColor.color(forBalanceDrop: vpsCreditDrop24h, isDark: isDark)
-          ]
+          cursorFont: cursorFont
         )
       )
     }
@@ -866,38 +883,154 @@ final class StatusItemController: NSObject {
     statusItem.length = contentView.requiredWidth
     contentView.frame = button.bounds
 
-    let deepseekLabel = L10n.string(
-      .a11yMenuBar, language: store.language, store.menuBarText
-    )
-    let codexLabel = L10n.string(
-      .a11yMenuBarCodex, language: store.language, codexStore.menuBarText
-    )
-    let cursorLabel = L10n.string(
-      .a11yMenuBarCursor, language: store.language, cursorStore.menuBarText
-    )
-    let openCodeLabel = L10n.string(
-      .a11yMenuBarOpenCode,
-      language: store.language,
-      openCodeStore.menuBarLines.joined(separator: ", ")
-    )
-    let vpsLabel = L10n.string(
-      .a11yMenuBarVPS,
-      language: store.language,
-      vpsStore.menuBarLines(language: store.language).joined(separator: ", ")
-    )
-    button.setAccessibilityLabel([deepseekLabel, codexLabel, cursorLabel, openCodeLabel, vpsLabel]
-      .enumerated()
-      .filter { index, _ in
-        switch index {
-        case 0: return visibility.showsDeepSeek
-        case 1: return visibility.showsCodex
-        case 2: return visibility.showsCursor
-        case 3: return visibility.showsOpenCode
-        default: return visibility.showsVPS
-        }
+    let visibleVendors = visibility.orderedVisibleVendors
+    let labels = visibleVendors.map { vendor -> String in
+      switch vendor {
+      case .deepseek:
+        return L10n.string(.a11yMenuBar, language: store.language, store.menuBarText)
+      case .codex:
+        return L10n.string(.a11yMenuBarCodex, language: store.language, codexStore.menuBarText)
+      case .cursor:
+        return L10n.string(.a11yMenuBarCursor, language: store.language, cursorStore.menuBarText)
+      case .openCode:
+        return L10n.string(
+          .a11yMenuBarOpenCode,
+          language: store.language,
+          openCodeStore.menuBarLines.joined(separator: ", ")
+        )
+      case .vps:
+        return L10n.string(
+          .a11yMenuBarVPS,
+          language: store.language,
+          vpsStore.menuBarLines(language: store.language).joined(separator: ", ")
+        )
+      case .commandCode:
+        return L10n.string(
+          .a11yMenuBarCommandCode,
+          language: store.language,
+          commandCodeStore.menuBarText
+        )
       }
-      .map(\.element)
-      .joined(separator: " | "))
+    }
+    button.setAccessibilityLabel(labels.joined(separator: " | "))
+  }
+
+  /// 按供应商构建菜单栏分段。
+  private func menuBarSegment(
+    for vendor: MenuBarVendor,
+    isDark: Bool,
+    openCodeMonthlyGap: Int?,
+    openCodeZenDrop24h: Double?,
+    vpsCreditDrop24h: Double?,
+    font: NSFont,
+    cursorFont: NSFont
+  ) -> MenuBarStatusContentView.Segment {
+    switch vendor {
+    case .deepseek:
+      return MenuBarStatusContentView.Segment(
+        icon: menuBarTintedIcon(
+          named: "DeepSeekIcon",
+          size: MenuBarIconLayout.deepSeekMaxDimension,
+          isDark: isDark
+        ),
+        lines: [store.menuBarText],
+        font: font,
+        lineHeight: nil,
+        verticalInset: 0,
+        lineColors: []
+      )
+    case .codex:
+      return MenuBarStatusContentView.Segment(
+        icon: menuBarTintedIcon(
+          named: "CodexIcon",
+          size: MenuBarIconLayout.codexMaxDimension,
+          isDark: isDark
+        ),
+        lines: [codexStore.menuBarText],
+        font: font,
+        lineHeight: nil,
+        verticalInset: 0,
+        lineColors: [
+          MenuBarUsageColor.color(
+            for: codexStore.usage?.usageGapPercent,
+            isDark: isDark
+          )
+        ]
+      )
+    case .cursor:
+      return MenuBarStatusContentView.Segment(
+        icon: menuBarTintedIcon(
+          named: "CursorIcon",
+          size: MenuBarIconLayout.cursorMaxDimension,
+          isDark: isDark
+        ),
+        lines: MenuBarDisplayLayout.cursorLines(cursorStore.menuBarText),
+        font: cursorFont,
+        lineHeight: MenuBarDisplayLayout.cursorLineHeight,
+        verticalInset: MenuBarDisplayLayout.cursorVerticalInset,
+        lineColors: [
+          MenuBarUsageColor.color(
+            for: cursorStore.usage?.usageGapPercent,
+            isDark: isDark
+          ),
+          MenuBarUsageColor.color(
+            for: cursorStore.usage?.apiUsageGapPercent,
+            isDark: isDark
+          )
+        ]
+      )
+    case .openCode:
+      return MenuBarStatusContentView.Segment(
+        icon: menuBarBrandIcon(
+          named: "OpenCodeIcon",
+          size: MenuBarIconLayout.openCodeMaxDimension
+        ),
+        lines: openCodeStore.menuBarLines,
+        font: cursorFont,
+        lineHeight: MenuBarDisplayLayout.cursorLineHeight,
+        verticalInset: MenuBarDisplayLayout.cursorVerticalInset,
+        lineColors: [
+          MenuBarUsageColor.color(for: openCodeMonthlyGap, isDark: isDark),
+          MenuBarUsageColor.color(forBalanceDrop: openCodeZenDrop24h, isDark: isDark)
+        ]
+      )
+    case .vps:
+      return MenuBarStatusContentView.Segment(
+        icon: menuBarBrandIcon(
+          named: "VultrIcon",
+          size: MenuBarIconLayout.vpsMaxDimension
+        ),
+        lines: vpsStore.menuBarLines(language: store.language),
+        font: cursorFont,
+        lineHeight: MenuBarDisplayLayout.cursorLineHeight,
+        verticalInset: MenuBarDisplayLayout.cursorVerticalInset,
+        lineColors: [
+          MenuBarUsageColor.color(
+            forTrafficRisk: vpsStore.trafficForecast?.riskScore,
+            isDark: isDark
+          ),
+          MenuBarUsageColor.color(forBalanceDrop: vpsCreditDrop24h, isDark: isDark)
+        ]
+      )
+    case .commandCode:
+      return MenuBarStatusContentView.Segment(
+        icon: menuBarTintedIcon(
+          named: "CommandCodeIcon",
+          size: MenuBarIconLayout.commandCodeMaxDimension,
+          isDark: isDark
+        ),
+        lines: [commandCodeStore.menuBarText],
+        font: font,
+        lineHeight: nil,
+        verticalInset: 0,
+        lineColors: [
+          MenuBarUsageColor.color(
+            for: commandCodeStore.usage?.usageGapPercent,
+            isDark: isDark
+          )
+        ]
+      )
+    }
   }
 
   // MARK: - 弹窗
@@ -911,6 +1044,7 @@ final class StatusItemController: NSObject {
       cursorStore: cursorStore,
       openCodeStore: openCodeStore,
       vpsStore: vpsStore,
+      commandCodeStore: commandCodeStore,
       codexStatusStore: codexStatusStore,
       cursorStatusStore: cursorStatusStore,
       visibility: visibility,
@@ -1083,7 +1217,9 @@ final class StatusItemController: NSObject {
 
   /// 当前可见的供应商标签页列表（与视图层 visibleTabs 保持一致的排序逻辑）。
   private var visibleTabs: [UsageTab] {
-    UsageTab.allCases.filter { visibility.isVisible($0.vendor) }
+    visibility.orderedVisibleVendors.compactMap { vendor in
+      UsageTab.allCases.first { $0.vendor == vendor }
+    }
   }
 
   /// 弹窗展示期间监听 Tab 键的本地与全局监听。在应用初始化时安装一次，
@@ -1104,13 +1240,10 @@ final class StatusItemController: NSObject {
   /// 处理 Tab 键切换供应商页。应用激活时本地监听调用此方法并消费事件
   ///（返回 nil）；应用未激活时全局监听调用此方法，事件无法拦截，继续
   /// 送至前台应用（风险仅在首次打开的几十毫秒空窗，可接受）。
+  /// Tab 永远只用于切换供应商页，不移动焦点：即使当前焦点在输入框或
+  /// 其他控件上，也拦截事件并切换页面，避免焦点漂移后 Tab 失效。
   private func handleTabKeyDown(_ event: NSEvent) -> NSEvent? {
     guard popover.isShown, event.keyCode == 48 else { return event }
-    // 应用激活且有文本输入框聚焦时放行 Tab（保留焦点移动行为）。
-    if NSApp.isActive,
-      let firstResponder = NSApp.keyWindow?.firstResponder,
-      firstResponder is NSText
-    { return event }
     let tabs = visibleTabs
     guard tabs.count > 1, let currentIndex = tabs.firstIndex(of: selectedUsageTab)
     else { return event }
@@ -1254,10 +1387,14 @@ final class StatusItemController: NSObject {
         )
         // 触发布局让 NSPopover 按本帧 contentSize 重排窗口。
         window.contentView?.layoutSubtreeIfNeeded()
+        // 每帧都强制移除滚动条：SwiftUI 布局轮次可能重新打开它们，
+        // 只在某帧配置一次会在下一帧被覆盖（滚动条闪现导致横向挤压）。
+        self.hideScrollIndicatorsInPopover()
         if progress >= 1 {
           setContentSize(targetFrame.height)
           window.setFrame(targetFrame, display: true)
           window.contentView?.layoutSubtreeIfNeeded()
+          self.hideScrollIndicatorsInPopover()
           break
         }
         try? await Task.sleep(for: .milliseconds(16))
@@ -1284,8 +1421,32 @@ final class StatusItemController: NSObject {
         try? await Task.sleep(for: .milliseconds(150))
         guard let self, popover.isShown else { return }
         self.measurePopoverChrome()
+        self.hideScrollIndicatorsInPopover()
       }
     }
+  }
+
+  /// 递归移除弹窗内所有 NSScrollView 的滚动条。
+  /// 切换供应商页时内容高度变化会让滚动条瞬时出现/消失：legacy 滚动条会
+  /// 占据布局宽度把整页向左挤压，overlay 滚动条则覆盖内容右缘，都表现为
+  /// “页面左右抖动”。SwiftUI 的 scrollIndicators(.hidden) 在部分系统设置
+  /// 下不生效，这里直接从 AppKit 层强制移除，滚动功能保留。
+  private func hideScrollIndicatorsInPopover() {
+    guard let contentView = popover.contentViewController?.view else { return }
+    func visit(_ view: NSView) {
+      if let scrollView = view as? NSScrollView {
+        scrollView.hasVerticalScroller = false
+        scrollView.verticalScroller = nil
+        scrollView.hasHorizontalScroller = false
+        scrollView.horizontalScroller = nil
+        scrollView.scrollerStyle = .overlay
+        scrollView.autohidesScrollers = true
+      }
+      for subview in view.subviews {
+        visit(subview)
+      }
+    }
+    visit(contentView)
   }
 
   /// 弹窗刚显示时窗口由 NSPopover 按 contentSize 自然排布；此刻窗口与
@@ -1367,31 +1528,6 @@ final class StatusItemController: NSObject {
 
     menu.addItem(.separator())
 
-    let visibilityHeader = NSMenuItem(
-      title: L10n.string(.menuBarVisibility, language: store.language),
-      action: nil,
-      keyEquivalent: ""
-    )
-    visibilityHeader.isEnabled = false
-    menu.addItem(visibilityHeader)
-
-    for vendor in MenuBarVendor.allCases {
-      let item = NSMenuItem(
-        title: L10n.string(
-          vendorTitleKey(vendor),
-          language: store.language
-        ),
-        action: #selector(toggleVendorVisibility(_:)),
-        keyEquivalent: ""
-      )
-      item.target = self
-      item.state = visibility.isVisible(vendor) ? .on : .off
-      item.tag = vendor.rawValue
-      menu.addItem(item)
-    }
-
-    menu.addItem(.separator())
-
     let quitItem = NSMenuItem(
       title: L10n.string(.footerQuit, language: store.language),
       action: #selector(quitApp),
@@ -1438,9 +1574,9 @@ final class StatusItemController: NSObject {
     NSApplication.shared.terminate(nil)
   }
 
-  @objc private func toggleVendorVisibility(_ sender: NSMenuItem) {
-    guard let vendor = MenuBarVendor(rawValue: sender.tag) else { return }
-    guard visibility.toggle(vendor) else { return }
+  /// 可见性或顺序变化后的副作用：启停对应 Store 并刷新菜单栏标题。
+  /// 设置页切换开关与调整顺序都会回调到这里。
+  private func applyVendorVisibility(_ vendor: MenuBarVendor) {
     switch vendor {
     case .deepseek:
       statusStore.setEnabled(visibility.showsDeepSeek)
@@ -1455,9 +1591,10 @@ final class StatusItemController: NSObject {
       openCodeStore.setEnabled(visibility.showsOpenCode)
     case .vps:
       vpsStore.setEnabled(visibility.showsVPS)
+    case .commandCode:
+      commandCodeStore.setEnabled(visibility.showsCommandCode)
     }
     updateTitle()
-    showContextMenu()
   }
 
   // MARK: - 菜单栏文字更新
@@ -1500,10 +1637,20 @@ final class StatusItemController: NSObject {
         self?.scheduleTitleUpdate()
       }
       .store(in: &cancellables)
+    commandCodeStore.objectWillChange
+      .sink { [weak self] _ in
+        self?.scheduleTitleUpdate()
+      }
+      .store(in: &cancellables)
   }
+}
 
-  private func vendorTitleKey(_ vendor: MenuBarVendor) -> L10nKey {
-    switch vendor {
+// MARK: - 菜单栏供应商扩展
+
+extension MenuBarVendor {
+  /// 供应商在菜单栏/设置页中的显示名称文案 key。
+  var titleKey: L10nKey {
+    switch self {
     case .deepseek:
       return .menuShowDeepSeek
     case .codex:
@@ -1514,6 +1661,8 @@ final class StatusItemController: NSObject {
       return .menuShowOpenCode
     case .vps:
       return .menuShowVPS
+    case .commandCode:
+      return .menuShowCommandCode
     }
   }
 }

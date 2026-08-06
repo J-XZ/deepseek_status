@@ -5,6 +5,9 @@ import SwiftUI
 struct SettingsView: View {
   @ObservedObject var store: BalanceStore
   @ObservedObject var loginItemStore: LoginItemStore
+  @ObservedObject var visibility: MenuBarVendorVisibility
+  /// 可见性切换后的副作用：启停对应 Store 并刷新菜单栏标题。
+  var onVisibilityChange: ((MenuBarVendor) -> Void)?
 
   @State private var showClearHistoryConfirmation = false
   @Environment(\.controlActiveState) private var controlActiveState
@@ -25,6 +28,50 @@ struct SettingsView: View {
     VStack(alignment: .leading, spacing: 14) {
       Text(L10n.string(.settingsTitle, language: language))
         .font(AppTypography.title)
+
+      settingsGroup {
+          VStack(alignment: .leading, spacing: 10) {
+            HStack {
+              Text(L10n.string(.settingsMenuBar, language: language))
+              Spacer()
+              Text(L10n.string(.settingsMenuBarOrderHint, language: language))
+                .font(AppTypography.caption)
+                .foregroundStyle(.secondary)
+            }
+
+            ForEach(orderedVendors, id: \.rawValue) { vendor in
+              HStack(spacing: 8) {
+                Button {
+                  moveVendor(vendor, offset: -1)
+                } label: {
+                  Image(systemName: "arrow.up")
+                }
+                .buttonStyle(.borderless)
+                .controlSize(.small)
+                .disabled(!canMove(vendor, offset: -1))
+                .help(L10n.string(.settingsMoveUp, language: language))
+
+                Button {
+                  moveVendor(vendor, offset: 1)
+                } label: {
+                  Image(systemName: "arrow.down")
+                }
+                .buttonStyle(.borderless)
+                .controlSize(.small)
+                .disabled(!canMove(vendor, offset: 1))
+                .help(L10n.string(.settingsMoveDown, language: language))
+
+                Text(L10n.string(vendorTitleKey(vendor), language: language))
+                Spacer()
+                Toggle("", isOn: visibilityBinding(for: vendor))
+                  .labelsHidden()
+                  .toggleStyle(.switch)
+                  .controlSize(.small)
+              }
+            }
+          }
+      }
+      .font(AppTypography.body)
 
       settingsGroup {
           VStack(alignment: .leading, spacing: 12) {
@@ -120,6 +167,48 @@ struct SettingsView: View {
         RoundedRectangle(cornerRadius: 14, style: .continuous)
           .stroke(cardBorder, lineWidth: 1)
       }
+  }
+
+  /// 菜单栏顺序中的可见供应商（含全部供应商，按已保存顺序排列）。
+  private var orderedVendors: [MenuBarVendor] {
+    visibility.orderedVendors
+  }
+
+  /// 判断供应商能否在可见列表内上移/下移：仅可见供应商参与排序。
+  private func canMove(_ vendor: MenuBarVendor, offset: Int) -> Bool {
+    let list = visibility.orderedVisibleVendors
+    guard let index = list.firstIndex(of: vendor) else {
+      return false
+    }
+    let target = index + offset
+    return target >= 0 && target < list.count
+  }
+
+  /// 在可见列表内移动供应商并通知控制器刷新菜单栏。
+  private func moveVendor(_ vendor: MenuBarVendor, offset: Int) {
+    var reordered = visibility.orderedVisibleVendors
+    guard let index = reordered.firstIndex(of: vendor) else { return }
+    let target = index + offset
+    guard target >= 0 && target < reordered.count else { return }
+    reordered.remove(at: index)
+    reordered.insert(vendor, at: target)
+    visibility.move(reordered)
+    onVisibilityChange?(vendor)
+  }
+
+  private func visibilityBinding(for vendor: MenuBarVendor) -> Binding<Bool> {
+    Binding(
+      get: { visibility.isVisible(vendor) },
+      set: { newValue in
+        guard newValue != visibility.isVisible(vendor) else { return }
+        visibility.toggle(vendor)
+        onVisibilityChange?(vendor)
+      }
+    )
+  }
+
+  private func vendorTitleKey(_ vendor: MenuBarVendor) -> L10nKey {
+    vendor.titleKey
   }
 
   private var loginBinding: Binding<Bool> {

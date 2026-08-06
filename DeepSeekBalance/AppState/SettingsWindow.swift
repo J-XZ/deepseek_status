@@ -9,7 +9,12 @@ final class SettingsWindow: NSObject {
   private let store: BalanceStore
   private var cancellables = Set<AnyCancellable>()
 
-  init(store: BalanceStore, loginItemStore: LoginItemStore) {
+  init(
+    store: BalanceStore,
+    loginItemStore: LoginItemStore,
+    visibility: MenuBarVendorVisibility,
+    onVisibilityChange: @escaping (MenuBarVendor) -> Void
+  ) {
     self.store = store
     let panel = NSPanel(
       contentRect: NSRect(x: 0, y: 0, width: 400, height: 300),
@@ -22,7 +27,12 @@ final class SettingsWindow: NSObject {
     panel.hidesOnDeactivate = false
     panel.level = .floating
     panel.contentView = NSHostingView(
-      rootView: SettingsView(store: store, loginItemStore: loginItemStore)
+      rootView: SettingsView(
+        store: store,
+        loginItemStore: loginItemStore,
+        visibility: visibility,
+        onVisibilityChange: onVisibilityChange
+      )
     )
     self.panel = panel
     super.init()
@@ -37,6 +47,13 @@ final class SettingsWindow: NSObject {
 
   func show() {
     updateTitle()
+    // 内容随可见供应商数量变化，按 SwiftUI 理想尺寸调整窗口高度。
+    if let hostingView = panel.contentView as? NSHostingView<SettingsView> {
+      let fitting = hostingView.fittingSize
+      if fitting.height > 0 {
+        panel.setContentSize(NSSize(width: 400, height: fitting.height))
+      }
+    }
     if !panel.isVisible {
       panel.center()
     }

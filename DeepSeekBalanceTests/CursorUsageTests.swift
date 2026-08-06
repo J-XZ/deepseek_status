@@ -537,6 +537,54 @@ extension TestFixtures {
       headerFields: nil
     )!
   }
+
+  static let commandCodeUsageJSON = """
+    {
+      "credits": {
+        "belowThreshold": false,
+        "creditThreshold": 0,
+        "monthlyCredits": 9.83,
+        "purchasedCredits": 0,
+        "freeCredits": 0
+      },
+      "windowLimits": {
+        "limited": true,
+        "exceeded": null,
+        "fiveHour": {
+          "used": 0.17,
+          "cap": 3,
+          "exceeded": false,
+          "resetAt": 1786000327270
+        },
+        "weekly": {
+          "used": 0.17,
+          "cap": 6,
+          "exceeded": false,
+          "resetAt": 1786587127270
+        }
+      },
+      "subscription": {
+        "id": "sub_1",
+        "status": "active",
+        "planId": "individual-go",
+        "currentPeriodStart": "2026-08-06T02:10:47.000Z",
+        "currentPeriodEnd": "2026-09-06T02:10:47.000Z"
+      },
+      "summary": {
+        "totalCount": 171,
+        "totalCost": 0.167,
+        "averageCost": 0.001,
+        "successRate": 100,
+        "totalTokens": 12500209,
+        "periodBasis": "billing-period"
+      },
+      "user": {
+        "id": "dc12d721",
+        "userName": "J-XZ",
+        "email": "xuzhenjiang@hhu.edu.cn"
+      }
+    }
+    """
 }
 
 /// 固定令牌的 Cursor 认证提供者。

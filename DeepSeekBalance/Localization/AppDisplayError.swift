@@ -17,6 +17,8 @@ enum AppDisplayError: Equatable, Sendable {
   case codexAuthInvalid
   case cursorNotConfigured
   case cursorAuthInvalid
+  case commandCodeNotConfigured
+  case commandCodeAuthInvalid
   case unknown
 
   func text(language: AppLanguage) -> String {
@@ -55,6 +57,10 @@ enum AppDisplayError: Equatable, Sendable {
       return L10n.string(.cursorNotConfigured, language: language)
     case .cursorAuthInvalid:
       return L10n.string(.cursorAuthInvalid, language: language)
+    case .commandCodeNotConfigured:
+      return L10n.string(.commandCodeNotConfigured, language: language)
+    case .commandCodeAuthInvalid:
+      return L10n.string(.commandCodeAuthInvalid, language: language)
     case .unknown:
       return L10n.string(.errorUnknown, language: language)
     }
