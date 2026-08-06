@@ -938,6 +938,26 @@ final class StatusItemController: NSObject {
       ).map { -$0 }
     }()
 
+    // 过去 24 小时 DeepSeek 余额下跌量（正值表示下跌）。
+    // 优先按人民币余额折算为美元（汇率按 7 估算），无人民币样本时直接按美元计算。
+    let deepseekBalanceDropUSD: Double? = {
+      let cnySamples = store.historySamples.filter { $0.currency.uppercased() == "CNY" }
+      let usdSamples = store.historySamples.filter { $0.currency.uppercased() == "USD" }
+      let source = cnySamples.isEmpty ? usdSamples : cnySamples
+      let divisor = cnySamples.isEmpty ? 1.0 : 7.0
+      return UsageHistoryWindow.change24h(
+        samples: source,
+        value: { sample in
+          guard let decimal = Decimal(
+            string: sample.totalBalance,
+            locale: Locale(identifier: "en_US_POSIX")
+          ) else { return nil }
+          return NSDecimalNumber(decimal: decimal).doubleValue
+        },
+        date: \.bucketStart
+      ).map { -$0 / divisor }
+    }()
+
     // 按供应商构建分段；isDark 控制图标着色与文字颜色插值。
     func buildSegments(isDark: Bool) -> [MenuBarStatusContentView.Segment] {
       visibility.orderedVisibleVendors.map { vendor in
@@ -947,6 +967,7 @@ final class StatusItemController: NSObject {
           openCodeMonthlyGap: openCodeMonthlyGap,
           openCodeZenDrop24h: openCodeZenDrop24h,
           vpsCreditDrop24h: vpsCreditDrop24h,
+          deepseekBalanceDropUSD: deepseekBalanceDropUSD,
           font: font,
           cursorFont: cursorFont
         )
@@ -1021,6 +1042,7 @@ final class StatusItemController: NSObject {
     openCodeMonthlyGap: Int?,
     openCodeZenDrop24h: Double?,
     vpsCreditDrop24h: Double?,
+    deepseekBalanceDropUSD: Double?,
     font: NSFont,
     cursorFont: NSFont
   ) -> MenuBarStatusContentView.Segment {
@@ -1036,7 +1058,10 @@ final class StatusItemController: NSObject {
         font: font,
         lineHeight: nil,
         verticalInset: 0,
-        lineColors: []
+        // 余额下跌渐变与 VPS 信用额度一致：≤ $0.5 无色，$2 黄，$5 红。
+        lineColors: [
+          MenuBarUsageColor.color(forBalanceDrop: deepseekBalanceDropUSD, isDark: isDark)
+        ]
       )
     case .codex:
       return MenuBarStatusContentView.Segment(
