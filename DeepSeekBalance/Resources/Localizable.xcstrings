@@ -3414,13 +3414,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Remaining"
+            "value": "Remaining Quota"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "剩余"
+            "value": "剩余额度"
           }
         }
       }

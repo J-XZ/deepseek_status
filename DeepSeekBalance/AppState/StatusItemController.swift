@@ -705,6 +705,8 @@ final class StatusItemController: NSObject {
   )
   /// 悬浮窗：与菜单栏内容镜像，由设置开关启停。
   private lazy var floatingWindow = FloatingStatusWindow()
+  /// 悬浮窗悬停趋势小面板：悬停供应商段时浮现对应趋势图。
+  private lazy var floatingTrendPopover = FloatingTrendPopover()
   private var cancellables: Set<AnyCancellable> = []
   private var titleUpdateTask: Task<Void, Never>?
   private var popoverDismissObservations: [NotificationObservation] = []
@@ -753,6 +755,7 @@ final class StatusItemController: NSObject {
     configurePopover()
     subscribeToStore()
     installTabKeyMonitors()
+    wireFloatingHover()
     // 标签切换订阅：视图（按钮、Tab 键）与控制器（键盘监听）共用同一
     // tabSelection；任何路径的切换都会触发窗口高度重算。
     tabSelection.$selectedTab.dropFirst().sink { [weak self] tab in
@@ -800,8 +803,95 @@ final class StatusItemController: NSObject {
         self.updateTitle()
       } else {
         self.floatingWindow.hide()
+        self.floatingTrendPopover.hide()
       }
     }
+  }
+
+  /// 悬浮窗悬停接线：悬停供应商段时在其附近浮现趋势图，移出后隐藏。
+  private func wireFloatingHover() {
+    floatingTrendPopover.chartProvider = { [weak self] vendor in
+      self?.trendChartView(for: vendor)
+    }
+    floatingWindow.hoverContent.onHoverChange = { [weak self] index in
+      guard let self else { return }
+      guard let index else {
+        self.floatingTrendPopover.hide()
+        return
+      }
+      let vendors = self.visibility.orderedVisibleVendors
+      guard vendors.indices.contains(index) else { return }
+      let vendor = vendors[index]
+      // 用悬浮窗所在屏幕定位，避免小图跑到别的屏幕。
+      guard let segmentFrame = self.floatingWindow.hoverContent.hoveredSegmentScreenFrame,
+        let screen = self.floatingWindow.screen ?? NSScreen.main
+      else { return }
+      self.floatingTrendPopover.showChart(vendor: vendor, near: segmentFrame, screen: screen)
+    }
+  }
+
+  /// 按供应商构建趋势图视图（复用弹窗内现有图表），无历史数据时返回空占位。
+  private func trendChartView(for vendor: MenuBarVendor) -> AnyView? {
+    let language = store.language
+    let now = Date()
+    let chart: AnyView
+    switch vendor {
+    case .deepseek:
+      let currency = store.selectedCurrency ?? "CNY"
+      chart = AnyView(
+        BalanceTrendChartView(
+          samples: store.historySamples,
+          currency: currency,
+          language: language,
+          now: now
+        )
+      )
+    case .codex:
+      chart = AnyView(
+        CodexTrendChartView(
+          samples: codexStore.historySamples,
+          language: language,
+          now: now
+        )
+      )
+    case .cursor:
+      chart = AnyView(
+        CursorTrendChartView(
+          samples: cursorStore.historySamples,
+          language: language,
+          now: now
+        )
+      )
+    case .openCode:
+      chart = AnyView(
+        OpenCodeTrendChartView(
+          samples: openCodeStore.historySamples,
+          showGoTrend: openCodeStore.snapshot?.isGoSubscribed == true,
+          language: language,
+          now: now
+        )
+      )
+    case .vps:
+      chart = AnyView(
+        VPSTrendChartView(
+          samples: vpsStore.historySamples,
+          language: language,
+          now: now,
+          currentRemainingGB: vpsStore.snapshot?.remainingBandwidthGB,
+          cycleStart: vpsStore.snapshot?.cycleStart,
+          cycleEnd: vpsStore.snapshot?.cycleEnd
+        )
+      )
+    case .commandCode:
+      chart = AnyView(
+        CommandCodeTrendChartView(
+          samples: commandCodeStore.historySamples,
+          language: language,
+          now: now
+        )
+      )
+    }
+    return AnyView(chart)
   }
 
   /// 根据固定状态设置弹窗行为：

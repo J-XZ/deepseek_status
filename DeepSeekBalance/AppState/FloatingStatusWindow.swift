@@ -19,6 +19,12 @@ final class FloatingStatusWindow: NSObject {
 
   private let panel: NSPanel
   private let contentView = FloatingStatusContentView()
+
+  /// 内容视图：悬停回调等由外部（StatusItemController）接线。
+  var hoverContent: FloatingStatusContentView { contentView }
+
+  /// 悬浮窗当前所在屏幕（未显示时为 nil）。
+  var screen: NSScreen? { panel.screen }
   private var isFirstShow = true
 
   override init() {
@@ -114,6 +120,7 @@ final class FloatingStatusWindow: NSObject {
 
 /// 悬浮窗内容视图：圆角卡片背景 + 与菜单栏完全一致的镜像文本。
 /// 复用 MenuBarStatusContentView 的公共绘制方法，保证两侧布局一致。
+/// 支持按段悬停追踪：hoveredVendorIndex 为当前悬停的供应商段索引。
 final class FloatingStatusContentView: NSView {
   static let fixedHeight: CGFloat = 32
   private static let horizontalPadding: CGFloat = 10
@@ -125,8 +132,87 @@ final class FloatingStatusContentView: NSView {
     weight: .semibold
   )
 
+  /// 悬停的供应商段索引（按 segments 顺序）；nil 表示未悬停在任何段上。
+  var hoveredVendorIndex: Int? {
+    didSet {
+      guard oldValue != hoveredVendorIndex else { return }
+      onHoverChange?(hoveredVendorIndex)
+    }
+  }
+
+  /// 悬停段变化回调：参数为段索引（nil = 离开所有段）。
+  var onHoverChange: ((Int?) -> Void)?
+
+  private var hoverTrackingArea: NSTrackingArea?
+  private var segmentRanges: [(index: Int, range: Range<CGFloat>)] = []
+
   var segments: [MenuBarStatusContentView.Segment] = [] {
-    didSet { needsDisplay = true }
+    didSet {
+      segmentRanges = Self.computeSegmentRanges(for: segments)
+      needsDisplay = true
+    }
+  }
+
+  /// 按 drawSegments 相同的推进逻辑计算每个供应商段的 x 范围。
+  static func computeSegmentRanges(
+    for segments: [MenuBarStatusContentView.Segment]
+  ) -> [(index: Int, range: Range<CGFloat>)] {
+    var result: [(index: Int, range: Range<CGFloat>)] = []
+    var x = horizontalPadding
+    for (index, segment) in segments.enumerated() {
+      let width = MenuBarStatusContentView.segmentWidth(segment, iconTextSpacing: iconTextSpacing)
+      result.append((index, x..<(x + width)))
+      x += width
+      if index < segments.count - 1 {
+        x += MenuBarStatusContentView.attributedWidth(separatorText, font: separatorFont)
+      }
+    }
+    return result
+  }
+
+  override func updateTrackingAreas() {
+    super.updateTrackingAreas()
+    if let hoverTrackingArea {
+      removeTrackingArea(hoverTrackingArea)
+    }
+    let area = NSTrackingArea(
+      rect: bounds,
+      options: [.mouseMoved, .mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+      owner: self,
+      userInfo: nil
+    )
+    addTrackingArea(area)
+    hoverTrackingArea = area
+  }
+
+  override func mouseMoved(with event: NSEvent) {
+    super.mouseMoved(with: event)
+    updateHover(for: event)
+  }
+
+  override func mouseEntered(with event: NSEvent) {
+    super.mouseEntered(with: event)
+    updateHover(for: event)
+  }
+
+  override func mouseExited(with event: NSEvent) {
+    super.mouseExited(with: event)
+    hoveredVendorIndex = nil
+  }
+
+  private func updateHover(for event: NSEvent) {
+    let point = convert(event.locationInWindow, from: nil)
+    hoveredVendorIndex = segmentRanges.first { $0.range.contains(point.x) }?.index
+  }
+
+  /// 当前悬停段在屏幕上的 frame（含窗口偏移）。
+  var hoveredSegmentScreenFrame: NSRect? {
+    guard let index = hoveredVendorIndex,
+      let range = segmentRanges.first(where: { $0.index == index })?.range,
+      let window = window
+    else { return nil }
+    let viewRect = NSRect(x: range.lowerBound, y: 0, width: range.upperBound - range.lowerBound, height: bounds.height)
+    return window.convertToScreen(convert(viewRect, to: nil))
   }
 
   /// 内容总宽度：各分段宽度 + 分隔符 + 两侧 padding。

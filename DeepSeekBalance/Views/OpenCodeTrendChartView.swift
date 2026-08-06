@@ -231,9 +231,10 @@ struct OpenCodeTrendChartView: View {
       ForEach(model.zenPoints) { point in
         LineMark(
           x: .value(chartTimeTitle, point.date),
-          y: .value(zenAxisTitle, point.value)
+          y: .value(zenAxisTitle, point.value),
+          series: .value(seriesDimensionTitle, zenSeriesTitle)
         )
-        .foregroundStyle(.purple)
+        .foregroundStyle(by: .value(seriesDimensionTitle, zenSeriesTitle))
         .lineStyle(StrokeStyle(lineWidth: 2))
       }
 
@@ -259,7 +260,11 @@ struct OpenCodeTrendChartView: View {
         }
       }
     }
-    .chartLegend(.hidden)
+    .chartForegroundStyleScale(
+      domain: [zenSeriesTitle],
+      range: [.purple]
+    )
+    .chartLegend(position: .bottom, alignment: .leading, spacing: 12)
     .frame(height: 150)
     .trendChartSelection($selectedDate)
     .accessibilityLabel(L10n.string(.a11yOpenCodeZenLegend, language: language))

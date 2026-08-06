@@ -69,15 +69,16 @@ struct CodexTrendChartView: View {
   }
 
   private var chartView: some View {
-    Chart {
+    let remainingTitle = L10n.string(.chartRemaining, language: language)
+    return Chart {
       ForEach(Array(segments.enumerated()), id: \.offset) { index, segment in
         ForEach(segment) { sample in
           LineMark(
             x: .value(L10n.string(.chartTime, language: language), sample.bucketStart),
             y: .value(L10n.string(.chartRemaining, language: language), sample.remainingPercent),
-            series: .value(L10n.string(.chartSegment, language: language), index)
+            series: .value(L10n.string(.chartSegment, language: language), "\(remainingTitle)/\(index)")
           )
-          .foregroundStyle(.blue)
+          .foregroundStyle(by: .value(L10n.string(.chartSegment, language: language), remainingTitle))
           .lineStyle(StrokeStyle(lineWidth: 2))
         }
       }
@@ -116,7 +117,11 @@ struct CodexTrendChartView: View {
         }
       }
     }
-    .chartLegend(.hidden)
+    .chartForegroundStyleScale(
+      domain: [remainingTitle],
+      range: [.blue]
+    )
+    .chartLegend(position: .bottom, alignment: .leading, spacing: 12)
     .frame(height: 160)
     .trendChartSelection($selectedDate)
     .accessibilityLabel(L10n.string(.a11yCodexLegend, language: language))

@@ -76,17 +76,15 @@ struct CommandCodeTrendChartView: View {
   }
 
   private var chartView: some View {
-    Chart {
+    let remainingTitle = L10n.string(.chartRemaining, language: language)
+    return Chart {
       ForEach(points) { point in
         LineMark(
           x: .value(L10n.string(.chartTime, language: language), point.bucketStart),
           y: .value(L10n.string(.chartRemaining, language: language), point.percent),
-          series: .value(
-            L10n.string(.chartChannel, language: language),
-            "remaining/\(point.segment)"
-          )
+          series: .value(L10n.string(.chartChannel, language: language), "\(remainingTitle)/\(point.segment)")
         )
-        .foregroundStyle(.blue)
+        .foregroundStyle(by: .value(L10n.string(.chartChannel, language: language), remainingTitle))
         .lineStyle(StrokeStyle(lineWidth: 2))
       }
 
@@ -124,7 +122,11 @@ struct CommandCodeTrendChartView: View {
         }
       }
     }
-    .chartLegend(.hidden)
+    .chartForegroundStyleScale(
+      domain: [remainingTitle],
+      range: [.blue]
+    )
+    .chartLegend(position: .bottom, alignment: .leading, spacing: 12)
     .frame(height: 160)
     .trendChartSelection($selectedDate)
     .accessibilityLabel(L10n.string(.a11yCommandCodeLegend, language: language))
