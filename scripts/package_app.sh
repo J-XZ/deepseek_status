@@ -177,10 +177,10 @@ fi
 echo "==> 生成 ZIP ..."
 ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$ZIP_PATH"
 
-echo "==> 生成一键安装 PKG（安装到 /Applications） ..."
+echo "==> 生成一键安装 PKG（安装到 ~/Applications） ..."
 pkgbuild \
   --component "$APP_PATH" \
-  --install-location /Applications \
+  --install-location "$HOME/Applications" \
   --identifier "com.jxz.deepseekbalance" \
   --version "$VERSION" \
   "$WORK_DIR/$ARCHIVE_BASENAME-unsigned.pkg"
@@ -200,9 +200,9 @@ fi
 STAGING_DIR="$WORK_DIR/dmg-staging"
 mkdir -p "$STAGING_DIR"
 
-echo "==> 生成 DMG（拖入 Applications 即可安装） ..."
+echo "==> 生成 DMG（拖入 ~/Applications 即可安装） ..."
 ditto "$APP_PATH" "$STAGING_DIR/DeepSeekBalance.app"
-ln -s /Applications "$STAGING_DIR/Applications"
+ln -s "$HOME/Applications" "$STAGING_DIR/Applications"
 hdiutil create \
   -volname "DeepSeekBalance $VERSION" \
   -srcfolder "$STAGING_DIR" \

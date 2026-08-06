@@ -138,6 +138,18 @@ struct SettingsView: View {
       }
       .font(AppTypography.body)
 
+      settingsGroup {
+        HStack {
+          Text(L10n.string(.settingsFloatingWindow, language: language))
+          Spacer()
+          Toggle("", isOn: floatingWindowBinding)
+            .labelsHidden()
+            .toggleStyle(.switch)
+            .controlSize(.small)
+        }
+      }
+      .font(AppTypography.body)
+
       Spacer()
     }
     .padding(20)
@@ -224,6 +236,13 @@ struct SettingsView: View {
     Binding(
       get: { store.appearance },
       set: { store.setAppearance($0) }
+    )
+  }
+
+  private var floatingWindowBinding: Binding<Bool> {
+    Binding(
+      get: { FloatingStatusWindow.isEnabled },
+      set: { FloatingStatusWindow.setEnabled($0) }
     )
   }
 

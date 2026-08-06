@@ -1761,6 +1761,22 @@
         }
       }
     },
+    "settings.floatingWindow": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Floating Window"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "悬浮窗"
+          }
+        }
+      }
+    },
     "settings.title": {
       "localizations": {
         "en": {

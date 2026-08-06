@@ -75,6 +75,7 @@ enum L10nKey: String, CaseIterable, Sendable {
   case loginUnknownStatus = "login.unknownStatus"
   case loginOpenSettings = "login.openSettings"
   case settingsLocalHistory = "settings.localHistory"
+  case settingsFloatingWindow = "settings.floatingWindow"
 
   // 服务状态
   case serviceTitle = "serviceStatus.title"

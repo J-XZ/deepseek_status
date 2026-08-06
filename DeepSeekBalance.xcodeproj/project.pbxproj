@@ -45,6 +45,7 @@
 		AA00000000000000000003D4 /* StatusPageMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000113 /* StatusPageMapper.swift */; };
 		AA00000000000000000003D5 /* StatusPageStatusStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000114 /* StatusPageStatusStore.swift */; };
 		AA000000000000000000030B /* StatusItemController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000010B /* StatusItemController.swift */; };
+		FF0000000000000000000302 /* FloatingStatusWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000301 /* FloatingStatusWindow.swift */; };
 		AA000000000000000000030C /* AppAppearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000010D /* AppAppearance.swift */; };
 		DD00000000000000001001 /* builder.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000101 /* builder.cc */; };
 		DD00000000000000001002 /* c.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000102 /* c.cc */; };
@@ -206,6 +207,7 @@
 		BB0000000000000000000113 /* StatusPageMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusPageMapper.swift; sourceTree = "<group>"; };
 		BB0000000000000000000114 /* StatusPageStatusStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusPageStatusStore.swift; sourceTree = "<group>"; };
 		BB000000000000000000010B /* StatusItemController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemController.swift; sourceTree = "<group>"; };
+		FF0000000000000000000301 /* FloatingStatusWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingStatusWindow.swift; sourceTree = "<group>"; };
 		BB0000000000000000000201 /* CodexUsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexUsageModels.swift; sourceTree = "<group>"; };
 		BB0000000000000000000202 /* CodexUsageClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexUsageClient.swift; sourceTree = "<group>"; };
 		BB0000000000000000000203 /* CodexAuthProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexAuthProvider.swift; sourceTree = "<group>"; };
@@ -405,6 +407,7 @@
 				BB0000000000000000000105 /* LoginItemManager.swift */,
 				BB000000000000000000010B /* StatusItemController.swift */,
 				BB000000000000000000020B /* SettingsWindow.swift */,
+				FF0000000000000000000301 /* FloatingStatusWindow.swift */,
 				BB0000000000000000000234 /* CommandCodeUsageStore.swift */,
 			);
 			path = AppState;
@@ -800,6 +803,7 @@
 				AA00000000000000000003D4 /* StatusPageMapper.swift in Sources */,
 				AA00000000000000000003D5 /* StatusPageStatusStore.swift in Sources */,
 				AA000000000000000000030B /* StatusItemController.swift in Sources */,
+				FF0000000000000000000302 /* FloatingStatusWindow.swift in Sources */,
 				AA0000000000000000000401 /* CodexUsageModels.swift in Sources */,
 				AA0000000000000000000402 /* CodexUsageClient.swift in Sources */,
 				AA0000000000000000000403 /* CodexAuthProvider.swift in Sources */,
@@ -1066,7 +1070,7 @@
 				CODE_SIGN_ENTITLEMENTS = DeepSeekBalance/DeepSeekBalance.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				HEADER_SEARCH_PATHS = (
@@ -1078,7 +1082,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 3.0.1;
+				MARKETING_VERSION = 3.0.2;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lc++",
@@ -1098,7 +1102,7 @@
 				CODE_SIGN_ENTITLEMENTS = DeepSeekBalance/DeepSeekBalance.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				HEADER_SEARCH_PATHS = (
@@ -1110,7 +1114,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 3.0.1;
+				MARKETING_VERSION = 3.0.2;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lc++",
@@ -1128,7 +1132,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1140,7 +1144,7 @@
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 3.0.1;
+				MARKETING_VERSION = 3.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jxz.deepseekbalance.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -1153,7 +1157,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1165,7 +1169,7 @@
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 3.0.1;
+				MARKETING_VERSION = 3.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jxz.deepseekbalance.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;

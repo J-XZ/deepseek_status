@@ -180,7 +180,8 @@ enum MenuBarIconLayout {
 
 /// 菜单栏内容视图：用明确的几何布局绘制供应商信息，避免 NSStatusBarButton
 /// 对多行 attributedTitle 按单行宽度计算而产生截断或错位。
-private final class MenuBarStatusContentView: NSView {
+/// 悬浮窗镜像复用同一视图绘制，保持内容一致。
+final class MenuBarStatusContentView: NSView {
   struct Segment {
     let icon: NSImage?
     let lines: [String]
@@ -231,14 +232,57 @@ private final class MenuBarStatusContentView: NSView {
 
   override func draw(_ dirtyRect: NSRect) {
     super.draw(dirtyRect)
+    _ = Self.drawSegments(
+      segments,
+      in: bounds,
+      horizontalPadding: horizontalPadding,
+      separatorText: separatorText,
+      separatorFont: separatorFont,
+      iconTextSpacing: iconTextSpacing
+    )
+  }
+
+  // MARK: - 公共绘制（菜单栏与悬浮窗共用）
+
+  /// 把一段文字按字体与颜色构造成属性字符串；color 为空时使用默认文本色。
+  static func attributedText(
+    _ line: String,
+    font: NSFont,
+    color: NSColor?,
+    defaultColor: NSColor = .labelColor
+  ) -> NSAttributedString {
+    NSAttributedString(
+      string: line,
+      attributes: [
+        .font: font,
+        .foregroundColor: color ?? defaultColor
+      ]
+    )
+  }
+
+  /// 按「分段 + 分隔符」布局绘制内容，返回内容总宽度（不含 padding）。
+  /// 多行分段按 lineHeight 逐行纵向排布；垂直方向按 bounds 居中。
+  /// 菜单栏视图与悬浮窗共用，保证两侧文本布局一致。
+  /// defaultTextColor 用于未指定颜色的文本（悬浮窗深色背景上传白色）。
+  @discardableResult
+  static func drawSegments(
+    _ segments: [Segment],
+    in bounds: NSRect,
+    horizontalPadding: CGFloat,
+    separatorText: String,
+    separatorFont: NSFont,
+    iconTextSpacing: CGFloat = 4,
+    defaultTextColor: NSColor = .labelColor
+  ) -> CGFloat {
+    guard !segments.isEmpty else { return 0 }
 
     var x = horizontalPadding
-    let textColor = NSColor.labelColor
+    let textColor = defaultTextColor
 
     for (index, segment) in segments.enumerated() {
       let lines = segment.lines.isEmpty ? [""] : segment.lines
       let iconWidth = segment.icon.map { $0.size.width + iconTextSpacing } ?? 0
-      let lineHeight = segment.lineHeight ?? fontLineHeight(segment.font)
+      let lineHeight = segment.lineHeight ?? Self.fontLineHeight(segment.font)
       let textHeight = lineHeight * CGFloat(lines.count)
       let iconHeight = segment.icon?.size.height ?? 0
       let contentHeight = max(textHeight, iconHeight)
@@ -251,11 +295,12 @@ private final class MenuBarStatusContentView: NSView {
         let lineColor = segment.lineColors.indices.contains(lineIndex)
           ? segment.lineColors[lineIndex]
           : nil
-        let attributes: [NSAttributedString.Key: Any] = [
-          .font: segment.font,
-          .foregroundColor: lineColor ?? textColor
-        ]
-        let attributedLine = NSAttributedString(string: line, attributes: attributes)
+        let attributedLine = attributedText(
+          line,
+          font: segment.font,
+          color: lineColor,
+          defaultColor: defaultTextColor
+        )
         let lineSize = attributedLine.size()
         let lineCenterY = textBottom + textHeight
           - lineHeight * (CGFloat(lineIndex) + 0.5)
@@ -279,13 +324,9 @@ private final class MenuBarStatusContentView: NSView {
         )
       }
 
-      x += segmentWidth(segment)
+      x += Self.segmentWidth(segment, iconTextSpacing: iconTextSpacing)
       if index < segments.count - 1 {
-        let attributes: [NSAttributedString.Key: Any] = [
-          .font: separatorFont,
-          .foregroundColor: textColor
-        ]
-        let separator = NSAttributedString(string: separatorText, attributes: attributes)
+        let separator = attributedText(separatorText, font: separatorFont, color: textColor)
         let separatorSize = separator.size()
         separator.draw(
           at: NSPoint(
@@ -293,16 +334,21 @@ private final class MenuBarStatusContentView: NSView {
             y: bounds.midY - separatorSize.height / 2
           )
         )
-        x += separatorWidth
+        x += separator.size().width
       }
     }
+    return x - horizontalPadding
   }
 
   private var separatorWidth: CGFloat {
-    attributedWidth(separatorText, font: separatorFont)
+    Self.attributedWidth(separatorText, font: separatorFont)
   }
 
   private func segmentWidth(_ segment: Segment) -> CGFloat {
+    Self.segmentWidth(segment, iconTextSpacing: iconTextSpacing)
+  }
+
+  static func segmentWidth(_ segment: Segment, iconTextSpacing: CGFloat) -> CGFloat {
     let textWidth = segment.lines.map {
       attributedWidth($0, font: segment.font)
     }.max() ?? 0
@@ -310,14 +356,14 @@ private final class MenuBarStatusContentView: NSView {
     return ceil(iconWidth + textWidth)
   }
 
-  private func attributedWidth(_ text: String, font: NSFont) -> CGFloat {
+  static func attributedWidth(_ text: String, font: NSFont) -> CGFloat {
     NSAttributedString(
       string: text,
       attributes: [.font: font]
     ).size().width
   }
 
-  private func fontLineHeight(_ font: NSFont) -> CGFloat {
+  static func fontLineHeight(_ font: NSFont) -> CGFloat {
     ceil(font.ascender - font.descender + font.leading)
   }
 }
@@ -657,6 +703,8 @@ final class StatusItemController: NSObject {
       self?.applyVendorVisibility(vendor)
     }
   )
+  /// 悬浮窗：与菜单栏内容镜像，由设置开关启停。
+  private lazy var floatingWindow = FloatingStatusWindow()
   private var cancellables: Set<AnyCancellable> = []
   private var titleUpdateTask: Task<Void, Never>?
   private var popoverDismissObservations: [NotificationObservation] = []
@@ -728,6 +776,32 @@ final class StatusItemController: NSObject {
       self?.applyPinBehavior(pinned)
     }
     .store(in: &cancellables)
+
+    // 悬浮窗开关：开启时立即显示并用当前内容填充，关闭时收起。
+    // UserDefaults.didChangeNotification 覆盖设置页（同进程）与外部修改。
+    if FloatingStatusWindow.isEnabled {
+      floatingWindow.show()
+    }
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(floatingWindowSettingChanged(_:)),
+      name: UserDefaults.didChangeNotification,
+      object: nil
+    )
+  }
+
+  /// 悬浮窗开关变化：开启显示（内容在 updateTitle 时同步），关闭隐藏。
+  /// UserDefaults 通知可能来自后台线程，统一切回主线程处理。
+  @objc private func floatingWindowSettingChanged(_ notification: Notification) {
+    Task { @MainActor [weak self] in
+      guard let self else { return }
+      if FloatingStatusWindow.isEnabled {
+        self.floatingWindow.show()
+        self.updateTitle()
+      } else {
+        self.floatingWindow.hide()
+      }
+    }
   }
 
   /// 根据固定状态设置弹窗行为：
@@ -738,6 +812,7 @@ final class StatusItemController: NSObject {
   }
 
   deinit {
+    NotificationCenter.default.removeObserver(self)
     titleUpdateTask?.cancel()
     pendingPopoverSizeTask?.cancel()
     shrinkSettleTask?.cancel()
@@ -863,9 +938,9 @@ final class StatusItemController: NSObject {
       ).map { -$0 }
     }()
 
-    var segments: [MenuBarStatusContentView.Segment] = []
-    for vendor in visibility.orderedVisibleVendors {
-      segments.append(
+    // 按供应商构建分段；isDark 控制图标着色与文字颜色插值。
+    func buildSegments(isDark: Bool) -> [MenuBarStatusContentView.Segment] {
+      visibility.orderedVisibleVendors.map { vendor in
         menuBarSegment(
           for: vendor,
           isDark: isDark,
@@ -875,7 +950,31 @@ final class StatusItemController: NSObject {
           font: font,
           cursorFont: cursorFont
         )
-      )
+      }
+    }
+
+    // 悬浮窗镜像：启用后详情全部由悬浮窗承载（始终按深色风格生成以适配
+    // 深蓝背景），菜单栏只保留一个 DeepSeek 图标。
+    var segments: [MenuBarStatusContentView.Segment]
+    if FloatingStatusWindow.isEnabled {
+      floatingWindow.setSegments(buildSegments(isDark: true))
+      segments = [
+        MenuBarStatusContentView.Segment(
+          icon: menuBarTintedIcon(
+            named: "DeepSeekIcon",
+            size: MenuBarIconLayout.deepSeekMaxDimension,
+            isDark: isDark
+          ),
+          lines: [],
+          font: font,
+          lineHeight: nil,
+          verticalInset: 0,
+          lineColors: []
+        )
+      ]
+    } else {
+      segments = buildSegments(isDark: isDark)
+      floatingWindow.setSegments(segments)
     }
 
     guard let contentView = menuBarContentView else { return }
