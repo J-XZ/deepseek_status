@@ -5313,34 +5313,34 @@
         }
       }
     },
-    "commandCode.trendWindowUsed": {
+    "commandCode.trendFiveHour": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ used of %@"
+            "value": "5-hour window"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "已用 %@ / %@"
+            "value": "5 小时窗口"
           }
         }
       }
     },
-    "commandCode.trendWindowExceeded": {
+    "commandCode.trendWeekly": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Limit exceeded"
+            "value": "Weekly window"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "已达上限"
+            "value": "每周窗口"
           }
         }
       }

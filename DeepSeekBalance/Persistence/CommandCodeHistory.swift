@@ -105,6 +105,7 @@ struct CommandCodeHistoryService: Sendable {
   func makeSample(
     remainingPercent: Int,
     daysRemaining: Int?,
+    windowLimits: CommandCodeWindowLimits?,
     credentialID: String,
     at date: Date
   ) -> CommandCodeUsageSample {
@@ -113,8 +114,15 @@ struct CommandCodeHistoryService: Sendable {
       bucketStart: TimeBucket.bucketStart(for: date),
       observedAt: date,
       remainingPercent: remainingPercent,
-      daysRemaining: daysRemaining
+      daysRemaining: daysRemaining,
+      fiveHourUsedPercent: windowLimits?.fiveHour.flatMap(Self.normalizedPercent),
+      weeklyUsedPercent: windowLimits?.weekly.flatMap(Self.normalizedPercent)
     )
+  }
+
+  /// 已用百分比夹在 0...100；金额缺失（cap 为 nil）时返回 nil。
+  private static func normalizedPercent(_ limit: CommandCodeWindowLimit) -> Int? {
+    limit.usedPercent
   }
 
   func save(sample: CommandCodeUsageSample) async throws {

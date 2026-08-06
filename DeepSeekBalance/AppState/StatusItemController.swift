@@ -887,8 +887,7 @@ final class StatusItemController: NSObject {
         CommandCodeTrendChartView(
           samples: commandCodeStore.historySamples,
           language: language,
-          now: now,
-          windowLimits: commandCodeStore.usage?.windowLimits
+          now: now
         )
       )
     }

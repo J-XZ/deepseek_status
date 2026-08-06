@@ -53,9 +53,9 @@ final class FloatingTrendPopover: NSObject {
     let card = FloatingTrendCard(content: chart)
     hostingView.rootView = card
 
-    // 固定内容尺寸：图表视图统一 280×300（图表 160 + 估算行 + 窗口限制行 + 图例），
+    // 固定内容尺寸：图表视图统一 280×240（图表 160 + 估算行 + 图例），
     // 避免依赖 hostingView 尺寸拟合（sizingOptions = [] 下拟合不可靠）。
-    let contentSize = NSSize(width: 300, height: 320)
+    let contentSize = NSSize(width: 300, height: 260)
     panel.setContentSize(contentSize)
     hostingView.frame = NSRect(origin: .zero, size: contentSize)
 
@@ -101,8 +101,8 @@ private struct FloatingTrendCard: View {
     Group {
       if let content {
         content
-          // 固定图表区域尺寸，避免依赖外部拟合；高度含图例/估算行/窗口限制行。
-          .frame(width: 280, height: 300)
+          // 固定图表区域尺寸，避免依赖外部拟合；高度含图例/估算行。
+          .frame(width: 280, height: 240)
       } else {
         Color.clear.frame(width: 1, height: 1)
       }

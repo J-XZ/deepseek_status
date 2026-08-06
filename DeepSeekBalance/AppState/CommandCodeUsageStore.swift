@@ -176,6 +176,7 @@ final class CommandCodeUsageStore: ObservableObject {
     let sample = history.makeSample(
       remainingPercent: remainingPercent,
       daysRemaining: response.daysRemaining,
+      windowLimits: response.windowLimits,
       credentialID: Self.credentialID,
       at: clock.now()
     )

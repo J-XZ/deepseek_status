@@ -252,6 +252,90 @@ final class CommandCodeUsageTests: XCTestCase {
     XCTAssertEqual(MockURLProtocol.recordedRequestCount, before)
   }
 
+  // MARK: - 趋势窗口线
+
+  func testTrendPointsIncludeWindowSeries() {
+    let samples = [
+      CommandCodeUsageSample(
+        credentialID: "commandcode",
+        bucketStart: Date(timeIntervalSince1970: 1_800_000),
+        observedAt: Date(timeIntervalSince1970: 1_800_000),
+        remainingPercent: 60,
+        fiveHourUsedPercent: 30,
+        weeklyUsedPercent: 10
+      ),
+      CommandCodeUsageSample(
+        credentialID: "commandcode",
+        bucketStart: Date(timeIntervalSince1970: 1_800_600),
+        observedAt: Date(timeIntervalSince1970: 1_800_600),
+        remainingPercent: 55,
+        fiveHourUsedPercent: 45,
+        weeklyUsedPercent: 15
+      ),
+    ]
+    let points = CommandCodeTrendProcessor.points(samples, language: .simplifiedChinese)
+    let overall = points.filter { $0.kind == .overall }
+    let fiveHour = points.filter { $0.kind == .fiveHour }
+    let weekly = points.filter { $0.kind == .weekly }
+    // 整体线保存剩余百分比原值；窗口线把已用百分比转为剩余百分比。
+    XCTAssertEqual(overall.map(\.percent), [60, 55])
+    XCTAssertEqual(fiveHour.map(\.percent), [70, 55])
+    XCTAssertEqual(weekly.map(\.percent), [90, 85])
+  }
+
+  func testTrendPointsSkipsMissingWindowFields() {
+    let samples = [
+      CommandCodeUsageSample(
+        credentialID: "commandcode",
+        bucketStart: Date(timeIntervalSince1970: 1_800_000),
+        observedAt: Date(timeIntervalSince1970: 1_800_000),
+        remainingPercent: 60
+      ),
+      CommandCodeUsageSample(
+        credentialID: "commandcode",
+        bucketStart: Date(timeIntervalSince1970: 1_800_600),
+        observedAt: Date(timeIntervalSince1970: 1_800_600),
+        remainingPercent: 55
+      ),
+    ]
+    let points = CommandCodeTrendProcessor.points(samples, language: .english)
+    XCTAssertEqual(points.count, 2)
+    XCTAssertTrue(points.allSatisfy { $0.kind == .overall })
+  }
+
+  func testWindowLimitsPersistThroughHistoryRoundTrip() async throws {
+    let tempDir = FileManager.default.temporaryDirectory
+      .appendingPathComponent(UUID().uuidString, isDirectory: true)
+    try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+    let fileURL = tempDir.appendingPathComponent("history.json")
+    let service = CommandCodeHistoryService(
+      store: CommandCodeHistoryFileStore(fileURL: fileURL),
+      clock: FixedClock(date: Date(timeIntervalSince1970: 1_784_813_765))
+    )
+    let windowLimits = try JSONDecoder().decode(
+      CommandCodeWindowLimits.self,
+      from: Data("""
+        {
+          "limited": false,
+          "fiveHour": {"used": 1.5, "cap": 3, "exceeded": false, "resetAt": "1784820000000"},
+          "weekly": {"used": 8, "cap": 30, "exceeded": false, "resetAt": "1784820000000"}
+        }
+        """.utf8)
+    )
+    let sample = service.makeSample(
+      remainingPercent: 70,
+      daysRemaining: 12,
+      windowLimits: windowLimits,
+      credentialID: "commandcode",
+      at: Date(timeIntervalSince1970: 1_784_813_765)
+    )
+    try await service.save(sample: sample)
+    let fetched = try await service.recentSamples(credentialID: "commandcode")
+    XCTAssertEqual(fetched.count, 1)
+    XCTAssertEqual(fetched[0].fiveHourUsedPercent, 50)
+    XCTAssertEqual(fetched[0].weeklyUsedPercent, 27)
+  }
+
   private func makeStore(authFileMissing: Bool = false) -> CommandCodeUsageStore {
     let tempDir = FileManager.default.temporaryDirectory
       .appendingPathComponent(UUID().uuidString, isDirectory: true)
