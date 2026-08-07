@@ -1064,34 +1064,32 @@ final class StatusItemController: NSObject {
       }
     }
 
+    guard let contentView = menuBarContentView else { return }
+
     // 悬浮窗镜像：启用后详情全部由悬浮窗承载（始终按深色风格生成以适配
-    // 深蓝背景），菜单栏只保留一个 DeepSeek 图标。
-    var segments: [MenuBarStatusContentView.Segment]
+    // 深蓝背景），菜单栏只保留一个 DeepSeek 图标。直接使用系统模板渲染的
+    // 单图标按钮（squareLength），让系统按标准状态栏图标布局，紧凑无多余空白。
     if FloatingStatusWindow.isEnabled {
       floatingWindow.setSegments(buildSegments(isDark: true))
-      segments = [
-        MenuBarStatusContentView.Segment(
-          icon: menuBarTintedIcon(
-            named: "DeepSeekIcon",
-            size: MenuBarIconLayout.deepSeekMaxDimension,
-            isDark: isDark
-          ),
-          lines: [],
-          font: font,
-          lineHeight: nil,
-          verticalInset: 0,
-          lineColors: []
-        )
-      ]
+      button.image = menuBarIcon(
+        named: "DeepSeekIcon",
+        size: MenuBarIconLayout.deepSeekMaxDimension
+      )
+      button.imagePosition = .imageOnly
+      // 固定为图标实际宽度（16pt），比 squareLength(22pt) 更紧凑，
+      // 按钮与图标严格等宽，无多余空白。
+      statusItem.length = 16
+      contentView.isHidden = true
     } else {
-      segments = buildSegments(isDark: isDark)
+      button.image = nil
+      button.imagePosition = .noImage
+      contentView.isHidden = false
+      let segments = buildSegments(isDark: isDark)
       floatingWindow.setSegments(segments)
+      contentView.segments = segments
+      statusItem.length = contentView.requiredWidth
+      contentView.frame = button.bounds
     }
-
-    guard let contentView = menuBarContentView else { return }
-    contentView.segments = segments
-    statusItem.length = contentView.requiredWidth
-    contentView.frame = button.bounds
 
     let visibleVendors = visibility.orderedVisibleVendors
     let labels = visibleVendors.map { vendor -> String in

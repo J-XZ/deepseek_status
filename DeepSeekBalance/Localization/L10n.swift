@@ -36,6 +36,7 @@ enum L10nKey: String, CaseIterable, Sendable {
   case trendSummaryInsufficient = "trend.summaryInsufficient"
   case trendSummaryChange = "trend.summaryChange"
   case trendEstimateBalance = "trend.estimateBalance"
+  case trendEstimateExhausted = "trend.estimateExhausted"
   case trendEstimateGoUnavailable = "trend.estimateGoUnavailable"
   case trendEstimateUnavailable = "trend.estimateUnavailable"
   case trendEstimateMonthly = "trend.estimateMonthly"

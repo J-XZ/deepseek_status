@@ -243,6 +243,31 @@ final class BalanceTrendTests: XCTestCase {
     XCTAssertNil(UsageExhaustionEstimator.estimate(points: points, now: t0))
   }
 
+  func testExhaustionEstimateReturnsZeroWhenExhausted() {
+    let points = [
+      exhaustionPoint(-24 * 3600, remaining: 100),
+      exhaustionPoint(0, remaining: 0),
+    ]
+    let estimate = UsageExhaustionEstimator.estimate(points: points, now: t0)
+    XCTAssertEqual(estimate, 0)
+    XCTAssertTrue(UsageExhaustionEstimator.isExhausted(estimate))
+    XCTAssertFalse(UsageExhaustionEstimator.isExhausted(nil))
+    XCTAssertFalse(UsageExhaustionEstimator.isExhausted(3600))
+  }
+
+  func testExhaustionEstimateFiltersNegativePointsThenEstimates() {
+    // 负余额点被视为无效数据被过滤；只剩有效点时按正常逻辑估算。
+    let points = [
+      exhaustionPoint(-24 * 3600, remaining: 100),
+      exhaustionPoint(0, remaining: -5),
+    ]
+    XCTAssertNil(UsageExhaustionEstimator.estimate(points: points, now: t0))
+  }
+
+  func testExhaustionEstimateNilWithoutAnyPoint() {
+    XCTAssertNil(UsageExhaustionEstimator.estimate(points: [], now: t0))
+  }
+
   func testExhaustionDurationUsesLocalizedLargestUsefulUnit() {
     XCTAssertEqual(
       UsageExhaustionEstimator.formattedDuration(2 * 24 * 3600, language: .simplifiedChinese),

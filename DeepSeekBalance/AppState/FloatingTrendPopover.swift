@@ -93,7 +93,7 @@ final class FloatingTrendPopover: NSObject {
   }
 }
 
-/// 深色小卡片：包裹趋势图视图，与悬浮窗深蓝背景一致。
+/// 深色小卡片：包裹趋势图视图，使用与悬浮窗相同的 hudWindow 毛玻璃。
 private struct FloatingTrendCard: View {
   var content: AnyView?
 
@@ -110,7 +110,14 @@ private struct FloatingTrendCard: View {
     .padding(10)
     .background(
       RoundedRectangle(cornerRadius: 10, style: .continuous)
-        .fill(Color(red: 0.05, green: 0.15, blue: 0.40).opacity(0.98))
+        // 与悬浮窗相同的 hudWindow 毛玻璃材质。
+        .fill(Color.clear)
+        .overlay(HudWindowMaterial().clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous)))
+        // 深蓝着色叠加，保持与悬浮窗一致的深色基调。
+        .overlay(
+          Color(red: 0.05, green: 0.15, blue: 0.40).opacity(0.35)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        )
         .overlay(
           RoundedRectangle(cornerRadius: 10, style: .continuous)
             .stroke(Color.white.opacity(0.25), lineWidth: 1)
@@ -118,4 +125,18 @@ private struct FloatingTrendCard: View {
     )
     .preferredColorScheme(.dark)
   }
+}
+
+/// 与悬浮窗一致的 hudWindow 毛玻璃材质（SwiftUI 侧 NSVisualEffectView 包装）。
+private struct HudWindowMaterial: NSViewRepresentable {
+  func makeNSView(context: Context) -> NSVisualEffectView {
+    let view = NSVisualEffectView()
+    view.material = .hudWindow
+    view.blendingMode = .behindWindow
+    view.state = .active
+    view.appearance = NSAppearance(named: .darkAqua)
+    return view
+  }
+
+  func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
 }

@@ -69,7 +69,9 @@ enum UsageExhaustionEstimator {
     let validPoints = points
       .filter { $0.date <= now && $0.remaining.isFinite && $0.remaining >= 0 }
       .sorted { $0.date < $1.date }
-    guard let current = validPoints.last, current.remaining > 0 else { return nil }
+    guard let current = validPoints.last else { return nil }
+    // 余额已经耗尽（≤ 0）：返回 0 表示「已耗尽」，而不是无法估算。
+    guard current.remaining > 0 else { return 0 }
 
     for window in recentWindows {
       let lowerBound = now.addingTimeInterval(-window)
@@ -81,6 +83,11 @@ enum UsageExhaustionEstimator {
 
     guard let rate = consumptionRate(points: validPoints) else { return nil }
     return current.remaining / rate
+  }
+
+  /// 判断估算结果是否表示「额度已耗尽」。
+  static func isExhausted(_ seconds: TimeInterval?) -> Bool {
+    seconds == 0
   }
 
   /// 用正向下降量之和计算平均消耗速度，避免充值或窗口重置被误认为用量。

@@ -118,19 +118,56 @@ final class FloatingStatusWindow: NSObject {
   }
 }
 
-/// 悬浮窗内容视图：圆角卡片背景 + 与菜单栏完全一致的镜像文本。
+/// 悬浮窗内容视图：毛玻璃圆角卡片背景 + 与菜单栏完全一致的镜像文本。
 /// 复用 MenuBarStatusContentView 的公共绘制方法，保证两侧布局一致。
 /// 支持按段悬停追踪：hoveredVendorIndex 为当前悬停的供应商段索引。
 final class FloatingStatusContentView: NSView {
   static let fixedHeight: CGFloat = 32
-  private static let horizontalPadding: CGFloat = 10
-  private static let cornerRadius: CGFloat = 9
-  private static let iconTextSpacing: CGFloat = 4
-  private static let separatorText = "  |  "
-  private static let separatorFont = NSFont.monospacedDigitSystemFont(
+  fileprivate static let horizontalPadding: CGFloat = 10
+  fileprivate static let cornerRadius: CGFloat = 9
+  fileprivate static let iconTextSpacing: CGFloat = 4
+  fileprivate static let separatorText = "  |  "
+  fileprivate static let separatorFont = NSFont.monospacedDigitSystemFont(
     ofSize: MenuBarDisplayLayout.regularFontSize,
     weight: .semibold
   )
+
+  /// 毛玻璃背景层：位于最底层，随视图尺寸自动布局。
+  private let blurBackground = NSVisualEffectView()
+  /// 内容绘制层：位于毛玻璃之上，绘制半透明深蓝卡片与镜像文本。
+  private let contentOverlay = FloatingStatusContentOverlayView()
+
+  override init(frame frameRect: NSRect) {
+    super.init(frame: frameRect)
+
+    blurBackground.material = .hudWindow
+    // 轻量毛玻璃：低噪点、低通透，既能看到背景又保持文字可读。
+    blurBackground.blendingMode = .behindWindow
+    blurBackground.state = .active
+    // 悬浮窗始终为深蓝深色风格（白字/白图标），毛玻璃强制深色外观保持一致。
+    blurBackground.appearance = NSAppearance(named: .darkAqua)
+    // 圆角裁剪：让视觉特效视图贴合卡片圆角轮廓。
+    blurBackground.wantsLayer = true
+    blurBackground.layer?.cornerRadius = Self.cornerRadius
+    blurBackground.layer?.masksToBounds = true
+    blurBackground.translatesAutoresizingMaskIntoConstraints = false
+    addSubview(blurBackground, positioned: .below, relativeTo: nil)
+    NSLayoutConstraint.activate([
+      blurBackground.leadingAnchor.constraint(equalTo: leadingAnchor),
+      blurBackground.trailingAnchor.constraint(equalTo: trailingAnchor),
+      blurBackground.topAnchor.constraint(equalTo: topAnchor),
+      blurBackground.bottomAnchor.constraint(equalTo: bottomAnchor),
+    ])
+
+    contentOverlay.frame = bounds
+    contentOverlay.autoresizingMask = [.width, .height]
+    addSubview(contentOverlay)
+  }
+
+  @available(*, unavailable)
+  required init?(coder: NSCoder) {
+    fatalError("init(coder:) has not been implemented")
+  }
 
   /// 悬停的供应商段索引（按 segments 顺序）；nil 表示未悬停在任何段上。
   var hoveredVendorIndex: Int? {
@@ -149,6 +186,7 @@ final class FloatingStatusContentView: NSView {
   var segments: [MenuBarStatusContentView.Segment] = [] {
     didSet {
       segmentRanges = Self.computeSegmentRanges(for: segments)
+      contentOverlay.segments = segments
       needsDisplay = true
     }
   }
@@ -230,14 +268,42 @@ final class FloatingStatusContentView: NSView {
 
   override func draw(_ dirtyRect: NSRect) {
     super.draw(dirtyRect)
+    // 背景与文字绘制全部由 contentOverlay 完成（位于毛玻璃层之上），
+    // 避免毛玻璃把自绘内容遮挡成灰色。
+  }
+}
+
+/// 悬浮窗内容绘制层：位于毛玻璃背景之上，负责半透明深蓝卡片与镜像文本。
+/// 自绘内容必须放在毛玻璃上方的独立子视图里，NSVisualEffectView 会盖住
+/// 父视图 draw 的内容。
+private final class FloatingStatusContentOverlayView: NSView {
+  /// 与父视图同步的镜像文本分段。
+  var segments: [MenuBarStatusContentView.Segment] = [] {
+    didSet { needsDisplay = true }
+  }
+
+  override init(frame frameRect: NSRect) {
+    super.init(frame: frameRect)
+    // 悬浮窗固定为深蓝深色风格，强制深色外观保证白字/白图标稳定着色。
+    appearance = NSAppearance(named: .darkAqua)
+  }
+
+  @available(*, unavailable)
+  required init?(coder: NSCoder) {
+    fatalError("init(coder:) has not been implemented")
+  }
+
+  override func draw(_ dirtyRect: NSRect) {
+    super.draw(dirtyRect)
 
     let card = NSBezierPath(
       roundedRect: bounds,
-      xRadius: Self.cornerRadius,
-      yRadius: Self.cornerRadius
+      xRadius: FloatingStatusContentView.cornerRadius,
+      yRadius: FloatingStatusContentView.cornerRadius
     )
-    // 深蓝背景：无论系统外观如何，保证白字/白图标可读。
-    NSColor(srgbRed: 0.05, green: 0.15, blue: 0.40, alpha: 0.95).setFill()
+    // 半透明深蓝着色：叠加在毛玻璃之上，保留深色基调保证白字/白图标可读，
+    // 同时透过下方毛玻璃清晰看到桌面内容。
+    NSColor(srgbRed: 0.05, green: 0.15, blue: 0.40, alpha: 0.35).setFill()
     card.fill()
     NSColor.white.withAlphaComponent(0.25).setStroke()
     card.lineWidth = 1
@@ -246,10 +312,10 @@ final class FloatingStatusContentView: NSView {
     _ = MenuBarStatusContentView.drawSegments(
       segments,
       in: bounds,
-      horizontalPadding: Self.horizontalPadding,
-      separatorText: Self.separatorText,
-      separatorFont: Self.separatorFont,
-      iconTextSpacing: Self.iconTextSpacing,
+      horizontalPadding: FloatingStatusContentView.horizontalPadding,
+      separatorText: FloatingStatusContentView.separatorText,
+      separatorFont: FloatingStatusContentView.separatorFont,
+      iconTextSpacing: FloatingStatusContentView.iconTextSpacing,
       // 深蓝背景：未指定颜色的文本统一用白色。
       defaultTextColor: .white
     )

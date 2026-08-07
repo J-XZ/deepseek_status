@@ -2097,6 +2097,22 @@
         }
       }
     },
+    "trend.estimateExhausted": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Balance exhausted"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "余额已耗尽"
+          }
+        }
+      }
+    },
     "trend.estimateGoUnavailable": {
       "localizations": {
         "en": {

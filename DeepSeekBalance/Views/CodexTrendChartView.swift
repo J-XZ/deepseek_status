@@ -41,21 +41,26 @@ struct CodexTrendChartView: View {
       },
       now: now
     ) {
-      Text(
-        L10n.string(
-          .trendEstimateWeekly,
-          language: language,
-          UsageExhaustionEstimator.formattedDuration(seconds, language: language)
-        )
-      )
-      .font(AppTypography.caption)
-      .foregroundStyle(.secondary)
-      .multilineTextAlignment(.trailing)
-      .lineLimit(2)
-      .minimumScaleFactor(0.75)
-      .fixedSize(horizontal: false, vertical: true)
-      .frame(maxWidth: .infinity, alignment: .trailing)
+      Text(exhaustionEstimateText(seconds))
+        .font(AppTypography.caption)
+        .foregroundStyle(.secondary)
+        .multilineTextAlignment(.trailing)
+        .lineLimit(2)
+        .minimumScaleFactor(0.75)
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: .infinity, alignment: .trailing)
     }
+  }
+
+  private func exhaustionEstimateText(_ seconds: TimeInterval) -> String {
+    if UsageExhaustionEstimator.isExhausted(seconds) {
+      return L10n.string(.trendEstimateExhausted, language: language)
+    }
+    return L10n.string(
+      .trendEstimateWeekly,
+      language: language,
+      UsageExhaustionEstimator.formattedDuration(seconds, language: language)
+    )
   }
 
   var body: some View {

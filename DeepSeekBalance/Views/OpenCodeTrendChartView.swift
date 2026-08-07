@@ -112,25 +112,33 @@ struct OpenCodeTrendChartView: View {
     var result: [String] = []
     if showGoTrend {
       if let seconds = model.exhaustion.goWeeklySeconds {
-        result.append(
-          L10n.string(
-            .trendEstimateWeekly,
-            language: language,
-            UsageExhaustionEstimator.formattedDuration(seconds, language: language)
+        if UsageExhaustionEstimator.isExhausted(seconds) {
+          result.append(L10n.string(.trendEstimateExhausted, language: language))
+        } else {
+          result.append(
+            L10n.string(
+              .trendEstimateWeekly,
+              language: language,
+              UsageExhaustionEstimator.formattedDuration(seconds, language: language)
+            )
           )
-        )
+        }
       } else {
         result.append(L10n.string(.trendEstimateGoUnavailable, language: language))
       }
     }
     if let seconds = model.exhaustion.zenSeconds {
-      result.append(
-        L10n.string(
-          .trendEstimateBalance,
-          language: language,
-          UsageExhaustionEstimator.formattedDuration(seconds, language: language)
+      if UsageExhaustionEstimator.isExhausted(seconds) {
+        result.append(L10n.string(.trendEstimateExhausted, language: language))
+      } else {
+        result.append(
+          L10n.string(
+            .trendEstimateBalance,
+            language: language,
+            UsageExhaustionEstimator.formattedDuration(seconds, language: language)
+          )
         )
-      )
+      }
     } else {
       result.append(L10n.string(.trendEstimateZenUnavailable, language: language))
     }

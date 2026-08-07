@@ -216,7 +216,8 @@ struct BalancePopoverView: View {
       // 保持在窗口顶部，溢出只向下走，避免居中导致切换栏被挤出可视区域。
       alignment: .top
     )
-    // 纯色背景：浅色为白色、深色为黑色，不做毛玻璃/半透明。
+    // 毛玻璃窗口背景：透过弹窗可见背景内容，跟随系统外观自动切换深浅。
+    // 半透明材质 + 圆角裁切，替代原有不透明纯色背景。
     .background(windowBackground)
     .preferredColorScheme(store.appearance.colorScheme)
     .onAppear {
@@ -446,9 +447,9 @@ struct BalancePopoverView: View {
     }
   }
 
-  /// 弹出窗口底色：浅色白色、深色黑色，均为不透明纯色。
-  private var windowBackground: Color {
-    store.appearance == .dark ? .black : .white
+  /// 弹出窗口背景：轻量毛玻璃（低通透、低噪点），内容之上保持可读。
+  private var windowBackground: some View {
+    VisualEffectBackground()
   }
 
   /// DeepSeek 标题与额度内容必须属于同一张卡片。
@@ -1117,4 +1118,18 @@ struct BalancePopoverView: View {
     }
     .controlSize(.small)
   }
+}
+
+/// 轻量毛玻璃背景：NSVisualEffectView 封装为 SwiftUI 视图，
+/// 跟随系统外观，弹出窗口之上呈现轻微磨砂质感。
+private struct VisualEffectBackground: NSViewRepresentable {
+  func makeNSView(context: Context) -> NSVisualEffectView {
+    let view = NSVisualEffectView()
+    view.material = .popover
+    view.blendingMode = .behindWindow
+    view.state = .active
+    return view
+  }
+
+  func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
 }
