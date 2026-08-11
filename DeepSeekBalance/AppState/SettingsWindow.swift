@@ -7,6 +7,7 @@ import Combine
 final class SettingsWindow: NSObject {
   private let panel: NSPanel
   private let store: BalanceStore
+  private let visibility: MenuBarVendorVisibility
   private var cancellables = Set<AnyCancellable>()
 
   init(
@@ -16,6 +17,7 @@ final class SettingsWindow: NSObject {
     onVisibilityChange: @escaping (MenuBarVendor) -> Void
   ) {
     self.store = store
+    self.visibility = visibility
     let panel = NSPanel(
       contentRect: NSRect(x: 0, y: 0, width: 400, height: 300),
       styleMask: [.titled, .closable, .utilityWindow],
@@ -40,20 +42,20 @@ final class SettingsWindow: NSObject {
     store.objectWillChange
       .receive(on: RunLoop.main)
       .sink { [weak self] _ in
-        self?.updateTitle()
+        self?.updateLayout()
+      }
+      .store(in: &cancellables)
+    visibility.objectWillChange
+      .receive(on: RunLoop.main)
+      .sink { [weak self] _ in
+        self?.updateLayout()
       }
       .store(in: &cancellables)
   }
 
   func show() {
     updateTitle()
-    // 内容随可见供应商数量变化，按 SwiftUI 理想尺寸调整窗口高度。
-    if let hostingView = panel.contentView as? NSHostingView<SettingsView> {
-      let fitting = hostingView.fittingSize
-      if fitting.height > 0 {
-        panel.setContentSize(NSSize(width: 400, height: fitting.height))
-      }
-    }
+    resizeToFittingSize()
     if !panel.isVisible {
       panel.center()
     }
@@ -63,5 +65,26 @@ final class SettingsWindow: NSObject {
 
   private func updateTitle() {
     panel.title = L10n.string(.settingsTitle, language: store.language)
+  }
+
+  /// 语言、可见供应商等变化后，等 SwiftUI 完成布局再按理想尺寸调整窗口，
+  /// 避免设置窗口开着时文案变长被裁掉。
+  private func updateLayout() {
+    updateTitle()
+    guard panel.isVisible else { return }
+    Task { @MainActor [weak self] in
+      await Task.yield()
+      self?.resizeToFittingSize()
+    }
+  }
+
+  private func resizeToFittingSize() {
+    guard let hostingView = panel.contentView as? NSHostingView<SettingsView> else { return }
+    let fitting = hostingView.fittingSize
+    guard fitting.height > 0 else { return }
+    let target = NSSize(width: 400, height: fitting.height)
+    if panel.contentView?.frame.size != target {
+      panel.setContentSize(target)
+    }
   }
 }

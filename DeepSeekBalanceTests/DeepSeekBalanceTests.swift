@@ -532,7 +532,7 @@ final class TrendChartModelCacheTests: XCTestCase {
         toppedUpBalance: "10", isAvailable: true
       ),
     ]
-    let now = Date(timeIntervalSince1970: 1_700_000_100)
+    let now = Date(timeIntervalSince1970: 1_700_000_000 + 1_200)
     let key = BalanceTrendProcessor.chartModelCacheKey(
       samples: samples, currency: "CNY", now: now
     )
@@ -542,7 +542,7 @@ final class TrendChartModelCacheTests: XCTestCase {
     BalanceTrendProcessor.storeChartModel(model, for: key)
     XCTAssertEqual(BalanceTrendProcessor.cachedChartModel(for: key), model)
     // 同一小时内重访问命中同一缓存项。
-    let laterSameHour = Date(timeIntervalSince1970: 1_700_000_300)
+    let laterSameHour = Date(timeIntervalSince1970: 1_700_000_000 + 1_500)
     XCTAssertEqual(
       BalanceTrendProcessor.chartModelCacheKey(
         samples: samples, currency: "CNY", now: laterSameHour

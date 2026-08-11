@@ -9,9 +9,11 @@ struct VPSTrendChartView: View {
   let currentRemainingGB: Double?
   let cycleStart: Date?
   let cycleEnd: Date?
+  let period: TrendPeriod
 
   @State private var preparedModel: VPSUsageTrendProcessor.ChartModel?
   @State private var selectedDate: Date?
+  @Environment(\.trendChartHighContrast) private var highContrast
 
   init(
     samples: [VPSUsageSample],
@@ -19,7 +21,8 @@ struct VPSTrendChartView: View {
     now: Date,
     currentRemainingGB: Double? = nil,
     cycleStart: Date? = nil,
-    cycleEnd: Date? = nil
+    cycleEnd: Date? = nil,
+    period: TrendPeriod = .fourteenDays
   ) {
     self.samples = samples
     self.language = language
@@ -27,12 +30,21 @@ struct VPSTrendChartView: View {
     self.currentRemainingGB = currentRemainingGB
     self.cycleStart = cycleStart
     self.cycleEnd = cycleEnd
+    self.period = period
     // 样本集未变化时直接用缓存渲染，切回本页不会闪等待文案。
     _preparedModel = State(
       initialValue: VPSUsageTrendProcessor.cachedChartModel(
-        for: VPSUsageTrendProcessor.chartModelCacheKey(samples: samples, now: now)
+        for: VPSUsageTrendProcessor.chartModelCacheKey(
+          samples: samples,
+          now: now,
+          period: period
+        )
       )
     )
+  }
+
+  private var periodSamples: [VPSUsageSample] {
+    TrendPeriod.filtered(samples, period: period, now: now) { $0.bucketStart }
   }
 
   /// 图表数据与样本集不变时无需重新准备；不把当前分钟纳入 ID，
@@ -40,18 +52,18 @@ struct VPSTrendChartView: View {
   private var preparationID: String {
     let latest = samples.last
     let observedAt = latest?.observedAt.timeIntervalSince1970 ?? -1
-    return "\(samples.count)-\(latest?.id ?? "empty")-\(observedAt)"
+    return "\(period.rawValue)-\(samples.count)-\(latest?.id ?? "empty")-\(observedAt)"
   }
 
   private var selectedSample: VPSUsageSample? {
     guard let selectedDate else { return nil }
-    return VPSUsageTrendProcessor.nearestSample(to: selectedDate, samples: samples)
+    return VPSUsageTrendProcessor.nearestSample(to: selectedDate, samples: periodSamples)
   }
 
   private var trafficForecast: VPSTrafficForecast? {
     guard let cycleEnd else { return nil }
     return VPSTrafficForecastEstimator.estimate(
-      samples: samples,
+      samples: periodSamples,
       currentRemainingGB: currentRemainingGB,
       cycleStart: cycleStart,
       cycleEnd: cycleEnd,
@@ -83,16 +95,25 @@ struct VPSTrendChartView: View {
     }
     .task(id: preparationID) {
       preparedModel = nil
-      let capturedSamples = samples
+      let capturedSamples = periodSamples
       let capturedNow = now
+      let capturedPeriod = period
       let model = await Task.detached(priority: .userInitiated) {
-        VPSUsageTrendProcessor.chartModel(samples: capturedSamples, now: capturedNow)
+        VPSUsageTrendProcessor.chartModel(
+          samples: capturedSamples,
+          now: capturedNow,
+          period: capturedPeriod
+        )
       }.value
       guard !Task.isCancelled else { return }
       preparedModel = model
       VPSUsageTrendProcessor.storeChartModel(
         model,
-        for: VPSUsageTrendProcessor.chartModelCacheKey(samples: capturedSamples, now: capturedNow)
+        for: VPSUsageTrendProcessor.chartModelCacheKey(
+          samples: capturedSamples,
+          now: capturedNow,
+          period: capturedPeriod
+        )
       )
     }
   }
@@ -104,7 +125,7 @@ struct VPSTrendChartView: View {
       Rectangle().fill(.clear)
       Text(L10n.string(.vpsTrendWaiting, language: language))
         .font(AppTypography.caption)
-        .foregroundStyle(.secondary)
+        .foregroundStyle(TrendChartPalette.secondaryText(highContrast: highContrast))
     }
     .frame(height: 180)
     .frame(maxWidth: .infinity)
@@ -113,7 +134,7 @@ struct VPSTrendChartView: View {
   private var exhaustionEstimate: some View {
     Text(exhaustionEstimateText)
       .font(AppTypography.caption)
-      .foregroundStyle(.secondary)
+      .foregroundStyle(TrendChartPalette.secondaryText(highContrast: highContrast))
       .multilineTextAlignment(.trailing)
       .lineLimit(2)
       .minimumScaleFactor(0.75)
@@ -192,7 +213,7 @@ struct VPSTrendChartView: View {
             selectedSample.bucketStart
           )
         )
-        .foregroundStyle(.secondary)
+        .foregroundStyle(TrendChartPalette.selection(highContrast: highContrast))
         .lineStyle(TrendChartSelectionStyle.rule)
       }
     }
@@ -204,24 +225,25 @@ struct VPSTrendChartView: View {
     )
     .chartXAxis {
       AxisMarks(values: .automatic(desiredCount: 4)) { value in
-        AxisGridLine().foregroundStyle(.quaternary)
+        AxisGridLine().foregroundStyle(TrendChartPalette.grid(highContrast: highContrast))
         AxisValueLabel {
           if let date = value.as(Date.self) {
             Text(axisLabel(for: date))
               .font(AppTypography.caption)
+              .foregroundStyle(TrendChartPalette.axisText(highContrast: highContrast))
               .lineLimit(1)
-              .minimumScaleFactor(0.8)
           }
         }
       }
     }
     .chartYAxis {
       AxisMarks(position: .leading, values: normalizedTicks) { value in
-        AxisGridLine().foregroundStyle(.quaternary)
+        AxisGridLine().foregroundStyle(TrendChartPalette.grid(highContrast: highContrast))
         AxisValueLabel {
           if let normalized = value.as(Double.self) {
             Text(UsageFormatting.formattedGB(denormalized(normalized, in: model.trafficDomain)))
               .font(AppTypography.caption)
+              .foregroundStyle(TrendChartPalette.axisText(highContrast: highContrast))
           }
         }
       }
@@ -230,6 +252,7 @@ struct VPSTrendChartView: View {
           if let normalized = value.as(Double.self) {
             Text(formattedUSD(denormalized(normalized, in: model.creditDomain)))
               .font(AppTypography.caption)
+              .foregroundStyle(TrendChartPalette.axisText(highContrast: highContrast))
           }
         }
       }

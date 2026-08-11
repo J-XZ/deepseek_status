@@ -1,6 +1,38 @@
 import Charts
 import SwiftUI
 
+/// 悬浮窗悬停趋势图使用的高对比配色。
+/// 普通弹窗沿用系统次级色；悬浮窗卡片是深蓝半透明背景，坐标轴/说明文字
+/// 改成更浅的白色层级，避免在小图上发灰看不清。
+enum TrendChartPalette {
+  static func axisText(highContrast: Bool) -> Color {
+    highContrast ? Color.white.opacity(0.92) : Color.secondary
+  }
+
+  static func grid(highContrast: Bool) -> AnyShapeStyle {
+    highContrast ? AnyShapeStyle(Color.white.opacity(0.32)) : AnyShapeStyle(.quaternary)
+  }
+
+  static func secondaryText(highContrast: Bool) -> Color {
+    highContrast ? Color.white.opacity(0.86) : Color.secondary
+  }
+
+  static func selection(highContrast: Bool) -> Color {
+    highContrast ? Color.white.opacity(0.75) : Color.secondary
+  }
+}
+
+private struct TrendChartHighContrastKey: EnvironmentKey {
+  static let defaultValue = false
+}
+
+extension EnvironmentValues {
+  var trendChartHighContrast: Bool {
+    get { self[TrendChartHighContrastKey.self] }
+    set { self[TrendChartHighContrastKey.self] = newValue }
+  }
+}
+
 /// 最近 14 天余额趋势图（Apple Swift Charts）。
 /// 存储按 UTC 排序，X 轴按本地时间显示；缺口超过 20 分钟会断开连线。
 struct BalanceTrendChartView: View {
@@ -8,30 +40,39 @@ struct BalanceTrendChartView: View {
   let currency: String
   let language: AppLanguage
   let now: Date
+  let period: TrendPeriod
 
   @State private var preparedModel: BalanceTrendProcessor.ChartModel?
   @State private var selectedDate: Date?
+  @Environment(\.trendChartHighContrast) private var highContrast
 
   init(
     samples: [BalanceSample],
     currency: String,
     language: AppLanguage,
-    now: Date
+    now: Date,
+    period: TrendPeriod = .fourteenDays
   ) {
     self.samples = samples
     self.currency = currency
     self.language = language
     self.now = now
+    self.period = period
     // 样本集未变化时直接用缓存渲染，切回本页不会闪加载占位。
     _preparedModel = State(
       initialValue: BalanceTrendProcessor.cachedChartModel(
         for: BalanceTrendProcessor.chartModelCacheKey(
           samples: samples,
           currency: currency,
-          now: now
+          now: now,
+          period: period
         )
       )
     )
+  }
+
+  private var periodSamples: [BalanceSample] {
+    TrendPeriod.filtered(samples, period: period, now: now) { $0.bucketStart }
   }
 
   /// 图表数据与样本集不变时无需重新准备；不把当前分钟纳入 ID，
@@ -39,14 +80,14 @@ struct BalanceTrendChartView: View {
   private var preparationID: String {
     let latest = samples.last
     let observedAt = latest?.observedAt.timeIntervalSince1970 ?? -1
-    return "\(samples.count)-\(currency)-\(latest?.id ?? "empty")-\(observedAt)"
+    return "\(period.rawValue)-\(samples.count)-\(currency)-\(latest?.id ?? "empty")-\(observedAt)"
   }
 
   private var selectedSample: BalanceSample? {
     guard let selectedDate else { return nil }
     return BalanceTrendProcessor.nearestSample(
       to: selectedDate,
-      samples: samples,
+      samples: periodSamples,
       currency: currency
     )
   }
@@ -89,11 +130,13 @@ struct BalanceTrendChartView: View {
       let capturedSamples = samples
       let capturedCurrency = currency
       let capturedNow = now
+      let capturedPeriod = period
       let model = await Task.detached(priority: .userInitiated) {
         BalanceTrendProcessor.chartModel(
           samples: capturedSamples,
           currency: capturedCurrency,
-          now: capturedNow
+          now: capturedNow,
+          period: capturedPeriod
         )
       }.value
       guard !Task.isCancelled else { return }
@@ -103,7 +146,8 @@ struct BalanceTrendChartView: View {
         for: BalanceTrendProcessor.chartModelCacheKey(
           samples: capturedSamples,
           currency: capturedCurrency,
-          now: capturedNow
+          now: capturedNow,
+          period: capturedPeriod
         )
       )
     }
@@ -123,14 +167,14 @@ struct BalanceTrendChartView: View {
   @ViewBuilder
   private var exhaustionEstimate: some View {
     if let seconds = UsageExhaustionEstimator.estimate(
-      points: BalanceTrendProcessor.points(for: samples, currency: currency)
+      points: BalanceTrendProcessor.points(for: periodSamples, currency: currency)
         .filter { $0.metric == .total }
         .map { UsageExhaustionPoint(date: $0.date, remaining: $0.value) },
       now: now
     ) {
       Text(exhaustionEstimateText(seconds))
         .font(AppTypography.caption)
-        .foregroundStyle(.secondary)
+        .foregroundStyle(TrendChartPalette.secondaryText(highContrast: highContrast))
         .multilineTextAlignment(.trailing)
         .lineLimit(2)
         .minimumScaleFactor(0.75)
@@ -168,7 +212,7 @@ struct BalanceTrendChartView: View {
 
       if let selectedSample {
         RuleMark(x: .value(L10n.string(.chartSelectedTime, language: language), selectedSample.bucketStart))
-          .foregroundStyle(.secondary)
+          .foregroundStyle(TrendChartPalette.selection(highContrast: highContrast))
           .lineStyle(TrendChartSelectionStyle.rule)
       }
     }
@@ -181,21 +225,29 @@ struct BalanceTrendChartView: View {
     )
     .chartXAxis {
       AxisMarks(values: .automatic(desiredCount: 4)) { value in
-        AxisGridLine().foregroundStyle(.quaternary)
+        AxisGridLine().foregroundStyle(TrendChartPalette.grid(highContrast: highContrast))
         AxisValueLabel {
           if let date = value.as(Date.self) {
             Text(axisLabel(for: date))
               .font(AppTypography.caption)
+              .foregroundStyle(TrendChartPalette.axisText(highContrast: highContrast))
               .lineLimit(1)
-              .minimumScaleFactor(0.8)
           }
         }
       }
     }
     .chartYAxis {
-      AxisMarks(position: .leading) { _ in
-        AxisGridLine().foregroundStyle(.quaternary)
-        AxisValueLabel(format: BalanceAxisFormat(currency: currency))
+      AxisMarks(position: .leading) { value in
+        AxisGridLine().foregroundStyle(TrendChartPalette.grid(highContrast: highContrast))
+        AxisValueLabel {
+          if let value = value.as(Double.self) {
+            Text(
+              BalanceAxisFormat(currency: currency, locale: language.locale).format(value)
+            )
+            .font(AppTypography.caption)
+            .foregroundStyle(TrendChartPalette.axisText(highContrast: highContrast))
+          }
+        }
       }
     }
     .chartLegend(.hidden)
@@ -228,7 +280,7 @@ struct BalanceTrendChartView: View {
       .stroke(color, style: StrokeStyle(lineWidth: 2, dash: dash))
       .frame(width: 20, height: 6)
       Text(label)
-        .foregroundStyle(.secondary)
+        .foregroundStyle(TrendChartPalette.secondaryText(highContrast: highContrast))
     }
   }
 
@@ -363,6 +415,7 @@ struct TrendChartSelectionDetail: View {
   let date: Date
   let language: AppLanguage
   let values: [String]
+  @Environment(\.trendChartHighContrast) private var highContrast
 
   var body: some View {
     VStack(alignment: .leading, spacing: 3) {
@@ -372,10 +425,11 @@ struct TrendChartSelectionDetail: View {
         )
       )
         .font(AppTypography.caption.weight(.medium))
+        .foregroundStyle(TrendChartPalette.secondaryText(highContrast: highContrast))
       ForEach(Array(values.enumerated()), id: \.offset) { _, value in
         Text(value)
           .font(AppTypography.caption)
-          .foregroundStyle(.secondary)
+          .foregroundStyle(TrendChartPalette.secondaryText(highContrast: highContrast))
       }
     }
     .textSelection(.enabled)
@@ -392,11 +446,17 @@ struct BalanceAxisFormat: FormatStyle {
   typealias FormatOutput = String
 
   let currency: String
+  let locale: Locale
+
+  init(currency: String, locale: Locale = .current) {
+    self.currency = currency
+    self.locale = locale
+  }
 
   func format(_ value: Double) -> String {
     let formatter = NumberFormatter()
     formatter.numberStyle = .decimal
-    formatter.locale = .current
+    formatter.locale = locale
     formatter.minimumFractionDigits = 2
     formatter.maximumFractionDigits = 2
     let text = formatter.string(from: NSNumber(value: value)) ?? "\(value)"

@@ -216,12 +216,13 @@ enum BalanceTrendProcessor {
   static func chartModelCacheKey(
     samples: [BalanceSample],
     currency: String,
-    now: Date
+    now: Date,
+    period: TrendPeriod = .fourteenDays
   ) -> String {
     let latest = samples.last
     let observedAt = latest?.observedAt.timeIntervalSince1970 ?? -1
     let hour = Int(now.timeIntervalSince1970 / 3_600)
-    return "\(samples.count)-\(currency)-\(latest?.id ?? "empty")-\(observedAt)-\(hour)"
+    return "\(period.rawValue)-\(samples.count)-\(currency)-\(latest?.id ?? "empty")-\(observedAt)-\(hour)"
   }
 
   static func cachedChartModel(for key: String) -> ChartModel? {
@@ -315,6 +316,11 @@ enum BalanceTrendProcessor {
     now.addingTimeInterval(-chartWindowHours * 3600)...now
   }
 
+  /// 指定周期的 X 轴 domain。
+  static func chartDomain(now: Date, period: TrendPeriod) -> ClosedRange<Date> {
+    period.chartDomain(now: now)
+  }
+
   /// 0 起点 Y 轴上限：把数据最大值向上取整到 1/2/5×10ⁿ 的“漂亮”刻度，
   /// 金额折线图从 0 开始画，避免仅显示数据区间的放大错觉。
   static func yCeiling(for maxValue: Double) -> Double {
@@ -338,9 +344,16 @@ enum BalanceTrendProcessor {
   static func chartModel(
     samples: [BalanceSample],
     currency: String,
-    now: Date
+    now: Date,
+    period: TrendPeriod = .fourteenDays
   ) -> ChartModel {
-    let points = points(for: samples, currency: currency)
+    let periodSamples = TrendPeriod.filtered(
+      samples,
+      period: period,
+      now: now,
+      date: { $0.bucketStart }
+    )
+    let points = points(for: periodSamples, currency: currency)
     var lineSegments: [ChartModel.Segment] = []
 
     for metric in TrendPoint.Metric.allCases {
@@ -361,7 +374,7 @@ enum BalanceTrendProcessor {
 
     return ChartModel(
       segments: lineSegments,
-      xDomain: chartDomain(now: now)
+      xDomain: chartDomain(now: now, period: period)
     )
   }
 

@@ -359,12 +359,13 @@ enum VPSUsageTrendProcessor {
 
   static func chartModelCacheKey(
     samples: [VPSUsageSample],
-    now: Date
+    now: Date,
+    period: TrendPeriod = .fourteenDays
   ) -> String {
     let latest = samples.last
     let observedAt = latest?.observedAt.timeIntervalSince1970 ?? -1
     let hour = Int(now.timeIntervalSince1970 / 3_600)
-    return "\(samples.count)-\(latest?.id ?? "empty")-\(observedAt)-\(hour)"
+    return "\(period.rawValue)-\(samples.count)-\(latest?.id ?? "empty")-\(observedAt)-\(hour)"
   }
 
   static func cachedChartModel(for key: String) -> ChartModel? {
@@ -377,12 +378,13 @@ enum VPSUsageTrendProcessor {
 
   static func chartModel(
     samples: [VPSUsageSample],
-    now: Date
+    now: Date,
+    period: TrendPeriod = .fourteenDays
   ) -> ChartModel {
     let deduplicated = deduplicatedSamples(samples)
     return ChartModel(
       samples: deduplicated,
-      xDomain: UsageHistoryWindow.chartDomain(now: now),
+      xDomain: period.chartDomain(now: now),
       trafficDomain: axisDomain(deduplicated.map(\.remainingBandwidthGB)),
       creditDomain: axisDomain(deduplicated.map(\.availableCreditUSD))
     )

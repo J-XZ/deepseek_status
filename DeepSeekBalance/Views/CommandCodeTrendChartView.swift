@@ -28,20 +28,38 @@ struct CommandCodeTrendChartView: View {
   let samples: [CommandCodeUsageSample]
   let language: AppLanguage
   let now: Date
+  let period: TrendPeriod
 
   @State private var selectedDate: Date?
+  @Environment(\.trendChartHighContrast) private var highContrast
+
+  init(
+    samples: [CommandCodeUsageSample],
+    language: AppLanguage,
+    now: Date,
+    period: TrendPeriod = .fourteenDays
+  ) {
+    self.samples = samples
+    self.language = language
+    self.now = now
+    self.period = period
+  }
+
+  private var periodSamples: [CommandCodeUsageSample] {
+    TrendPeriod.filtered(samples, period: period, now: now) { $0.bucketStart }
+  }
 
   private var selectedSample: CommandCodeUsageSample? {
     guard let selectedDate else { return nil }
-    return CommandCodeTrendProcessor.nearestSample(to: selectedDate, samples: samples)
+    return CommandCodeTrendProcessor.nearestSample(to: selectedDate, samples: periodSamples)
   }
 
   private var points: [CommandCodeTrendPoint] {
-    CommandCodeTrendProcessor.points(samples, language: language)
+    CommandCodeTrendProcessor.points(periodSamples, language: language)
   }
 
   private var xDomain: ClosedRange<Date> {
-    now.addingTimeInterval(-CommandCodeTrendProcessor.chartWindowHours * 3600)...now
+    period.chartDomain(now: now)
   }
 
   /// 统一趋势摘要所需的变化值；摘要前缀由供应商趋势卡片统一渲染。
@@ -57,14 +75,14 @@ struct CommandCodeTrendChartView: View {
   @ViewBuilder
   private var exhaustionEstimate: some View {
     if let seconds = UsageExhaustionEstimator.estimate(
-      points: samples.map {
+      points: periodSamples.map {
         UsageExhaustionPoint(date: $0.bucketStart, remaining: Double($0.remainingPercent))
       },
       now: now
     ) {
       Text(exhaustionEstimateText(seconds))
         .font(AppTypography.caption)
-        .foregroundStyle(.secondary)
+        .foregroundStyle(TrendChartPalette.secondaryText(highContrast: highContrast))
         .multilineTextAlignment(.trailing)
         .lineLimit(2)
         .minimumScaleFactor(0.75)
@@ -110,7 +128,7 @@ struct CommandCodeTrendChartView: View {
         RuleMark(
           x: .value(L10n.string(.chartSelectedTime, language: language), selectedSample.bucketStart)
         )
-        .foregroundStyle(.secondary)
+        .foregroundStyle(TrendChartPalette.selection(highContrast: highContrast))
         .lineStyle(TrendChartSelectionStyle.rule)
       }
     }
@@ -120,24 +138,25 @@ struct CommandCodeTrendChartView: View {
     return chartWithAxes
       .chartXAxis {
         AxisMarks(values: .automatic(desiredCount: 4)) { value in
-          AxisGridLine().foregroundStyle(.quaternary)
+          AxisGridLine().foregroundStyle(TrendChartPalette.grid(highContrast: highContrast))
           AxisValueLabel {
             if let date = value.as(Date.self) {
               Text(axisLabel(for: date))
                 .font(AppTypography.caption)
+                .foregroundStyle(TrendChartPalette.axisText(highContrast: highContrast))
                 .lineLimit(1)
-                .minimumScaleFactor(0.8)
             }
           }
         }
       }
       .chartYAxis {
         AxisMarks(position: .leading) { value in
-          AxisGridLine().foregroundStyle(.quaternary)
+          AxisGridLine().foregroundStyle(TrendChartPalette.grid(highContrast: highContrast))
           AxisValueLabel {
             if let percent = value.as(Double.self) {
               Text("\(Int(percent))%")
                 .font(AppTypography.caption)
+                .foregroundStyle(TrendChartPalette.axisText(highContrast: highContrast))
             }
           }
         }

@@ -139,13 +139,23 @@ struct SettingsView: View {
       .font(AppTypography.body)
 
       settingsGroup {
-        HStack {
-          Text(L10n.string(.settingsFloatingWindow, language: language))
-          Spacer()
-          Toggle("", isOn: floatingWindowBinding)
-            .labelsHidden()
-            .toggleStyle(.switch)
-            .controlSize(.small)
+        VStack(alignment: .leading, spacing: 10) {
+          HStack {
+            Text(L10n.string(.settingsFloatingWindow, language: language))
+            Spacer()
+            Toggle("", isOn: floatingWindowBinding)
+              .labelsHidden()
+              .toggleStyle(.switch)
+              .controlSize(.small)
+          }
+          HStack {
+            Text(L10n.string(.floatingWindowSnapToMenuBar, language: language))
+            Spacer()
+            Toggle("", isOn: floatingSnapBinding)
+              .labelsHidden()
+              .toggleStyle(.switch)
+              .controlSize(.small)
+          }
         }
       }
       .font(AppTypography.body)
@@ -243,6 +253,13 @@ struct SettingsView: View {
     Binding(
       get: { FloatingStatusWindow.isEnabled },
       set: { FloatingStatusWindow.setEnabled($0) }
+    )
+  }
+
+  private var floatingSnapBinding: Binding<Bool> {
+    Binding(
+      get: { FloatingStatusWindow.snapsToMenuBar },
+      set: { FloatingStatusWindow.setSnapsToMenuBar($0) }
     )
   }
 

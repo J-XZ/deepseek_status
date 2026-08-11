@@ -11,13 +11,33 @@ struct OpenCodeTrendChartView: View {
   let showGoTrend: Bool
   let language: AppLanguage
   let now: Date
+  let period: TrendPeriod
 
   @State private var preparedModel: OpenCodeTrendProcessor.ChartModel?
   @State private var selectedDate: Date?
+  @Environment(\.trendChartHighContrast) private var highContrast
+
+  init(
+    samples: [OpenCodeUsageSample],
+    showGoTrend: Bool,
+    language: AppLanguage,
+    now: Date,
+    period: TrendPeriod = .fourteenDays
+  ) {
+    self.samples = samples
+    self.showGoTrend = showGoTrend
+    self.language = language
+    self.now = now
+    self.period = period
+  }
+
+  private var periodSamples: [OpenCodeUsageSample] {
+    TrendPeriod.filtered(samples, period: period, now: now) { $0.bucketStart }
+  }
 
   private var selectedSample: OpenCodeUsageSample? {
     guard let selectedDate else { return nil }
-    return OpenCodeTrendProcessor.nearestSample(to: selectedDate, samples: samples)
+    return OpenCodeTrendProcessor.nearestSample(to: selectedDate, samples: periodSamples)
   }
 
   /// 图表数据与订阅状态不变时无需重新准备；不再把当前分钟纳入 ID，
@@ -25,11 +45,11 @@ struct OpenCodeTrendChartView: View {
   private var preparationID: String {
     let latest = samples.last
     let observedAt = latest?.observedAt.timeIntervalSince1970 ?? -1
-    return "\(showGoTrend)-\(samples.count)-\(latest?.id ?? "empty")-\(observedAt)"
+    return "\(period.rawValue)-\(showGoTrend)-\(samples.count)-\(latest?.id ?? "empty")-\(observedAt)"
   }
 
   private var xDomain: ClosedRange<Date> {
-    now.addingTimeInterval(-UsageHistoryWindow.seconds)...now
+    period.chartDomain(now: now)
   }
 
   /// 统一趋势摘要所需的变化值；Go 只使用月度额度，Zen 使用余额变化。
@@ -73,7 +93,7 @@ struct OpenCodeTrendChartView: View {
     }
     .task(id: preparationID) {
       preparedModel = nil
-      let capturedSamples = samples
+      let capturedSamples = periodSamples
       let capturedShowGoTrend = showGoTrend
       let capturedNow = now
       let model = await Task.detached(priority: .userInitiated) {
@@ -96,7 +116,7 @@ struct OpenCodeTrendChartView: View {
         ForEach(Array(estimates.enumerated()), id: \.offset) { _, estimate in
           Text(estimate)
             .font(AppTypography.caption)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(TrendChartPalette.secondaryText(highContrast: highContrast))
             .multilineTextAlignment(.trailing)
             .lineLimit(2)
             .minimumScaleFactor(0.75)
@@ -168,7 +188,7 @@ struct OpenCodeTrendChartView: View {
   private var waitingView: some View {
     Text(L10n.string(.openCodeTrendWaiting, language: language))
       .font(AppTypography.caption)
-      .foregroundStyle(.secondary)
+      .foregroundStyle(TrendChartPalette.secondaryText(highContrast: highContrast))
   }
 
   private func combinedChart(_ model: OpenCodeTrendProcessor.ChartModel) -> some View {
@@ -182,7 +202,7 @@ struct OpenCodeTrendChartView: View {
         RuleMark(
           x: .value(L10n.string(.chartSelectedTime, language: language), selectedSample.bucketStart)
         )
-        .foregroundStyle(.secondary)
+        .foregroundStyle(TrendChartPalette.selection(highContrast: highContrast))
         .lineStyle(TrendChartSelectionStyle.rule)
       }
     }
@@ -195,12 +215,13 @@ struct OpenCodeTrendChartView: View {
     .chartXAxis { xAxis }
     .chartYAxis {
       AxisMarks(position: .leading, values: normalizedAxisTicks) { value in
-        AxisGridLine().foregroundStyle(.quaternary)
+        AxisGridLine().foregroundStyle(TrendChartPalette.grid(highContrast: highContrast))
         AxisTick()
         AxisValueLabel {
           if let number = value.as(Double.self) {
             Text("\(Int(number * 100))%")
               .font(AppTypography.caption)
+              .foregroundStyle(TrendChartPalette.axisText(highContrast: highContrast))
           }
         }
       }
@@ -211,6 +232,7 @@ struct OpenCodeTrendChartView: View {
             if let number = value.as(Double.self) {
               Text(formattedAxisUSD(zenValue(fromNormalized: number, model: model)))
                 .font(AppTypography.caption)
+                .foregroundStyle(TrendChartPalette.axisText(highContrast: highContrast))
             }
           }
         }
@@ -250,7 +272,7 @@ struct OpenCodeTrendChartView: View {
         RuleMark(
           x: .value(L10n.string(.chartSelectedTime, language: language), selectedSample.bucketStart)
         )
-        .foregroundStyle(.secondary)
+        .foregroundStyle(TrendChartPalette.selection(highContrast: highContrast))
         .lineStyle(TrendChartSelectionStyle.rule)
       }
     }
@@ -259,11 +281,12 @@ struct OpenCodeTrendChartView: View {
     .chartXAxis { xAxis }
     .chartYAxis {
       AxisMarks(position: .leading) { value in
-        AxisGridLine().foregroundStyle(.quaternary)
+        AxisGridLine().foregroundStyle(TrendChartPalette.grid(highContrast: highContrast))
         AxisValueLabel {
           if let number = value.as(Double.self) {
             Text(formattedAxisUSD(number))
               .font(AppTypography.caption)
+              .foregroundStyle(TrendChartPalette.axisText(highContrast: highContrast))
           }
         }
       }
@@ -317,13 +340,13 @@ struct OpenCodeTrendChartView: View {
 
   private var xAxis: some AxisContent {
     AxisMarks(values: .automatic(desiredCount: 4)) { value in
-      AxisGridLine().foregroundStyle(.quaternary)
+      AxisGridLine().foregroundStyle(TrendChartPalette.grid(highContrast: highContrast))
       AxisValueLabel {
         if let date = value.as(Date.self) {
-          Text(axisLabel(for: date))
-            .font(AppTypography.caption)
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
+            Text(axisLabel(for: date))
+              .font(AppTypography.caption)
+              .foregroundStyle(TrendChartPalette.axisText(highContrast: highContrast))
+              .lineLimit(1)
         }
       }
     }

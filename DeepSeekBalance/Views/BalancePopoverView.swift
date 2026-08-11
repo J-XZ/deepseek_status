@@ -182,19 +182,6 @@ struct BalancePopoverView: View {
             }
           }
       }
-      .overlay(alignment: .topTrailing) {
-        Button { tabSelection.isPinned.toggle() } label: {
-          Image(systemName: tabSelection.isPinned ? "pin.fill" : "pin")
-            .font(.system(size: 11, weight: .medium))
-            .frame(width: 22, height: 22)
-            .contentShape(Rectangle())
-            .foregroundStyle(tabSelection.isPinned ? Color.accentColor : .secondary)
-        }
-        .buttonStyle(.plain)
-        .help(tabSelection.isPinned ? "Unpin" : "Pin")
-        .padding(.trailing, 8)
-        .padding(.top, 4)
-      }
       // 隐藏滚动条指示器：切换供应商页时内容高度变化会让滚动条瞬时出现/
       // 消失，覆盖在内容边缘造成“左右抖动”的视觉干扰。滚动功能不受影响。
       .scrollIndicators(.hidden)
@@ -398,6 +385,7 @@ struct BalancePopoverView: View {
         .accessibilityLabel(L10n.string(tabLabelKey(tab), language: language))
         .accessibilityAddTraits(tabSelection.selectedTab == tab ? .isSelected : [])
       }
+      pinButton
     }
     .frame(maxWidth: .infinity)
     // 左右各留与卡片等宽的边距，按钮列与详情卡片左右对齐。
@@ -411,6 +399,31 @@ struct BalancePopoverView: View {
         tabSelection.selectedTab = first
       }
     }
+  }
+
+  /// 固定弹窗按钮：放在切换栏右侧，避免覆盖滚动内容第一张卡片右上角。
+  private var pinButton: some View {
+    Button { tabSelection.isPinned.toggle() } label: {
+      Image(systemName: tabSelection.isPinned ? "pin.fill" : "pin")
+        .font(.system(size: 11, weight: .medium))
+        .frame(width: 22, height: 22)
+        .contentShape(Rectangle())
+        .foregroundStyle(tabSelection.isPinned ? Color.accentColor : .secondary)
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel(
+      L10n.string(
+        tabSelection.isPinned ? .popoverUnpin : .popoverPin,
+        language: language
+      )
+    )
+    .accessibilityAddTraits(tabSelection.isPinned ? .isSelected : [])
+    .help(
+      L10n.string(
+        tabSelection.isPinned ? .popoverUnpin : .popoverPin,
+        language: language
+      )
+    )
   }
 
   private func vendorLogoName(_ tab: UsageTab) -> String {
@@ -929,8 +942,22 @@ struct BalancePopoverView: View {
 
       TextEditor(text: $openCodeCookieInput)
         .font(AppTypography.caption.monospaced())
-        .frame(height: 30)
+        .scrollContentBackground(.hidden)
+        .frame(height: 72)
+        .overlay(alignment: .topLeading) {
+          if openCodeCookieInput.isEmpty {
+            Text(L10n.string(.openCodeCookiePlaceholder, language: language))
+              .font(AppTypography.caption.monospaced())
+              .foregroundStyle(.tertiary)
+              .padding(.leading, 5)
+              .padding(.top, 6)
+              .allowsHitTesting(false)
+              .lineLimit(1)
+              .truncationMode(.tail)
+          }
+        }
         .padding(4)
+        .background(cardBackground, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay {
           RoundedRectangle(cornerRadius: 8, style: .continuous)
             .stroke(cardBorder, lineWidth: 1)
@@ -1094,14 +1121,18 @@ struct BalancePopoverView: View {
       }
       Button(L10n.string(.footerRefresh, language: language)) {
         Task {
-          await store.refreshAll()
-          await codexStore.refreshIfNeeded(maximumAge: 0)
-          await cursorStore.refreshIfNeeded(maximumAge: 0)
-          await openCodeStore.refreshIfNeeded(maximumAge: 0)
-          await vpsStore.refreshIfNeeded(maximumAge: 0)
-          await commandCodeStore.refreshIfNeeded(maximumAge: 0)
-          await codexStatusStore.refreshIfNeeded(maximumAge: 0)
-          await cursorStatusStore.refreshIfNeeded(maximumAge: 0)
+          async let balanceRefresh: Void = store.refreshAll()
+          async let codexRefresh: Void = codexStore.refreshIfNeeded(maximumAge: 0)
+          async let cursorRefresh: Void = cursorStore.refreshIfNeeded(maximumAge: 0)
+          async let openCodeRefresh: Void = openCodeStore.refreshIfNeeded(maximumAge: 0)
+          async let vpsRefresh: Void = vpsStore.refreshIfNeeded(maximumAge: 0)
+          async let commandCodeRefresh: Void = commandCodeStore.refreshIfNeeded(maximumAge: 0)
+          async let codexStatusRefresh: Void = codexStatusStore.refreshIfNeeded(maximumAge: 0)
+          async let cursorStatusRefresh: Void = cursorStatusStore.refreshIfNeeded(maximumAge: 0)
+          _ = await (
+            balanceRefresh, codexRefresh, cursorRefresh, openCodeRefresh, vpsRefresh,
+            commandCodeRefresh, codexStatusRefresh, cursorStatusRefresh
+          )
         }
       }
       .disabled(

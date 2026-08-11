@@ -707,6 +707,8 @@ final class StatusItemController: NSObject {
   private lazy var floatingWindow = FloatingStatusWindow()
   /// 悬浮窗悬停趋势小面板：悬停供应商段时浮现对应趋势图。
   private lazy var floatingTrendPopover = FloatingTrendPopover()
+  /// 悬浮窗趋势周期：单击循环切换，仅运行时状态，重启恢复 14 天。
+  private var floatingTrendPeriod: TrendPeriod = .fourteenDays
   private var cancellables: Set<AnyCancellable> = []
   private var titleUpdateTask: Task<Void, Never>?
   private var popoverDismissObservations: [NotificationObservation] = []
@@ -805,6 +807,8 @@ final class StatusItemController: NSObject {
         self.floatingWindow.hide()
         self.floatingTrendPopover.hide()
       }
+      // 设置页切换「贴顶菜单栏」后立即吸附；关闭时保留当前位置。
+      self.floatingWindow.applySnapToMenuBarIfNeeded()
     }
   }
 
@@ -812,6 +816,31 @@ final class StatusItemController: NSObject {
   private func wireFloatingHover() {
     floatingTrendPopover.chartProvider = { [weak self] vendor in
       self?.trendChartView(for: vendor)
+    }
+    // 右键菜单：关闭开关直接写设置，UserDefaults 通知会同步收起悬浮窗；
+    // 设置入口复用菜单栏的设置窗口。
+    floatingWindow.hoverContent.onToggleClose = {
+      FloatingStatusWindow.setEnabled(!FloatingStatusWindow.isEnabled)
+    }
+    // 单击：只有趋势图已显示时才切换周期并立即刷新，避免无悬停时的空点产生困惑。
+    floatingWindow.hoverContent.onSingleClick = { [weak self] in
+      guard let self, self.floatingTrendPopover.isVisible else { return }
+      self.floatingTrendPeriod = self.floatingTrendPeriod.next()
+      self.floatingTrendPopover.currentPeriod = self.floatingTrendPeriod
+      self.floatingTrendPopover.refreshChart(language: self.store.language)
+    }
+    floatingWindow.hoverContent.onOpenSettings = { [weak self] in
+      self?.openSettings()
+    }
+    // 贴顶开关：直接写设置，UserDefaults 通知会同步吸附到菜单栏下方。
+    floatingWindow.hoverContent.onToggleSnapToMenuBar = { [weak self] in
+      guard let self else { return }
+      FloatingStatusWindow.setSnapsToMenuBar(!FloatingStatusWindow.snapsToMenuBar)
+      self.floatingWindow.applySnapToMenuBarIfNeeded()
+    }
+    // 右键控制面板出现前收起趋势小面板，避免两个悬浮面板叠层。
+    floatingWindow.hoverContent.onShowContextMenu = { [weak self] in
+      self?.floatingTrendPopover.hide()
     }
     floatingWindow.hoverContent.onHoverChange = { [weak self] index in
       guard let self else { return }
@@ -826,7 +855,12 @@ final class StatusItemController: NSObject {
       guard let segmentFrame = self.floatingWindow.hoverContent.hoveredSegmentScreenFrame,
         let screen = self.floatingWindow.screen ?? NSScreen.main
       else { return }
-      self.floatingTrendPopover.showChart(vendor: vendor, near: segmentFrame, screen: screen)
+      self.floatingTrendPopover.showChart(
+        vendor: vendor,
+        near: segmentFrame,
+        screen: screen,
+        language: self.store.language
+      )
     }
   }
 
@@ -843,7 +877,8 @@ final class StatusItemController: NSObject {
           samples: store.historySamples,
           currency: currency,
           language: language,
-          now: now
+          now: now,
+          period: floatingTrendPeriod
         )
       )
     case .codex:
@@ -851,7 +886,8 @@ final class StatusItemController: NSObject {
         CodexTrendChartView(
           samples: codexStore.historySamples,
           language: language,
-          now: now
+          now: now,
+          period: floatingTrendPeriod
         )
       )
     case .cursor:
@@ -859,7 +895,8 @@ final class StatusItemController: NSObject {
         CursorTrendChartView(
           samples: cursorStore.historySamples,
           language: language,
-          now: now
+          now: now,
+          period: floatingTrendPeriod
         )
       )
     case .openCode:
@@ -868,7 +905,8 @@ final class StatusItemController: NSObject {
           samples: openCodeStore.historySamples,
           showGoTrend: openCodeStore.snapshot?.isGoSubscribed == true,
           language: language,
-          now: now
+          now: now,
+          period: floatingTrendPeriod
         )
       )
     case .vps:
@@ -879,7 +917,8 @@ final class StatusItemController: NSObject {
           now: now,
           currentRemainingGB: vpsStore.snapshot?.remainingBandwidthGB,
           cycleStart: vpsStore.snapshot?.cycleStart,
-          cycleEnd: vpsStore.snapshot?.cycleEnd
+          cycleEnd: vpsStore.snapshot?.cycleEnd,
+          period: floatingTrendPeriod
         )
       )
     case .commandCode:
@@ -887,7 +926,8 @@ final class StatusItemController: NSObject {
         CommandCodeTrendChartView(
           samples: commandCodeStore.historySamples,
           language: language,
-          now: now
+          now: now,
+          period: floatingTrendPeriod
         )
       )
     }
@@ -939,12 +979,6 @@ final class StatusItemController: NSObject {
   private func menuBarTintedIcon(named name: String, size: CGFloat, isDark: Bool) -> NSImage? {
     guard let icon = menuBarIcon(named: name, size: size) else { return nil }
     return tintedImage(icon, color: isDark ? .white : .black)
-  }
-
-  /// 品牌图标在菜单栏统一绘制为白色。
-  private func menuBarBrandIcon(named name: String, size: CGFloat) -> NSImage? {
-    guard let icon = menuBarIcon(named: name, size: size) else { return nil }
-    return tintedImage(icon, color: .white)
   }
 
   private func tintedImage(_ image: NSImage, color: NSColor) -> NSImage {
@@ -1121,6 +1155,12 @@ final class StatusItemController: NSObject {
       }
     }
     button.setAccessibilityLabel(labels.joined(separator: " | "))
+
+    // 悬浮趋势卡与菜单栏共用同一份数据：数据更新时重绘当前悬停的图表，
+    // 否则鼠标停留在同一供应商段上时会一直显示旧数据。
+    if FloatingStatusWindow.isEnabled, floatingTrendPopover.isVisible {
+      floatingTrendPopover.refreshChart(language: store.language)
+    }
   }
 
   /// 按供应商构建菜单栏分段。
@@ -1193,9 +1233,10 @@ final class StatusItemController: NSObject {
       )
     case .openCode:
       return MenuBarStatusContentView.Segment(
-        icon: menuBarBrandIcon(
+        icon: menuBarTintedIcon(
           named: "OpenCodeIcon",
-          size: MenuBarIconLayout.openCodeMaxDimension
+          size: MenuBarIconLayout.openCodeMaxDimension,
+          isDark: isDark
         ),
         lines: openCodeStore.menuBarLines,
         font: cursorFont,
@@ -1208,9 +1249,10 @@ final class StatusItemController: NSObject {
       )
     case .vps:
       return MenuBarStatusContentView.Segment(
-        icon: menuBarBrandIcon(
+        icon: menuBarTintedIcon(
           named: "VultrIcon",
-          size: MenuBarIconLayout.vpsMaxDimension
+          size: MenuBarIconLayout.vpsMaxDimension,
+          isDark: isDark
         ),
         lines: vpsStore.menuBarLines(language: store.language),
         font: cursorFont,
@@ -1738,6 +1780,23 @@ final class StatusItemController: NSObject {
     )
     menu.addItem(settingsItem)
 
+    let isFloatingEnabled = FloatingStatusWindow.isEnabled
+    let floatingItem = NSMenuItem(
+      title: L10n.string(
+        isFloatingEnabled ? .floatingWindowClose : .floatingWindowShow,
+        language: store.language
+      ),
+      action: #selector(toggleFloatingWindow),
+      keyEquivalent: ""
+    )
+    floatingItem.target = self
+    floatingItem.state = isFloatingEnabled ? .on : .off
+    floatingItem.image = NSImage(
+      systemSymbolName: isFloatingEnabled ? "eye.slash" : "eye",
+      accessibilityDescription: nil
+    )
+    menu.addItem(floatingItem)
+
     menu.addItem(.separator())
 
     let quitItem = NSMenuItem(
@@ -1761,14 +1820,18 @@ final class StatusItemController: NSObject {
 
   @objc private func refreshApp() {
     Task {
-      await store.refreshAll()
-      await codexStore.refreshIfNeeded(maximumAge: 0)
-      await cursorStore.refreshIfNeeded(maximumAge: 0)
-      await openCodeStore.refreshIfNeeded(maximumAge: 0)
-      await vpsStore.refreshIfNeeded(maximumAge: 0)
-      await statusStore.refreshIfNeeded(maximumAge: 0)
-      await codexStatusStore.refreshIfNeeded(maximumAge: 0)
-      await cursorStatusStore.refreshIfNeeded(maximumAge: 0)
+      async let balanceRefresh: Void = store.refreshAll()
+      async let codexRefresh: Void = codexStore.refreshIfNeeded(maximumAge: 0)
+      async let cursorRefresh: Void = cursorStore.refreshIfNeeded(maximumAge: 0)
+      async let openCodeRefresh: Void = openCodeStore.refreshIfNeeded(maximumAge: 0)
+      async let vpsRefresh: Void = vpsStore.refreshIfNeeded(maximumAge: 0)
+      async let statusRefresh: Void = statusStore.refreshIfNeeded(maximumAge: 0)
+      async let codexStatusRefresh: Void = codexStatusStore.refreshIfNeeded(maximumAge: 0)
+      async let cursorStatusRefresh: Void = cursorStatusStore.refreshIfNeeded(maximumAge: 0)
+      _ = await (
+        balanceRefresh, codexRefresh, cursorRefresh, openCodeRefresh, vpsRefresh,
+        statusRefresh, codexStatusRefresh, cursorStatusRefresh
+      )
     }
   }
 
@@ -1780,6 +1843,10 @@ final class StatusItemController: NSObject {
   @objc private func openSettings() {
     closePopover()
     settingsWindow.show()
+  }
+
+  @objc private func toggleFloatingWindow() {
+    FloatingStatusWindow.setEnabled(!FloatingStatusWindow.isEnabled)
   }
 
   @objc private func quitApp() {
@@ -1807,6 +1874,16 @@ final class StatusItemController: NSObject {
       commandCodeStore.setEnabled(visibility.showsCommandCode)
     }
     updateTitle()
+    validateSelectedTabForVisibility()
+  }
+
+  /// 可见供应商变化后，若当前选中页已被隐藏，切回第一个可见页，
+  /// 避免固定弹窗继续显示一个已从切换栏消失的页面。
+  private func validateSelectedTabForVisibility() {
+    guard let first = visibleTabs.first, !visibleTabs.contains(selectedUsageTab) else {
+      return
+    }
+    tabSelection.selectedTab = first
   }
 
   // MARK: - 菜单栏文字更新

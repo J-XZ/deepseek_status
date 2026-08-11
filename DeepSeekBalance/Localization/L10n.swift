@@ -13,6 +13,10 @@ enum L10nKey: String, CaseIterable, Sendable {
   case statusRequestFailed = "status.requestFailed"
   case statusInsufficientBalance = "status.insufficientBalance"
 
+  // 弹窗
+  case popoverPin = "popover.pin"
+  case popoverUnpin = "popover.unpin"
+
   // 余额区
   case balanceTotal = "balance.total"
   case balanceToppedUp = "balance.toppedUp"
@@ -43,6 +47,11 @@ enum L10nKey: String, CaseIterable, Sendable {
   case trendEstimateZenUnavailable = "trend.estimateZenUnavailable"
   case trendEstimateWeekly = "trend.estimateWeekly"
   case trendSelectionChange = "trend.selectionChange"
+  case trendPeriod14Days = "trend.period.14days"
+  case trendPeriod7Days = "trend.period.7days"
+  case trendPeriod1Day = "trend.period.1day"
+  case trendPeriod3Hours = "trend.period.3hours"
+  case trendPeriod1Hour = "trend.period.1hour"
 
   // API Key 设置
   case apiKeyTitle = "apiKey.title"
@@ -77,6 +86,13 @@ enum L10nKey: String, CaseIterable, Sendable {
   case loginOpenSettings = "login.openSettings"
   case settingsLocalHistory = "settings.localHistory"
   case settingsFloatingWindow = "settings.floatingWindow"
+  case floatingWindowClose = "floatingWindow.close"
+  case floatingWindowShow = "floatingWindow.show"
+  case screenPermissionTitle = "screenPermission.title"
+  case screenPermissionMessage = "screenPermission.message"
+  case screenPermissionOpenSettings = "screenPermission.openSettings"
+  case floatingWindowSettings = "floatingWindow.settings"
+  case floatingWindowSnapToMenuBar = "floatingWindow.snapToMenuBar"
 
   // 服务状态
   case serviceTitle = "serviceStatus.title"
