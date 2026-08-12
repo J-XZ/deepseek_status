@@ -887,7 +887,8 @@ final class StatusItemController: NSObject {
           samples: codexStore.historySamples,
           language: language,
           now: now,
-          period: floatingTrendPeriod
+          period: floatingTrendPeriod,
+          weeklyWindow: codexStore.usage?.weeklyWindow
         )
       )
     case .cursor:

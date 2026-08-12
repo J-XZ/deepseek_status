@@ -8,6 +8,7 @@ struct CodexTrendChartView: View {
   let language: AppLanguage
   let now: Date
   let period: TrendPeriod
+  let weeklyWindow: CodexUsageWindow?
 
   @State private var selectedDate: Date?
   @Environment(\.trendChartHighContrast) private var highContrast
@@ -16,12 +17,14 @@ struct CodexTrendChartView: View {
     samples: [CodexUsageSample],
     language: AppLanguage,
     now: Date,
-    period: TrendPeriod = .fourteenDays
+    period: TrendPeriod = .fourteenDays,
+    weeklyWindow: CodexUsageWindow? = nil
   ) {
     self.samples = samples
     self.language = language
     self.now = now
     self.period = period
+    self.weeklyWindow = weeklyWindow
   }
 
   private var periodSamples: [CodexUsageSample] {
@@ -39,6 +42,24 @@ struct CodexTrendChartView: View {
 
   private var xDomain: ClosedRange<Date> {
     period.chartDomain(now: now)
+  }
+
+  /// 1 小时 / 3 小时周期展示最近用量速度对比；数据或周窗口不足时返回 nil。
+  private var speedResult: CodexUsageSpeedEvaluator.Result? {
+    guard period == .threeHours || period == .oneHour else { return nil }
+    // 绿线对齐蓝线实际可见分段的首末点：segments 会丢弃孤立点，
+    // 若直接取窗口内全局首末样本，可能落在蓝线未绘制的点上。
+    guard let visibleFirst = segments.first?.first?.bucketStart,
+      let visibleLast = segments.last?.last?.bucketStart
+    else { return nil }
+    return CodexUsageSpeedEvaluator.evaluate(
+      samples: periodSamples,
+      window: weeklyWindow,
+      now: now,
+      windowSeconds: period.duration,
+      firstSample: visibleFirst,
+      lastSample: visibleLast
+    )
   }
 
   /// 统一趋势摘要所需的变化值；摘要前缀由供应商趋势卡片统一渲染。
@@ -85,6 +106,18 @@ struct CodexTrendChartView: View {
     VStack(alignment: .leading, spacing: 8) {
       exhaustionEstimate
       chartView
+      if let speedResult {
+        HStack(spacing: 12) {
+          legendLine(label: speedConclusionText(speedResult.comparison), color: .blue, dash: [])
+          legendLine(
+            label: L10n.string(.codexIdealSpeedLegend, language: language),
+            color: Color.green.opacity(0.9),
+            dash: [6, 4]
+          )
+          Spacer()
+        }
+        .font(AppTypography.caption)
+      }
       if let selectedSample {
         selectionDetail(selectedSample)
       }
@@ -112,6 +145,30 @@ struct CodexTrendChartView: View {
         )
         .foregroundStyle(TrendChartPalette.selection(highContrast: highContrast))
         .lineStyle(TrendChartSelectionStyle.rule)
+      }
+
+      if let speedResult {
+        LineMark(
+          x: .value(L10n.string(.chartTime, language: language), speedResult.idealLineStart),
+          y: .value(
+            L10n.string(.chartRemaining, language: language),
+            speedResult.idealLineStartRemaining
+          ),
+          series: .value(L10n.string(.chartSegment, language: language), "ideal-speed")
+        )
+        .foregroundStyle(Color.green.opacity(0.9))
+        .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
+
+        LineMark(
+          x: .value(L10n.string(.chartTime, language: language), speedResult.idealLineEnd),
+          y: .value(
+            L10n.string(.chartRemaining, language: language),
+            speedResult.idealLineEndRemaining
+          ),
+          series: .value(L10n.string(.chartSegment, language: language), "ideal-speed")
+        )
+        .foregroundStyle(Color.green.opacity(0.9))
+        .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
       }
     }
     .chartXScale(domain: xDomain)
@@ -145,7 +202,8 @@ struct CodexTrendChartView: View {
       domain: [remainingTitle],
       range: [.blue]
     )
-    .chartLegend(position: .bottom, alignment: .leading, spacing: 12)
+    // 3 小时对比图使用下方自定义双线图例；其他周期沿用系统图例。
+    .chartLegend(speedResult == nil ? .visible : .hidden)
     .frame(height: 160)
     .trendChartSelection($selectedDate)
     .accessibilityLabel(L10n.string(.a11yCodexLegend, language: language))
@@ -168,6 +226,30 @@ struct CodexTrendChartView: View {
         ),
       ]
     )
+  }
+
+  private func speedConclusionText(_ comparison: CodexUsageSpeedEvaluator.Comparison) -> String {
+    switch comparison {
+    case .faster:
+      return L10n.string(.codexSpeedFaster, language: language)
+    case .slower:
+      return L10n.string(.codexSpeedSlower, language: language)
+    case .onPar:
+      return L10n.string(.codexSpeedOnPar, language: language)
+    }
+  }
+
+  private func legendLine(label: String, color: Color, dash: [CGFloat]) -> some View {
+    HStack(spacing: 4) {
+      Path { path in
+        path.move(to: CGPoint(x: 0, y: 3))
+        path.addLine(to: CGPoint(x: 20, y: 3))
+      }
+      .stroke(color, style: StrokeStyle(lineWidth: 2, dash: dash))
+      .frame(width: 20, height: 6)
+      Text(label)
+        .foregroundStyle(TrendChartPalette.secondaryText(highContrast: highContrast))
+    }
   }
 
   private func axisLabel(for date: Date) -> String {

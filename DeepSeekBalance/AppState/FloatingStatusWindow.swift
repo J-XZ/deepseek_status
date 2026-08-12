@@ -208,7 +208,7 @@ final class FloatingStatusWindow: NSObject {
     guard let nsScreen = NSScreen.screens.first(where: {
       FloatingPlacement.sameRect($0.visibleFrame, screen.visibleFrame)
     }) else {
-      return ScreenSnapshot(obstacles: windowObstacles(), darkRegions: [])
+      return ScreenSnapshot(obstacles: windowObstacles())
     }
 
     if !ScreenObstacleScanner.hasScreenCaptureAccess {
@@ -219,7 +219,7 @@ final class FloatingStatusWindow: NSObject {
     {
       return snapshot
     }
-    return ScreenSnapshot(obstacles: windowObstacles(), darkRegions: [])
+    return ScreenSnapshot(obstacles: windowObstacles())
   }
 
   private func promptForScreenCaptureIfNeeded() {
@@ -299,8 +299,7 @@ final class FloatingStatusWindow: NSObject {
       let globalMaxY = NSScreen.screens.map(\.frame.maxY).max() ?? rect.maxY
       rects.append(
         ScreenObstacle(
-          rect: FloatingPlacement.appKitRect(fromCG: rect, globalMaxY: globalMaxY),
-          darkRatio: 0
+          rect: FloatingPlacement.appKitRect(fromCG: rect, globalMaxY: globalMaxY)
         )
       )
     }

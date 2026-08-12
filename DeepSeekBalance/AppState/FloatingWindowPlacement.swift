@@ -15,20 +15,6 @@ struct FloatingSafeAreaInsets: Equatable {
 /// 仅用于截屏不可用时的窗口列表降级路径。
 struct ScreenObstacle: Equatable {
   var rect: CGRect
-  /// 该块内“暗色（低亮度）”网格单元占比 0...1。
-  var darkRatio: Double
-  /// 是否为足够大的暗色区域：只有这种块才参与“移到全黑位置”的暗色奖励。
-  var isLargeDarkRegion: Bool
-
-  init(
-    rect: CGRect,
-    darkRatio: Double,
-    isLargeDarkRegion: Bool = false
-  ) {
-    self.rect = rect
-    self.darkRatio = darkRatio
-    self.isLargeDarkRegion = isLargeDarkRegion
-  }
 }
 
 /// 截屏下采样网格：content 标记“内容/遮挡”，colors 记录每格主色。
@@ -151,8 +137,6 @@ struct FloatingScreenGrid: Equatable {
 /// 截屏快照：障碍块 + 适合放置的暗色候选区域。
 struct ScreenSnapshot: Equatable {
   var obstacles: [ScreenObstacle]
-  /// 暗色（低亮度）连通区域，候选生成会把它们中心加入候选。
-  var darkRegions: [CGRect]
   /// 原始下采样网格：存在时评分使用精确的暗色/内容覆盖。
   var grid: FloatingScreenGrid?
 }
@@ -237,7 +221,6 @@ enum FloatingPlacement {
     screen: FloatingScreenGeometry,
     snappedToMenuBar: Bool,
     obstacles: [ScreenObstacle],
-    darkRegions: [CGRect],
     currentOrigin: CGPoint
   ) -> CGPoint? {
     // 旧路径（无 grid）：保留边界/障碍边界候选，去掉距离平局。
@@ -246,7 +229,6 @@ enum FloatingPlacement {
       screen: screen,
       snappedToMenuBar: snappedToMenuBar,
       obstacles: obstacles,
-      darkRegions: darkRegions,
       currentOrigin: currentOrigin
     )
     let visible = screen.visibleFrame
@@ -281,7 +263,6 @@ enum FloatingPlacement {
         screen: screen,
         snappedToMenuBar: snappedToMenuBar,
         obstacles: snapshot.obstacles,
-        darkRegions: snapshot.darkRegions,
         currentOrigin: currentOrigin
       )
     }
@@ -338,7 +319,6 @@ enum FloatingPlacement {
     screen: FloatingScreenGeometry,
     snappedToMenuBar: Bool,
     obstacles: [ScreenObstacle],
-    darkRegions: [CGRect],
     currentOrigin: CGPoint
   ) -> [CGPoint] {
     let visible = screen.visibleFrame
@@ -363,13 +343,6 @@ enum FloatingPlacement {
       safe.maxY - margin - size.height,
       currentOrigin.y,
     ]
-
-    // 暗色区域中心也作为候选：全黑区域通常不在障碍边界附近，
-    // 只有把中心点加入候选，评分才有机会选中“基本全黑位置”。
-    for dark in darkRegions where dark.intersects(visible) {
-      xValues.append(dark.midX - size.width / 2)
-      yValues.append(dark.midY - size.height / 2)
-    }
 
     // 只考虑与当前屏幕可见区相交的障碍，其他屏幕/远处窗口不参与评分。
     for obstacle in obstacles where obstacle.rect.intersects(visible) {
@@ -454,9 +427,6 @@ enum FloatingPlacement {
       safeFrame: safeFrame,
       obstacles: obstacles
     )
-    if lhsScore.darkBonus != rhsScore.darkBonus {
-      return lhsScore.darkBonus > rhsScore.darkBonus
-    }
     if lhsScore.area != rhsScore.area {
       return lhsScore.area < rhsScore.area
     }
@@ -471,10 +441,9 @@ enum FloatingPlacement {
     frame: CGRect,
     safeFrame: CGRect,
     obstacles: [ScreenObstacle]
-  ) -> (area: CGFloat, darkBonus: Double, outsideSafe: Int) {
+  ) -> (area: CGFloat, outsideSafe: Int) {
     let candidateFrame = CGRect(origin: origin, size: frame.size)
     var area: CGFloat = 0
-    var darkBonus = 0.0
     for obstacle in obstacles {
       let intersection = candidateFrame.intersection(obstacle.rect)
       guard !intersection.isNull, intersection.width > 0, intersection.height > 0 else {
@@ -482,15 +451,9 @@ enum FloatingPlacement {
       }
       let overlapArea = intersection.width * intersection.height
       area += overlapArea
-      // 障碍覆盖当前候选的部分，若障碍本身是暗色，则不算“视觉遮挡”，
-      // 用暗色比例作为奖励，让评分优先选择基本全黑的位置；
-      // 只有足够大的暗色块才参与奖励，避免把浅色背景上的小文字误当候选。
-      if obstacle.isLargeDarkRegion {
-        darkBonus += Double(overlapArea) * obstacle.darkRatio
-      }
     }
     let outsideSafe = safeFrame.contains(candidateFrame) ? 0 : 1
-    return (area, darkBonus, outsideSafe)
+    return (area, outsideSafe)
   }
 
   /// 网格级评分：先比“颜色单一性”（dominantColorRatio 越大越好），

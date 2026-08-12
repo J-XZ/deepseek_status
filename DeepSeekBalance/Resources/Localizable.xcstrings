@@ -2641,6 +2641,70 @@
         }
       }
     },
+    "codex.speedFaster": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faster than ideal"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快于理想"
+          }
+        }
+      }
+    },
+    "codex.speedSlower": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slower than ideal"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "慢于理想"
+          }
+        }
+      }
+    },
+    "codex.speedOnPar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On par with ideal"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "与理想相当"
+          }
+        }
+      }
+    },
+    "codex.idealSpeedLegend": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ideal speed"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "理想速度"
+          }
+        }
+      }
+    },
     "codex.resetAt": {
       "localizations": {
         "en": {

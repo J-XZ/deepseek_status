@@ -33,7 +33,6 @@ final class FloatingWindowPlacementTests: XCTestCase {
         screen: screen,
         snappedToMenuBar: true,
         obstacles: [],
-        darkRegions: [],
         currentOrigin: current
       )
     )
@@ -53,7 +52,6 @@ final class FloatingWindowPlacementTests: XCTestCase {
         screen: notchedScreen,
         snappedToMenuBar: true,
         obstacles: [],
-        darkRegions: [],
         currentOrigin: CGPoint(x: 100, y: 50)
       )
     )
@@ -68,7 +66,7 @@ final class FloatingWindowPlacementTests: XCTestCase {
     )
     // 顶部行大部分被障碍覆盖，只有最右一段空闲；整屏搜索应选中右段。
     let obstacles = [
-      ScreenObstacle(rect: CGRect(x: 8, y: 800 - 40 - 32, width: 700, height: 32), darkRatio: 0),
+      ScreenObstacle(rect: CGRect(x: 8, y: 800 - 40 - 32, width: 700, height: 32)),
     ]
     let origin = tryUnwrap(
       FloatingPlacement.bestOrigin(
@@ -76,7 +74,6 @@ final class FloatingWindowPlacementTests: XCTestCase {
         screen: notchedScreen,
         snappedToMenuBar: true,
         obstacles: obstacles,
-        darkRegions: [],
         currentOrigin: CGPoint(x: 100, y: 400)
       )
     )
@@ -91,8 +88,8 @@ final class FloatingWindowPlacementTests: XCTestCase {
     // 横向条 + 纵向条组成 L 形遮挡，当前点在横向条内；
     // 零遮挡位置需要同时向右、向上移动。
     let obstacles = [
-      ScreenObstacle(rect: CGRect(x: 8, y: 8, width: 784, height: 92), darkRatio: 0),
-      ScreenObstacle(rect: CGRect(x: 100, y: 100, width: 200, height: 692), darkRatio: 0),
+      ScreenObstacle(rect: CGRect(x: 8, y: 8, width: 784, height: 92)),
+      ScreenObstacle(rect: CGRect(x: 100, y: 100, width: 200, height: 692)),
     ]
     let origin = tryUnwrap(
       FloatingPlacement.bestOrigin(
@@ -100,7 +97,6 @@ final class FloatingWindowPlacementTests: XCTestCase {
         screen: screen,
         snappedToMenuBar: false,
         obstacles: obstacles,
-        darkRegions: [],
         currentOrigin: current
       )
     )
@@ -114,7 +110,7 @@ final class FloatingWindowPlacementTests: XCTestCase {
 
   func testChoosesSmallerIntersectionArea() {
     let obstacles = [
-      ScreenObstacle(rect: CGRect(x: 8, y: 8, width: 250, height: 32), darkRatio: 0),
+      ScreenObstacle(rect: CGRect(x: 8, y: 8, width: 250, height: 32)),
     ]
     let origin = tryUnwrap(
       FloatingPlacement.bestOrigin(
@@ -122,7 +118,6 @@ final class FloatingWindowPlacementTests: XCTestCase {
         screen: screen,
         snappedToMenuBar: false,
         obstacles: obstacles,
-        darkRegions: [],
         currentOrigin: CGPoint(x: 8, y: 8)
       )
     )
@@ -133,7 +128,7 @@ final class FloatingWindowPlacementTests: XCTestCase {
   func testFindsNarrowVerticalGapNotOnCoarseGrid() {
     // 障碍几乎覆盖整个中部，只留 700...900 的竖直窄缝；粗网格会错过。
     let obstacles = [
-      ScreenObstacle(rect: CGRect(x: 8, y: 8, width: 692, height: 784), darkRatio: 0),
+      ScreenObstacle(rect: CGRect(x: 8, y: 8, width: 692, height: 784)),
     ]
     let origin = tryUnwrap(
       FloatingPlacement.bestOrigin(
@@ -141,7 +136,6 @@ final class FloatingWindowPlacementTests: XCTestCase {
         screen: screen,
         snappedToMenuBar: false,
         obstacles: obstacles,
-        darkRegions: [],
         currentOrigin: CGPoint(x: 400, y: 400)
       )
     )
@@ -152,7 +146,7 @@ final class FloatingWindowPlacementTests: XCTestCase {
 
   func testFindsNarrowHorizontalGapNotOnCoarseGrid() {
     let obstacles = [
-      ScreenObstacle(rect: CGRect(x: 8, y: 8, width: 984, height: 692), darkRatio: 0),
+      ScreenObstacle(rect: CGRect(x: 8, y: 8, width: 984, height: 692)),
     ]
     let origin = tryUnwrap(
       FloatingPlacement.bestOrigin(
@@ -160,7 +154,6 @@ final class FloatingWindowPlacementTests: XCTestCase {
         screen: screen,
         snappedToMenuBar: false,
         obstacles: obstacles,
-        darkRegions: [],
         currentOrigin: CGPoint(x: 400, y: 400)
       )
     )
@@ -176,9 +169,8 @@ final class FloatingWindowPlacementTests: XCTestCase {
         screen: screen,
         snappedToMenuBar: false,
         obstacles: [
-          ScreenObstacle(rect: CGRect(x: 2000, y: 0, width: 500, height: 800), darkRatio: 0),
+          ScreenObstacle(rect: CGRect(x: 2000, y: 0, width: 500, height: 800)),
         ],
-        darkRegions: [],
         currentOrigin: CGPoint(x: 100, y: 600)
       )
     )
@@ -196,7 +188,6 @@ final class FloatingWindowPlacementTests: XCTestCase {
         screen: safeScreen,
         snappedToMenuBar: false,
         obstacles: [],
-        darkRegions: [],
         currentOrigin: CGPoint(x: 8, y: 8)
       )
     )
@@ -230,7 +221,7 @@ final class FloatingWindowPlacementTests: XCTestCase {
       content: content,
       colors: colors
     )
-    let snapshot = ScreenSnapshot(obstacles: [], darkRegions: [], grid: grid)
+    let snapshot = ScreenSnapshot(obstacles: [], grid: grid)
     let origin = tryUnwrap(
       FloatingPlacement.bestOrigin(
         frame: frame,
@@ -265,7 +256,7 @@ final class FloatingWindowPlacementTests: XCTestCase {
       content: content,
       colors: colors
     )
-    let snapshot = ScreenSnapshot(obstacles: [], darkRegions: [], grid: grid)
+    let snapshot = ScreenSnapshot(obstacles: [], grid: grid)
     let origin = tryUnwrap(
       FloatingPlacement.bestOrigin(
         frame: frame,
@@ -302,7 +293,7 @@ final class FloatingWindowPlacementTests: XCTestCase {
       content: content,
       colors: colors,
     )
-    let snapshot = ScreenSnapshot(obstacles: [], darkRegions: [], grid: grid)
+    let snapshot = ScreenSnapshot(obstacles: [], grid: grid)
     let origin = tryUnwrap(
       FloatingPlacement.bestOrigin(
         frame: frame,
@@ -323,9 +314,8 @@ final class FloatingWindowPlacementTests: XCTestCase {
         screen: screen,
         snappedToMenuBar: false,
         obstacles: [
-          ScreenObstacle(rect: CGRect(x: 0, y: 0, width: 1000, height: 800), darkRatio: 0),
+          ScreenObstacle(rect: CGRect(x: 0, y: 0, width: 1000, height: 800)),
         ],
-        darkRegions: [],
         currentOrigin: CGPoint(x: 500, y: 400)
       )
     )
@@ -339,7 +329,6 @@ final class FloatingWindowPlacementTests: XCTestCase {
         screen: screen,
         snappedToMenuBar: true,
         obstacles: [],
-        darkRegions: [],
         currentOrigin: CGPoint(x: 300, y: 0)
       )
     )

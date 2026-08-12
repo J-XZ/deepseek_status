@@ -3,7 +3,8 @@ import CoreGraphics
 import CoreVideo
 import QuartzCore
 
-/// 屏幕遮挡扫描器：双击智能定位时通过短时截屏帧差识别“内容稳定的窗口区域”。
+/// 屏幕遮挡扫描器：双击智能定位时抓取一帧屏幕并下采样，
+/// 输出每格主色与内容标记，供全局颜色单一性评分使用。
 ///
 /// macOS 的屏幕录制权限不会由代码直接弹窗；应用声明 NSScreenCaptureUsageDescription
 /// 后，用户首次调用截屏 API 时系统会弹授权框。未授权时本类返回 nil，
@@ -17,7 +18,7 @@ final class ScreenObstacleScanner: NSObject {
     CGPreflightScreenCaptureAccess()
   }
 
-  /// 抓取当前屏幕内容并返回“稳定区域”矩形（AppKit 左下坐标系）。
+  /// 抓取当前屏幕内容并返回下采样快照（AppKit 左下坐标系）。
   /// 采集失败或无权限返回 nil；调用方应降级。
   func captureSnapshot(screen: NSScreen) -> ScreenSnapshot? {
     guard Self.hasScreenCaptureAccess else { return nil }
@@ -33,7 +34,6 @@ final class ScreenObstacleScanner: NSObject {
     let pixelHeight = gridHeight * max(1, Int(scale.rounded()))
 
     var capturedFrame: [UInt8]?
-    var capturedDark: [UInt8]?
     var capturedColors: [UInt32]?
     let frameLock = NSLock()
     let frameReady = DispatchSemaphore(value: 0)
@@ -47,6 +47,10 @@ final class ScreenObstacleScanner: NSObject {
       queue: queue
     ) { _, _, surface, _ in
       guard let surface else { return }
+      frameLock.lock()
+      let alreadyCaptured = capturedFrame != nil
+      frameLock.unlock()
+      guard !alreadyCaptured else { return }
       var pixelBuffer: Unmanaged<CVPixelBuffer>?
       let error = CVPixelBufferCreateWithIOSurface(
         kCFAllocatorDefault,
@@ -56,7 +60,7 @@ final class ScreenObstacleScanner: NSObject {
       )
       guard error == kCVReturnSuccess, let pixelBuffer else { return }
       let imageBuffer = pixelBuffer.takeRetainedValue()
-      let (content, dark, colors) = Self.downsample(
+      let (content, colors) = Self.downsample(
         imageBuffer,
         gridWidth: gridWidth,
         gridHeight: gridHeight,
@@ -65,9 +69,6 @@ final class ScreenObstacleScanner: NSObject {
       frameLock.lock()
       if capturedFrame == nil {
         capturedFrame = content
-      }
-      if capturedDark == nil {
-        capturedDark = dark
       }
       if capturedColors == nil {
         capturedColors = colors
@@ -87,26 +88,12 @@ final class ScreenObstacleScanner: NSObject {
 
     frameLock.lock()
     let frame = capturedFrame
-    let darkFrame = capturedDark
     let colors = capturedColors
     frameLock.unlock()
     guard let frame else {
       return nil
     }
 
-    let obstacles = Self.stableRegions(
-      frame: frame,
-      darkFrame: darkFrame,
-      width: gridWidth,
-      height: gridHeight,
-      screenBounds: bounds
-    )
-    let darkRegions = Self.darkRegions(
-      darkFrame: darkFrame,
-      width: gridWidth,
-      height: gridHeight,
-      screenBounds: bounds
-    )
     let grid = FloatingScreenGrid(
       width: gridWidth,
       height: gridHeight,
@@ -116,8 +103,7 @@ final class ScreenObstacleScanner: NSObject {
       colors: colors ?? []
     )
     return ScreenSnapshot(
-      obstacles: obstacles,
-      darkRegions: darkRegions,
+      obstacles: [],
       grid: grid
     )
   }
@@ -155,21 +141,19 @@ final class ScreenObstacleScanner: NSObject {
     gridWidth: Int,
     gridHeight: Int,
     scale: CGFloat
-  ) -> (content: [UInt8], dark: [UInt8], colors: [UInt32]) {
+  ) -> (content: [UInt8], colors: [UInt32]) {
     CVPixelBufferLockBaseAddress(imageBuffer, .readOnly)
     defer { CVPixelBufferUnlockBaseAddress(imageBuffer, .readOnly) }
     guard let base = CVPixelBufferGetBaseAddress(imageBuffer) else {
-      return ([], [], [])
+      return ([], [])
     }
     let bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer)
     let bytesPerPixel = 4
     let bufferHeight = CVPixelBufferGetHeight(imageBuffer)
     let scaleInt = max(1, Int(scale.rounded()))
     var result = [UInt8](repeating: 0, count: gridWidth * gridHeight)
-    var dark = [UInt8](repeating: 0, count: gridWidth * gridHeight)
     var colors = [UInt32](repeating: 0, count: gridWidth * gridHeight)
     var luminance = [Double](repeating: 0, count: gridWidth * gridHeight)
-    var perCellLuma = [Double](repeating: 0, count: gridWidth * gridHeight)
     let basePtr = base.assumingMemoryBound(to: UInt8.self)
 
     for row in 0..<gridHeight {
@@ -194,7 +178,6 @@ final class ScreenObstacleScanner: NSObject {
           }
         }
         luminance[row * gridWidth + col] = maxLuma
-        perCellLuma[row * gridWidth + col] = maxLuma
         colors[row * gridWidth + col] = cellColorCounts.max { $0.value < $1.value }?.key ?? 0
       }
     }
@@ -221,153 +204,7 @@ final class ScreenObstacleScanner: NSObject {
       let backgroundDiff = abs(luminance[index] - median)
       let localContrast = localMax - localMin
       result[index] = backgroundDiff > 40 || localContrast > 56 ? 1 : 0
-      dark[index] = perCellLuma[index] < 32 ? 1 : 0
     }
-    return (result, dark, colors)
+    return (result, colors)
   }
-
-  /// 多帧取“稳定”单元：至少 2 帧同为内容、且没有大幅来回变化。
-  static func stableRegions(
-    frame: [UInt8],
-    darkFrame: [UInt8]?,
-    width: Int,
-    height: Int,
-    screenBounds: CGRect
-  ) -> [ScreenObstacle] {
-    var stable = [UInt8](repeating: 0, count: width * height)
-    for index in 0..<(width * height) {
-      stable[index] = frame.indices.contains(index) ? frame[index] : 0
-    }
-
-    // 连通单元合并为矩形：从每个未访问的稳定单元出发做 BFS。
-    var visited = [Bool](repeating: false, count: width * height)
-    var regions: [ScreenObstacle] = []
-    for start in 0..<(width * height) where stable[start] == 1 && !visited[start] {
-      var queue = [start]
-      visited[start] = true
-      var minX = start % width, maxX = minX
-      var minY = start / width, maxY = minY
-      while !queue.isEmpty {
-        let current = queue.removeFirst()
-        let cx = current % width
-        let cy = current / width
-        // 4 连通避免把相邻背景单元斜向连成整屏大块。
-        for (dx, dy) in [(-1, 0), (1, 0), (0, -1), (0, 1)] {
-          let nx = cx + dx
-          let ny = cy + dy
-          guard nx >= 0, nx < width, ny >= 0, ny < height else { continue }
-          let neighbor = ny * width + nx
-          if stable[neighbor] == 1 && !visited[neighbor] {
-            visited[neighbor] = true
-            queue.append(neighbor)
-            minX = min(minX, nx)
-            maxX = max(maxX, nx)
-            minY = min(minY, ny)
-            maxY = max(maxY, ny)
-          }
-        }
-      }
-      let cell = Self.sampleStep
-      let minRow = minY
-      let maxRow = maxY
-      let rect = CGRect(
-        x: screenBounds.minX + CGFloat(minX) * cell,
-        y: screenBounds.minY + CGFloat(height - 1 - maxRow) * cell,
-        width: CGFloat(maxX - minX + 1) * cell,
-        height: CGFloat(maxRow - minRow + 1) * cell
-      )
-      // 忽略几乎覆盖整屏的背景级大块：深色/彩色壁纸渐变会连成整屏，
-      // 若作为障碍会让任何位置都被判为遮挡。
-      let totalCells = width * height
-      let blockCells = (maxX - minX + 1) * (maxRow - minRow + 1)
-      if blockCells < Int(Double(totalCells) * 0.6) {
-        let blockCellCount = (maxX - minX + 1) * (maxRow - minRow + 1)
-        var darkCells = 0
-        for row in minY...maxY {
-          for col in minX...maxX {
-            let index = row * width + col
-            if let darkFrame, darkFrame.indices.contains(index), darkFrame[index] == 1 {
-              darkCells += 1
-            }
-          }
-        }
-      regions.append(
-        ScreenObstacle(
-          rect: rect,
-          darkRatio: Double(darkCells) / Double(blockCellCount),
-          isLargeDarkRegion: rect.width >= 200 && rect.height >= 100
-        )
-      )
-      }
-    }
-    return regions
-  }
-
-  /// 测试入口：对外暴露稳定区域合并逻辑。
-  static func stableRegionsForTesting(
-    frame: [UInt8],
-    darkFrame: [UInt8]?,
-    width: Int,
-    height: Int,
-    screenBounds: CGRect
-  ) -> [ScreenObstacle] {
-    stableRegions(
-      frame: frame,
-      darkFrame: darkFrame,
-      width: width,
-      height: height,
-      screenBounds: screenBounds
-    )
-  }
-
-  /// 把暗色网格合并为连通矩形，供候选生成使用。
-  private static func darkRegions(
-    darkFrame: [UInt8]?,
-    width: Int,
-    height: Int,
-    screenBounds: CGRect
-  ) -> [CGRect] {
-    guard let darkFrame, !darkFrame.isEmpty else { return [] }
-    var visited = [Bool](repeating: false, count: width * height)
-    var regions: [CGRect] = []
-    let cell = Self.sampleStep
-    for start in 0..<(width * height) where darkFrame[start] == 1 && !visited[start] {
-      var queue = [start]
-      visited[start] = true
-      var minX = start % width, maxX = minX
-      var minY = start / width, maxY = minY
-      while !queue.isEmpty {
-        let current = queue.removeFirst()
-        let cx = current % width
-        let cy = current / width
-        for (dx, dy) in [(-1, 0), (1, 0), (0, -1), (0, 1)] {
-          let nx = cx + dx
-          let ny = cy + dy
-          guard nx >= 0, nx < width, ny >= 0, ny < height else { continue }
-          let neighbor = ny * width + nx
-          if darkFrame[neighbor] == 1 && !visited[neighbor] {
-            visited[neighbor] = true
-            queue.append(neighbor)
-            minX = min(minX, nx)
-            maxX = max(maxX, nx)
-            minY = min(minY, ny)
-            maxY = max(maxY, ny)
-          }
-        }
-      }
-      let rect = CGRect(
-        x: screenBounds.minX + CGFloat(minX) * cell,
-        y: screenBounds.minY + CGFloat(height - 1 - maxY) * cell,
-        width: CGFloat(maxX - minX + 1) * cell,
-        height: CGFloat(maxY - minY + 1) * cell
-      )
-      // 只把足够大的暗色块作为“候选暗色区域”：
-      // 浅色背景上小面积暗色文字不是可放置区域，不应进入候选。
-      if rect.width >= 200, rect.height >= 100 {
-        regions.append(rect)
-      }
-    }
-    return regions
-  }
-
 }
