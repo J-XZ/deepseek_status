@@ -69,7 +69,8 @@ final class FloatingStatusWindow: NSObject {
     // 透明背景：圆角卡片与内容由内容视图自绘。
     panel.isOpaque = false
     panel.backgroundColor = .clear
-    panel.hasShadow = false
+    panel.appearance = AppVisualStyle.nsAppearance
+    panel.hasShadow = true
     panel.ignoresMouseEvents = false
     panel.contentView = contentView
     self.panel = panel
@@ -383,11 +384,11 @@ final class FloatingStatusWindow: NSObject {
 /// 复用 MenuBarStatusContentView 的公共绘制方法，保证两侧布局一致。
 /// 支持按段悬停追踪：hoveredVendorIndex 为当前悬停的供应商段索引。
 final class FloatingStatusContentView: NSView {
-  static let fixedHeight: CGFloat = 32
-  fileprivate static let horizontalPadding: CGFloat = 8
-  fileprivate static let cornerRadius: CGFloat = 9
-  fileprivate static let iconTextSpacing: CGFloat = 3
-  fileprivate static let separatorText = "  ·  "
+  static let fixedHeight: CGFloat = 34
+  fileprivate static let horizontalPadding: CGFloat = 10
+  fileprivate static let cornerRadius: CGFloat = 11
+  fileprivate static let iconTextSpacing: CGFloat = 4
+  fileprivate static let separatorText = "   "
   fileprivate static let separatorFont = NSFont.monospacedDigitSystemFont(
     ofSize: MenuBarDisplayLayout.regularFontSize,
     weight: .semibold
@@ -395,22 +396,23 @@ final class FloatingStatusContentView: NSView {
 
   /// 毛玻璃背景层：位于最底层，随视图尺寸自动布局。
   private let blurBackground = NSVisualEffectView()
-  /// 内容绘制层：位于毛玻璃之上，绘制半透明深蓝卡片与镜像文本。
+  /// 内容绘制层：位于系统材质之上，只绘制发丝轮廓与镜像内容。
   private let contentOverlay = FloatingStatusContentOverlayView()
 
   override init(frame frameRect: NSRect) {
     super.init(frame: frameRect)
 
-    blurBackground.material = .hudWindow
-    // 轻量毛玻璃：低噪点、低通透，既能看到背景又保持文字可读。
+    let lightAppearance = AppVisualStyle.nsAppearance
+    appearance = lightAppearance
+    blurBackground.material = .menu
+    // 采用 macOS 菜单材质，不强制深色或叠加彩色染色。
     blurBackground.blendingMode = .behindWindow
     blurBackground.state = .active
-    // 悬浮窗始终为深蓝深色风格（白字/白图标），毛玻璃强制深色外观保持一致。
-    blurBackground.appearance = NSAppearance(named: .darkAqua)
     // 圆角裁剪：让视觉特效视图贴合卡片圆角轮廓。
     blurBackground.wantsLayer = true
     blurBackground.layer?.cornerRadius = Self.cornerRadius
     blurBackground.layer?.masksToBounds = true
+    blurBackground.appearance = lightAppearance
     blurBackground.translatesAutoresizingMaskIntoConstraints = false
     addSubview(blurBackground, positioned: .below, relativeTo: nil)
     NSLayoutConstraint.activate([
@@ -422,6 +424,7 @@ final class FloatingStatusContentView: NSView {
 
     contentOverlay.frame = bounds
     contentOverlay.autoresizingMask = [.width, .height]
+    contentOverlay.appearance = lightAppearance
     addSubview(contentOverlay)
   }
 
@@ -649,7 +652,7 @@ final class FloatingStatusContentView: NSView {
   }
 }
 
-/// 悬浮窗内容绘制层：位于毛玻璃背景之上，负责半透明深蓝卡片与镜像文本。
+/// 悬浮窗内容绘制层：位于系统菜单材质上，仅绘制内容和发丝轮廓。
 /// 自绘内容必须放在毛玻璃上方的独立子视图里，NSVisualEffectView 会盖住
 /// 父视图 draw 的内容。
 private final class FloatingStatusContentOverlayView: NSView {
@@ -660,8 +663,6 @@ private final class FloatingStatusContentOverlayView: NSView {
 
   override init(frame frameRect: NSRect) {
     super.init(frame: frameRect)
-    // 悬浮窗固定为深蓝深色风格，强制深色外观保证白字/白图标稳定着色。
-    appearance = NSAppearance(named: .darkAqua)
   }
 
   @available(*, unavailable)
@@ -672,16 +673,14 @@ private final class FloatingStatusContentOverlayView: NSView {
   override func draw(_ dirtyRect: NSRect) {
     super.draw(dirtyRect)
 
+    let hairlineWidth = AppVisualStyle.hairlineWidth
     let card = NSBezierPath(
-      roundedRect: bounds,
+      roundedRect: bounds.insetBy(dx: hairlineWidth / 2, dy: hairlineWidth / 2),
       xRadius: FloatingStatusContentView.cornerRadius,
       yRadius: FloatingStatusContentView.cornerRadius
     )
-    // 高透明显示：整体 alpha 约 0.55，明显能看到被覆盖的桌面内容。
-    NSColor(srgbRed: 0.05, green: 0.15, blue: 0.40, alpha: 0.28).setFill()
-    card.fill()
-    NSColor.white.withAlphaComponent(0.18).setStroke()
-    card.lineWidth = 1
+    NSColor.separatorColor.withAlphaComponent(0.34).setStroke()
+    card.lineWidth = hairlineWidth
     card.stroke()
 
     _ = MenuBarStatusContentView.drawSegments(
@@ -691,9 +690,32 @@ private final class FloatingStatusContentOverlayView: NSView {
       separatorText: FloatingStatusContentView.separatorText,
       separatorFont: FloatingStatusContentView.separatorFont,
       iconTextSpacing: FloatingStatusContentView.iconTextSpacing,
-      // 深蓝背景：未指定颜色的文本统一用白色。
-      defaultTextColor: .white
+      defaultTextColor: .labelColor,
+      useFloatingColors: true
     )
+
+    // 分段之间用单物理像素发丝线，不用字符伪装分隔线，
+    // 因此各分隔线高度和垂直中心始终完全一致。
+    var x = FloatingStatusContentView.horizontalPadding
+    let separatorWidth = MenuBarStatusContentView.attributedWidth(
+      FloatingStatusContentView.separatorText,
+      font: FloatingStatusContentView.separatorFont
+    )
+    for (index, segment) in segments.enumerated() where index < segments.count - 1 {
+      x += MenuBarStatusContentView.segmentWidth(
+        segment,
+        iconTextSpacing: FloatingStatusContentView.iconTextSpacing
+      )
+      let scale = window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2
+      let dividerX = (floor((x + separatorWidth / 2) * scale) + 0.5) / scale
+      let divider = NSBezierPath()
+      divider.move(to: NSPoint(x: dividerX, y: bounds.midY - 7))
+      divider.line(to: NSPoint(x: dividerX, y: bounds.midY + 7))
+      divider.lineWidth = hairlineWidth
+      NSColor.separatorColor.withAlphaComponent(0.55).setStroke()
+      divider.stroke()
+      x += separatorWidth
+    }
   }
 }
 
@@ -718,8 +740,8 @@ private final class FloatingWindowContextPopover: NSObject {
     panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
     panel.isOpaque = false
     panel.backgroundColor = .clear
-    // 与悬浮窗本体一致：无阴影，由毛玻璃卡片自绘轮廓。
-    panel.hasShadow = false
+    panel.appearance = AppVisualStyle.nsAppearance
+    panel.hasShadow = true
     panel.isReleasedWhenClosed = false
     panel.hidesOnDeactivate = false
     panel.ignoresMouseEvents = false
@@ -738,6 +760,7 @@ private final class FloatingWindowContextPopover: NSObject {
     hostingView.sizingOptions = []
     hostingView.translatesAutoresizingMaskIntoConstraints = true
     hostingView.autoresizingMask = [.width, .height]
+    hostingView.appearance = AppVisualStyle.nsAppearance
     panel.contentView = hostingView
     self.panel = panel
     self.hostingView = hostingView
@@ -862,34 +885,36 @@ private struct FloatingWindowContextMenuView: View {
       ) {
         Text(L10n.string(.floatingWindowClose, language: language))
           .font(.system(size: 13))
-          .foregroundColor(.white)
+          .foregroundStyle(.primary)
       }
-      .toggleStyle(FloatingWindowSwitchStyle())
+      .toggleStyle(.switch)
+      .controlSize(.mini)
       .padding(.horizontal, 12)
       .frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
 
-      Divider().overlay(Color.white.opacity(0.18))
+      Divider()
 
       Toggle(
         isOn: $isSnapped
       ) {
         Text(L10n.string(.floatingWindowSnapToMenuBar, language: language))
           .font(.system(size: 13))
-          .foregroundColor(.white)
+          .foregroundStyle(.primary)
       }
       .onChange(of: isSnapped) { _ in
         onToggleSnapToMenuBar?()
       }
-      .toggleStyle(FloatingWindowSwitchStyle())
+      .toggleStyle(.switch)
+      .controlSize(.mini)
       .padding(.horizontal, 12)
       .frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
 
-      Divider().overlay(Color.white.opacity(0.18))
+      Divider()
 
       Button(action: { onOpenSettings?() }) {
         Label(L10n.string(.floatingWindowSettings, language: language), systemImage: "gearshape")
           .font(.system(size: 13))
-          .foregroundColor(.white)
+          .foregroundStyle(.primary)
           .frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
           .contentShape(Rectangle())
       }
@@ -899,49 +924,19 @@ private struct FloatingWindowContextMenuView: View {
     .frame(width: 240, height: 122)
     .background(
       ZStack {
-        // 与悬浮窗相同的 hudWindow 毛玻璃材质。
-        RoundedRectangle(cornerRadius: 9, style: .continuous)
+        RoundedRectangle(cornerRadius: 12, style: .continuous)
           .fill(Color.clear)
           .overlay(
             HudWindowMaterial()
-              .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+              .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
           )
-        // 与悬浮窗内容层相同的半透明深蓝着色。
-        RoundedRectangle(cornerRadius: 9, style: .continuous)
-          .fill(Color(red: 0.05, green: 0.15, blue: 0.40).opacity(0.28))
-        RoundedRectangle(cornerRadius: 9, style: .continuous)
-          .stroke(Color.white.opacity(0.18), lineWidth: 1)
+        RoundedRectangle(cornerRadius: 12, style: .continuous)
+          .strokeBorder(
+            Color(nsColor: .separatorColor).opacity(0.55),
+            lineWidth: AppVisualStyle.hairlineWidth
+          )
       }
     )
-    .preferredColorScheme(.dark)
-  }
-}
-
-/// 悬浮窗控制面板专用开关：开启时为绿色底纹，关闭时为灰色底纹，
-/// 在深蓝半透明背景上仍能一眼看清开关状态。
-private struct FloatingWindowSwitchStyle: ToggleStyle {
-  func makeBody(configuration: Configuration) -> some View {
-    HStack(spacing: 8) {
-      configuration.label
-      Spacer()
-      ZStack(alignment: configuration.isOn ? .trailing : .leading) {
-        Capsule()
-          .fill(
-            configuration.isOn
-              ? Color(red: 0.16, green: 0.72, blue: 0.36)
-              : Color.white.opacity(0.22)
-          )
-          .frame(width: 36, height: 20)
-        Circle()
-          .fill(Color.white)
-          .frame(width: 16, height: 16)
-          .padding(2)
-      }
-      .contentShape(Capsule())
-      .onTapGesture {
-        configuration.isOn.toggle()
-      }
-      .animation(.easeOut(duration: 0.15), value: configuration.isOn)
-    }
+    .preferredColorScheme(.light)
   }
 }

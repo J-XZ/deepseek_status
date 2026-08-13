@@ -4,7 +4,6 @@ import SwiftUI
 struct CodexUsageView: View {
   @ObservedObject var store: CodexUsageStore
   let language: AppLanguage
-  let appearance: AppAppearance
 
   @Environment(\.controlActiveState) private var controlActiveState
 
@@ -16,6 +15,8 @@ struct CodexUsageView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
       headerCard
+      Divider()
+        .overlay(AppVisualStyle.divider)
       if let usage = store.usage {
         usageCard(usage)
         creditsCard(usage)
@@ -33,6 +34,8 @@ struct CodexUsageView: View {
           Text(L10n.string(.codexLoading, language: language))
             .foregroundStyle(.secondary)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .appInsetCard()
       } else {
         emptyView
       }
@@ -41,31 +44,18 @@ struct CodexUsageView: View {
 
   private var headerCard: some View {
     VStack(alignment: .leading, spacing: 12) {
-      HStack(spacing: 10) {
-        Image("CodexIcon")
-          .renderingMode(.template)
-          .resizable()
-          .aspectRatio(contentMode: .fit)
-          .frame(width: 24, height: 24)
-          .padding(8)
-          .accessibilityLabel(L10n.string(.a11yCodexIcon, language: language))
-        VStack(alignment: .leading, spacing: 2) {
-          Text(L10n.string(.codexTitle, language: language))
-            .font(AppTypography.title)
-          Text(store.menuBarText)
-            .font(AppTypography.caption.monospacedDigit())
-            .foregroundStyle(.secondary)
+      AppProviderHeader(
+        imageName: "CodexIcon",
+        title: L10n.string(.codexTitle, language: language),
+        subtitle: store.menuBarText,
+        accessibilityLabel: L10n.string(.a11yCodexIcon, language: language)
+      ) {
+        HStack(spacing: 6) {
+          if let plan = store.usage.flatMap({ CodexUsageFormatter.planDisplayName($0.planType) }) {
+            AppStatusBadge(text: plan, tint: AppVisualStyle.accent, showsDot: false)
+          }
+          statusBadge
         }
-        Spacer()
-        if let plan = store.usage.flatMap({ CodexUsageFormatter.planDisplayName($0.planType) }) {
-          Text(plan)
-            .font(AppTypography.badge)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(Color.accentColor.opacity(0.14), in: Capsule())
-            .foregroundStyle(Color.accentColor)
-        }
-        statusBadge
       }
       if let email = store.usage?.email, !email.isEmpty {
         Label(
@@ -79,12 +69,7 @@ struct CodexUsageView: View {
   }
 
   private var statusBadge: some View {
-    Text(statusText)
-      .font(AppTypography.badge)
-      .padding(.horizontal, 8)
-      .padding(.vertical, 3)
-      .background(statusColor.opacity(0.14), in: Capsule())
-      .foregroundStyle(statusColor)
+    AppStatusBadge(text: statusText, tint: statusColor)
   }
 
   private var statusText: String {
@@ -105,13 +90,13 @@ struct CodexUsageView: View {
   private var statusColor: Color {
     switch store.status {
     case .loaded:
-      return .green
+      return AppVisualStyle.positive
     case .idle, .loading:
-      return .blue
+      return AppVisualStyle.accent
     case .notConfigured, .authInvalid:
-      return .orange
+      return AppVisualStyle.warning
     case .networkError, .serverError, .decodingError:
-      return .red
+      return AppVisualStyle.danger
     }
   }
 
@@ -172,6 +157,7 @@ struct CodexUsageView: View {
         .foregroundStyle(.secondary)
       }
     }
+    .appInsetCard()
   }
 
   /// 无用量限制信息时的徽章文案：免费计划明确标注，否则通用“无限制信息”。
@@ -221,23 +207,12 @@ struct CodexUsageView: View {
     usedPercent: Int,
     expected: Double? = nil
   ) -> some View {
-    GeometryReader { geo in
-      ZStack(alignment: .leading) {
-        Capsule()
-          .fill(trackColor)
-        Capsule()
-          .fill(barColor(usedPercent, idealPercent: expected))
-          .frame(width: geo.size.width * CGFloat(min(max(usedPercent, 0), 100)) / 100)
-        if let expected {
-          Rectangle()
-            .fill(.red)
-            .frame(width: 3, height: 6)
-            .position(x: UsageFormatting.markerX(width: geo.size.width, expected: expected), y: 3)
-            .accessibilityLabel(L10n.string(.codexExpectedMarker, language: language))
-        }
-      }
-    }
-    .frame(height: 6)
+    AppUsageProgressBar(
+      progress: Double(min(max(usedPercent, 0), 100)) / 100,
+      color: barColor(usedPercent, idealPercent: expected),
+      expected: expected,
+      expectedAccessibilityLabel: L10n.string(.codexExpectedMarker, language: language)
+    )
   }
 
   private func usageBar(_ window: CodexUsageWindow) -> some View {
@@ -250,13 +225,10 @@ struct CodexUsageView: View {
     )
   }
 
-  private var trackColor: Color {
-    appearance == .dark ? Color(white: 0.25) : Color(white: 0.85)
-  }
-
   private func barColor(_ usedPercent: Int, idealPercent: Double?) -> Color {
     let gap = idealPercent.map { Double(usedPercent) - $0 }
-    return MenuBarUsageColor.progressColor(forGap: gap).map(Color.init(nsColor:)) ?? .blue
+    return MenuBarUsageColor.detailProgressColor(forGap: gap).map(Color.init(nsColor:))
+      ?? AppVisualStyle.progressBlue
   }
 
 
@@ -348,6 +320,7 @@ struct CodexUsageView: View {
             .foregroundStyle(.red)
         }
       }
+      .appInsetCard()
     }
   }
 
@@ -389,6 +362,7 @@ struct CodexUsageView: View {
           .fixedSize(horizontal: false, vertical: true)
       }
     }
+    .appInsetCard()
   }
 
   private var emptyTitle: String {

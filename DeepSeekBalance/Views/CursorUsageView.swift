@@ -4,7 +4,6 @@ import SwiftUI
 struct CursorUsageView: View {
   @ObservedObject var store: CursorUsageStore
   let language: AppLanguage
-  let appearance: AppAppearance
 
   @Environment(\.controlActiveState) private var controlActiveState
 
@@ -16,6 +15,8 @@ struct CursorUsageView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
       headerCard
+      Divider()
+        .overlay(AppVisualStyle.divider)
       if let usage = store.usage {
         usageCard(usage)
         spendCard(usage)
@@ -33,6 +34,8 @@ struct CursorUsageView: View {
           Text(L10n.string(.cursorLoading, language: language))
             .foregroundStyle(.secondary)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .appInsetCard()
       } else {
         emptyView
       }
@@ -41,31 +44,18 @@ struct CursorUsageView: View {
 
   private var headerCard: some View {
     VStack(alignment: .leading, spacing: 12) {
-      HStack(spacing: 10) {
-        Image("CursorIcon")
-          .renderingMode(.template)
-          .resizable()
-          .aspectRatio(contentMode: .fit)
-          .frame(width: 24, height: 24)
-          .padding(8)
-          .accessibilityLabel(L10n.string(.a11yCursorIcon, language: language))
-        VStack(alignment: .leading, spacing: 2) {
-          Text(L10n.string(.cursorTitle, language: language))
-            .font(AppTypography.title)
-          Text(store.menuBarText)
-            .font(AppTypography.caption.monospacedDigit())
-            .foregroundStyle(.secondary)
+      AppProviderHeader(
+        imageName: "CursorIcon",
+        title: L10n.string(.cursorTitle, language: language),
+        subtitle: store.menuBarText,
+        accessibilityLabel: L10n.string(.a11yCursorIcon, language: language)
+      ) {
+        HStack(spacing: 6) {
+          if let plan = CursorUsageFormatter.planDisplayName(store.profile?.planTier) {
+            AppStatusBadge(text: plan, tint: AppVisualStyle.accent, showsDot: false)
+          }
+          statusBadge
         }
-        Spacer()
-        if let plan = CursorUsageFormatter.planDisplayName(store.profile?.planTier) {
-          Text(plan)
-            .font(AppTypography.badge)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(Color.accentColor.opacity(0.14), in: Capsule())
-            .foregroundStyle(Color.accentColor)
-        }
-        statusBadge
       }
       if let email = store.profile?.email, !email.isEmpty {
         Label(
@@ -79,12 +69,7 @@ struct CursorUsageView: View {
   }
 
   private var statusBadge: some View {
-    Text(statusText)
-      .font(AppTypography.badge)
-      .padding(.horizontal, 8)
-      .padding(.vertical, 3)
-      .background(statusColor.opacity(0.14), in: Capsule())
-      .foregroundStyle(statusColor)
+    AppStatusBadge(text: statusText, tint: statusColor)
   }
 
   private var statusText: String {
@@ -105,13 +90,13 @@ struct CursorUsageView: View {
   private var statusColor: Color {
     switch store.status {
     case .loaded:
-      return .green
+      return AppVisualStyle.positive
     case .idle, .loading:
-      return .blue
+      return AppVisualStyle.accent
     case .notConfigured, .authInvalid:
-      return .orange
+      return AppVisualStyle.warning
     case .networkError, .serverError, .decodingError:
-      return .red
+      return AppVisualStyle.danger
     }
   }
 
@@ -187,6 +172,7 @@ struct CursorUsageView: View {
         .foregroundStyle(.secondary)
       }
     }
+    .appInsetCard()
   }
 
   /// 进度条文案：有差距（实际已用 − 理想已用）时显示“已用 X% · 剩余 Y%（±Z%）”，
@@ -270,32 +256,18 @@ struct CursorUsageView: View {
     usedPercent: Int,
     expected: Double? = nil
   ) -> some View {
-    GeometryReader { geo in
-      ZStack(alignment: .leading) {
-        Capsule()
-          .fill(trackColor)
-        Capsule()
-          .fill(barColor(usedPercent, idealPercent: expected))
-          .frame(width: geo.size.width * CGFloat(min(max(usedPercent, 0), 100)) / 100)
-        if let expected {
-          Rectangle()
-            .fill(.red)
-            .frame(width: 3, height: 6)
-            .position(x: UsageFormatting.markerX(width: geo.size.width, expected: expected), y: 3)
-            .accessibilityLabel(L10n.string(.cursorExpectedMarker, language: language))
-        }
-      }
-    }
-    .frame(height: 6)
-  }
-
-  private var trackColor: Color {
-    appearance == .dark ? Color(white: 0.25) : Color(white: 0.85)
+    AppUsageProgressBar(
+      progress: Double(min(max(usedPercent, 0), 100)) / 100,
+      color: barColor(usedPercent, idealPercent: expected),
+      expected: expected,
+      expectedAccessibilityLabel: L10n.string(.cursorExpectedMarker, language: language)
+    )
   }
 
   private func barColor(_ usedPercent: Int, idealPercent: Double?) -> Color {
     let gap = idealPercent.map { Double(usedPercent) - $0 }
-    return MenuBarUsageColor.progressColor(forGap: gap).map(Color.init(nsColor:)) ?? .blue
+    return MenuBarUsageColor.detailProgressColor(forGap: gap).map(Color.init(nsColor:))
+      ?? AppVisualStyle.progressBlue
   }
 
 
@@ -335,6 +307,7 @@ struct CursorUsageView: View {
           .foregroundStyle(.red)
       }
     }
+    .appInsetCard()
   }
 
   private func spendRow(title: String, cents: Double?) -> some View {
@@ -366,6 +339,7 @@ struct CursorUsageView: View {
           .fixedSize(horizontal: false, vertical: true)
       }
     }
+    .appInsetCard()
   }
 
   private var emptyTitle: String {

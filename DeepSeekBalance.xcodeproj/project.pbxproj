@@ -14,6 +14,7 @@
 		AA0000000000000000000105 /* APIKeyProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000005 /* APIKeyProvider.swift */; };
 		AA0000000000000000000106 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000006 /* KeychainStore.swift */; };
 		AA0000000000000000000108 /* BalancePopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000008 /* BalancePopoverView.swift */; };
+		A90000000000000000000101 /* AppVisualStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A90000000000000000000201 /* AppVisualStyle.swift */; };
 		AA0000000000000000000109 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000009 /* Assets.xcassets */; };
 		AA000000000000000000010A /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BB000000000000000000000C /* Security.framework */; };
 		E1000000000000000000000F /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E10000000000000000000010 /* CoreVideo.framework */; };
@@ -58,7 +59,6 @@
 		E1000000000000000000000D /* ScreenObstacleScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000000000000000000000E /* ScreenObstacleScanner.swift */; };
 		E10000000000000000000015 /* CodexUsageSpeedEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000016 /* CodexUsageSpeedEvaluator.swift */; };
 		E10000000000000000000017 /* CodexUsageSpeedTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000018 /* CodexUsageSpeedTests.swift */; };
-		AA000000000000000000030C /* AppAppearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000010D /* AppAppearance.swift */; };
 		DD00000000000000001001 /* builder.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000101 /* builder.cc */; };
 		DD00000000000000001002 /* c.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000102 /* c.cc */; };
 		DD00000000000000001003 /* db_impl.cc in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000103 /* db_impl.cc */; };
@@ -244,6 +244,7 @@
 		BB000000000000000000020A /* CodexTrendChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexTrendChartView.swift; sourceTree = "<group>"; };
 		BB000000000000000000020B /* SettingsWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindow.swift; sourceTree = "<group>"; };
 		BB000000000000000000020C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A90000000000000000000201 /* AppVisualStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppVisualStyle.swift; sourceTree = "<group>"; };
 		BB000000000000000000020D /* CursorUsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorUsageModels.swift; sourceTree = "<group>"; };
 		BB000000000000000000020E /* CursorUsageClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorUsageClient.swift; sourceTree = "<group>"; };
 		BB000000000000000000020F /* CursorAuthProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorAuthProvider.swift; sourceTree = "<group>"; };
@@ -275,7 +276,6 @@
 		BB0000000000000000000224 /* VPSHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPSHistory.swift; sourceTree = "<group>"; };
 		BB0000000000000000000225 /* VPSUsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPSUsageView.swift; sourceTree = "<group>"; };
 		BB0000000000000000000226 /* VPSTrendChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPSTrendChartView.swift; sourceTree = "<group>"; };
-		BB000000000000000000010D /* AppAppearance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAppearance.swift; sourceTree = "<group>"; };
 		BB000000000000000000010C /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		CC0000000000000000000001 /* DeepSeekBalanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepSeekBalanceTests.swift; sourceTree = "<group>"; };
 		CC0000000000000000000002 /* MockURLProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockURLProtocol.swift; sourceTree = "<group>"; };
@@ -493,6 +493,7 @@
 		AA0000000000000000001006 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				A90000000000000000000201 /* AppVisualStyle.swift */,
 				BB0000000000000000000008 /* BalancePopoverView.swift */,
 				BB0000000000000000000205 /* CodexUsageView.swift */,
 				BB0000000000000000000211 /* CursorUsageView.swift */,
@@ -587,7 +588,6 @@
 			isa = PBXGroup;
 			children = (
 				BB0000000000000000000101 /* AppLanguage.swift */,
-				BB000000000000000000010D /* AppAppearance.swift */,
 				BB0000000000000000000102 /* L10n.swift */,
 				BB0000000000000000000103 /* AppDisplayError.swift */,
 			);
@@ -809,6 +809,7 @@
 				AA0000000000000000000105 /* APIKeyProvider.swift in Sources */,
 				AA0000000000000000000106 /* KeychainStore.swift in Sources */,
 				AA0000000000000000000108 /* BalancePopoverView.swift in Sources */,
+				A90000000000000000000101 /* AppVisualStyle.swift in Sources */,
 				EE0000000000000000000101 /* BalanceSample.swift in Sources */,
 				EE0000000000000000000102 /* BalanceTrendModels.swift in Sources */,
 				EE0000000000000000000103 /* BalanceHistoryStoring.swift in Sources */,
@@ -825,7 +826,6 @@
 				E10000000000000000000001 /* TrendPeriod.swift in Sources */,
 				E10000000000000000000015 /* CodexUsageSpeedEvaluator.swift in Sources */,
 				AA0000000000000000000301 /* AppLanguage.swift in Sources */,
-				AA000000000000000000030C /* AppAppearance.swift in Sources */,
 				AA0000000000000000000302 /* L10n.swift in Sources */,
 				AA0000000000000000000303 /* AppDisplayError.swift in Sources */,
 				AA0000000000000000000304 /* NotificationObservation.swift in Sources */,
@@ -1116,7 +1116,7 @@
 				CODE_SIGN_ENTITLEMENTS = DeepSeekBalance/DeepSeekBalance.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				HEADER_SEARCH_PATHS = (
@@ -1128,7 +1128,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 3.0.9;
+				MARKETING_VERSION = 3.0.10;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lc++",
@@ -1148,7 +1148,7 @@
 				CODE_SIGN_ENTITLEMENTS = DeepSeekBalance/DeepSeekBalance.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				HEADER_SEARCH_PATHS = (
@@ -1160,7 +1160,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 3.0.9;
+				MARKETING_VERSION = 3.0.10;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lc++",
@@ -1178,7 +1178,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1190,7 +1190,7 @@
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 3.0.9;
+				MARKETING_VERSION = 3.0.10;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jxz.deepseekbalance.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -1203,7 +1203,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1215,7 +1215,7 @@
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 3.0.9;
+				MARKETING_VERSION = 3.0.10;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jxz.deepseekbalance.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;

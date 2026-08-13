@@ -1,36 +1,12 @@
 import Charts
 import SwiftUI
 
-/// 悬浮窗悬停趋势图使用的高对比配色。
-/// 普通弹窗沿用系统次级色；悬浮窗卡片是深蓝半透明背景，坐标轴/说明文字
-/// 改成更浅的白色层级，避免在小图上发灰看不清。
+/// 趋势图统一使用浅色界面的系统语义文字与网格层级。
 enum TrendChartPalette {
-  static func axisText(highContrast: Bool) -> Color {
-    highContrast ? Color.white.opacity(0.92) : Color.secondary
-  }
-
-  static func grid(highContrast: Bool) -> AnyShapeStyle {
-    highContrast ? AnyShapeStyle(Color.white.opacity(0.32)) : AnyShapeStyle(.quaternary)
-  }
-
-  static func secondaryText(highContrast: Bool) -> Color {
-    highContrast ? Color.white.opacity(0.86) : Color.secondary
-  }
-
-  static func selection(highContrast: Bool) -> Color {
-    highContrast ? Color.white.opacity(0.75) : Color.secondary
-  }
-}
-
-private struct TrendChartHighContrastKey: EnvironmentKey {
-  static let defaultValue = false
-}
-
-extension EnvironmentValues {
-  var trendChartHighContrast: Bool {
-    get { self[TrendChartHighContrastKey.self] }
-    set { self[TrendChartHighContrastKey.self] = newValue }
-  }
+  static let axisText = Color.secondary
+  static let grid = AnyShapeStyle(.quaternary)
+  static let secondaryText = Color.secondary
+  static let selection = Color.secondary
 }
 
 /// 最近 14 天余额趋势图（Apple Swift Charts）。
@@ -44,7 +20,6 @@ struct BalanceTrendChartView: View {
 
   @State private var preparedModel: BalanceTrendProcessor.ChartModel?
   @State private var selectedDate: Date?
-  @Environment(\.trendChartHighContrast) private var highContrast
 
   init(
     samples: [BalanceSample],
@@ -174,7 +149,7 @@ struct BalanceTrendChartView: View {
     ) {
       Text(exhaustionEstimateText(seconds))
         .font(AppTypography.caption)
-        .foregroundStyle(TrendChartPalette.secondaryText(highContrast: highContrast))
+        .foregroundStyle(TrendChartPalette.secondaryText)
         .multilineTextAlignment(.trailing)
         .lineLimit(2)
         .minimumScaleFactor(0.75)
@@ -212,7 +187,7 @@ struct BalanceTrendChartView: View {
 
       if let selectedSample {
         RuleMark(x: .value(L10n.string(.chartSelectedTime, language: language), selectedSample.bucketStart))
-          .foregroundStyle(TrendChartPalette.selection(highContrast: highContrast))
+          .foregroundStyle(TrendChartPalette.selection)
           .lineStyle(TrendChartSelectionStyle.rule)
       }
     }
@@ -225,12 +200,12 @@ struct BalanceTrendChartView: View {
     )
     .chartXAxis {
       AxisMarks(values: .automatic(desiredCount: 4)) { value in
-        AxisGridLine().foregroundStyle(TrendChartPalette.grid(highContrast: highContrast))
+        AxisGridLine().foregroundStyle(TrendChartPalette.grid)
         AxisValueLabel {
           if let date = value.as(Date.self) {
             Text(axisLabel(for: date))
               .font(AppTypography.caption)
-              .foregroundStyle(TrendChartPalette.axisText(highContrast: highContrast))
+              .foregroundStyle(TrendChartPalette.axisText)
               .lineLimit(1)
           }
         }
@@ -238,14 +213,14 @@ struct BalanceTrendChartView: View {
     }
     .chartYAxis {
       AxisMarks(position: .leading) { value in
-        AxisGridLine().foregroundStyle(TrendChartPalette.grid(highContrast: highContrast))
+        AxisGridLine().foregroundStyle(TrendChartPalette.grid)
         AxisValueLabel {
           if let value = value.as(Double.self) {
             Text(
               BalanceAxisFormat(currency: currency, locale: language.locale).format(value)
             )
             .font(AppTypography.caption)
-            .foregroundStyle(TrendChartPalette.axisText(highContrast: highContrast))
+            .foregroundStyle(TrendChartPalette.axisText)
           }
         }
       }
@@ -280,7 +255,7 @@ struct BalanceTrendChartView: View {
       .stroke(color, style: StrokeStyle(lineWidth: 2, dash: dash))
       .frame(width: 20, height: 6)
       Text(label)
-        .foregroundStyle(TrendChartPalette.secondaryText(highContrast: highContrast))
+        .foregroundStyle(TrendChartPalette.secondaryText)
     }
   }
 
@@ -415,7 +390,6 @@ struct TrendChartSelectionDetail: View {
   let date: Date
   let language: AppLanguage
   let values: [String]
-  @Environment(\.trendChartHighContrast) private var highContrast
 
   var body: some View {
     VStack(alignment: .leading, spacing: 3) {
@@ -425,11 +399,11 @@ struct TrendChartSelectionDetail: View {
         )
       )
         .font(AppTypography.caption.weight(.medium))
-        .foregroundStyle(TrendChartPalette.secondaryText(highContrast: highContrast))
+        .foregroundStyle(TrendChartPalette.secondaryText)
       ForEach(Array(values.enumerated()), id: \.offset) { _, value in
         Text(value)
           .font(AppTypography.caption)
-          .foregroundStyle(TrendChartPalette.secondaryText(highContrast: highContrast))
+          .foregroundStyle(TrendChartPalette.secondaryText)
       }
     }
     .textSelection(.enabled)

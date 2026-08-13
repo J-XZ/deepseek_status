@@ -18,9 +18,17 @@ final class SettingsWindow: NSObject {
   ) {
     self.store = store
     self.visibility = visibility
+    let settingsView = SettingsView(
+      store: store,
+      loginItemStore: loginItemStore,
+      visibility: visibility,
+      onVisibilityChange: onVisibilityChange
+    )
+    let hostingController = NSHostingController(rootView: settingsView)
+    hostingController.sizingOptions = [.intrinsicContentSize]
     let panel = NSPanel(
-      contentRect: NSRect(x: 0, y: 0, width: 400, height: 300),
-      styleMask: [.titled, .closable, .utilityWindow],
+      contentRect: NSRect(x: 0, y: 0, width: 460, height: 300),
+      styleMask: [.titled, .closable, .fullSizeContentView],
       backing: .buffered,
       defer: false
     )
@@ -28,14 +36,16 @@ final class SettingsWindow: NSObject {
     panel.isReleasedWhenClosed = false
     panel.hidesOnDeactivate = false
     panel.level = .floating
-    panel.contentView = NSHostingView(
-      rootView: SettingsView(
-        store: store,
-        loginItemStore: loginItemStore,
-        visibility: visibility,
-        onVisibilityChange: onVisibilityChange
-      )
-    )
+    panel.titlebarAppearsTransparent = true
+    panel.titleVisibility = .hidden
+    panel.toolbarStyle = .unifiedCompact
+    panel.standardWindowButton(.zoomButton)?.isHidden = true
+    panel.standardWindowButton(.miniaturizeButton)?.isHidden = true
+    panel.isMovableByWindowBackground = true
+    // 与主弹窗相同，交给 NSHostingController 管理根视图；直接把 NSHostingView
+    // 设为 contentView 会在标题栏透明的 NSPanel 首次展示时丢失布局约束，
+    // 表现为窗口存在但 SwiftUI 内容区完全空白。
+    panel.contentViewController = hostingController
     self.panel = panel
     super.init()
 
@@ -55,6 +65,7 @@ final class SettingsWindow: NSObject {
 
   func show() {
     updateTitle()
+    panel.contentView?.layoutSubtreeIfNeeded()
     resizeToFittingSize()
     if !panel.isVisible {
       panel.center()
@@ -65,6 +76,7 @@ final class SettingsWindow: NSObject {
 
   private func updateTitle() {
     panel.title = L10n.string(.settingsTitle, language: store.language)
+    panel.appearance = AppVisualStyle.nsAppearance
   }
 
   /// 语言、可见供应商等变化后，等 SwiftUI 完成布局再按理想尺寸调整窗口，
@@ -79,10 +91,12 @@ final class SettingsWindow: NSObject {
   }
 
   private func resizeToFittingSize() {
-    guard let hostingView = panel.contentView as? NSHostingView<SettingsView> else { return }
-    let fitting = hostingView.fittingSize
+    guard let hostingController = panel.contentViewController as? NSHostingController<SettingsView>
+    else { return }
+    hostingController.view.layoutSubtreeIfNeeded()
+    let fitting = hostingController.view.fittingSize
     guard fitting.height > 0 else { return }
-    let target = NSSize(width: 400, height: fitting.height)
+    let target = NSSize(width: 460, height: fitting.height)
     if panel.contentView?.frame.size != target {
       panel.setContentSize(target)
     }

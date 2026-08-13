@@ -4,7 +4,6 @@ import SwiftUI
 struct OpenCodeUsageView: View {
   @ObservedObject var store: OpenCodeUsageStore
   let language: AppLanguage
-  let appearance: AppAppearance
 
   @Environment(\.controlActiveState) private var controlActiveState
 
@@ -22,8 +21,9 @@ struct OpenCodeUsageView: View {
         )
         .font(AppTypography.caption)
         .foregroundStyle(.secondary)
-        .padding(.leading, 10)
       }
+      Divider()
+        .overlay(AppVisualStyle.divider)
       if let snapshot = store.snapshot {
         zenCard(snapshot)
         goCard(snapshot)
@@ -46,33 +46,18 @@ struct OpenCodeUsageView: View {
   }
 
   private var headerCard: some View {
-    HStack(spacing: 10) {
-      Image("OpenCodeIcon")
-        .renderingMode(.template)
-        .resizable()
-        .aspectRatio(contentMode: .fit)
-        .frame(width: 24, height: 24)
-        .padding(8)
-        .accessibilityLabel(L10n.string(.a11yOpenCodeIcon, language: language))
-      VStack(alignment: .leading, spacing: 2) {
-        Text(L10n.string(.openCodeTitle, language: language))
-          .font(AppTypography.title)
-        Text(store.menuBarText)
-          .font(AppTypography.caption.monospacedDigit())
-          .foregroundStyle(.secondary)
-      }
-      Spacer()
+    AppProviderHeader(
+      imageName: "OpenCodeIcon",
+      title: L10n.string(.openCodeTitle, language: language),
+      subtitle: store.menuBarText,
+      accessibilityLabel: L10n.string(.a11yOpenCodeIcon, language: language)
+    ) {
       statusBadge
     }
   }
 
   private var statusBadge: some View {
-    Text(statusText)
-      .font(AppTypography.badge)
-      .padding(.horizontal, 8)
-      .padding(.vertical, 3)
-      .background(statusColor.opacity(0.14), in: Capsule())
-      .foregroundStyle(statusColor)
+    AppStatusBadge(text: statusText, tint: statusColor)
   }
 
   private var statusText: String {
@@ -96,15 +81,16 @@ struct OpenCodeUsageView: View {
   private var statusColor: Color {
     switch store.status {
     case .loaded:
-      return store.snapshot?.goSubscription == nil ? .red : .green
+      return store.snapshot?.goSubscription == nil
+        ? AppVisualStyle.danger : AppVisualStyle.positive
     case .idle, .loading:
-      return .blue
+      return AppVisualStyle.accent
     case .notConfigured:
       return .secondary
     case .authInvalid:
-      return .orange
+      return AppVisualStyle.warning
     case .keychainError, .networkError, .serverError, .decodingError:
-      return .red
+      return AppVisualStyle.danger
     }
   }
 
@@ -144,8 +130,7 @@ struct OpenCodeUsageView: View {
         .foregroundStyle(.secondary)
       }
     }
-    .padding(10)
-    .background(cardBackground, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    .appInsetCard()
   }
 
   private func goCard(_ snapshot: OpenCodeUsageSnapshot) -> some View {
@@ -181,8 +166,7 @@ struct OpenCodeUsageView: View {
           .foregroundStyle(.secondary)
       }
     }
-    .padding(10)
-    .background(cardBackground, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    .appInsetCard()
   }
 
   private var loadingZenCard: some View {
@@ -201,8 +185,7 @@ struct OpenCodeUsageView: View {
         .foregroundStyle(.secondary)
     }
     .frame(minHeight: 84)
-    .padding(10)
-    .background(cardBackground, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    .appInsetCard()
   }
 
   private var loadingGoCard: some View {
@@ -216,13 +199,21 @@ struct OpenCodeUsageView: View {
         ProgressView()
           .controlSize(.small)
       }
-      OpenCodeProgressBar(progress: 0.45, color: .blue)
-      OpenCodeProgressBar(progress: 0.3, color: .blue)
-      OpenCodeProgressBar(progress: 0.15, color: .blue)
+      OpenCodeProgressBar(
+        progress: 0.45,
+        color: AppVisualStyle.progressBlue
+      )
+      OpenCodeProgressBar(
+        progress: 0.3,
+        color: AppVisualStyle.progressBlue
+      )
+      OpenCodeProgressBar(
+        progress: 0.15,
+        color: AppVisualStyle.progressBlue
+      )
     }
     .frame(minHeight: 150)
-    .padding(10)
-    .background(cardBackground, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    .appInsetCard()
   }
 
   private func serviceTitle(imageName: String, title: String) -> some View {
@@ -314,10 +305,8 @@ struct OpenCodeUsageView: View {
           .fixedSize(horizontal: false, vertical: true)
       }
     }
-  }
-
-  private var cardBackground: Color {
-    appearance == .dark ? Color(white: 0.14) : Color(white: 0.96)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .appInsetCard()
   }
 
   private func windowTitle(_ kind: OpenCodeUsageWindow.Kind) -> String {
@@ -336,7 +325,8 @@ struct OpenCodeUsageView: View {
     expected: Double?
   ) -> Color {
     let gap = expected.map { Double(window.usedPercent) - $0 }
-    return MenuBarUsageColor.progressColor(forGap: gap).map(Color.init(nsColor:)) ?? .blue
+    return MenuBarUsageColor.detailProgressColor(forGap: gap).map(Color.init(nsColor:))
+      ?? AppVisualStyle.progressBlue
   }
 
 }
@@ -360,24 +350,12 @@ struct OpenCodeProgressBar: View {
   }
 
   var body: some View {
-    GeometryReader { proxy in
-      ZStack(alignment: .leading) {
-        Capsule()
-          .fill(Color.primary.opacity(0.12))
-        Capsule()
-          .fill(color)
-          .frame(width: proxy.size.width * max(0, min(1, progress)))
-        if let expected {
-          Rectangle()
-            .fill(.red)
-            .frame(width: 3, height: 8)
-            .position(x: UsageFormatting.markerX(width: proxy.size.width, expected: expected), y: 4)
-            .accessibilityLabel(expectedAccessibilityLabel)
-        }
-      }
-    }
-    .frame(height: 8)
-    .accessibilityValue("\(Int(max(0, min(1, progress)) * 100))%")
+    AppUsageProgressBar(
+      progress: progress,
+      color: color,
+      expected: expected,
+      expectedAccessibilityLabel: expectedAccessibilityLabel
+    )
   }
 
 }

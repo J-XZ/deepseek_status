@@ -5,7 +5,6 @@ import SwiftUI
 struct CommandCodeUsageView: View {
   @ObservedObject var store: CommandCodeUsageStore
   let language: AppLanguage
-  let appearance: AppAppearance
 
   @Environment(\.controlActiveState) private var controlActiveState
 
@@ -16,6 +15,8 @@ struct CommandCodeUsageView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
       headerCard
+      Divider()
+        .overlay(AppVisualStyle.divider)
       if let usage = store.usage {
         usageCard(usage)
         if let error = store.lastDisplayError {
@@ -32,6 +33,8 @@ struct CommandCodeUsageView: View {
           Text(L10n.string(.commandCodeLoading, language: language))
             .foregroundStyle(.secondary)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .appInsetCard()
       } else {
         emptyView
       }
@@ -40,31 +43,18 @@ struct CommandCodeUsageView: View {
 
   private var headerCard: some View {
     VStack(alignment: .leading, spacing: 12) {
-      HStack(spacing: 10) {
-        Image("CommandCodeIcon")
-          .renderingMode(.template)
-          .resizable()
-          .aspectRatio(contentMode: .fit)
-          .frame(width: 24, height: 24)
-          .padding(8)
-          .accessibilityLabel(L10n.string(.a11yCommandCodeIcon, language: language))
-        VStack(alignment: .leading, spacing: 2) {
-          Text(L10n.string(.commandCodeTitle, language: language))
-            .font(AppTypography.title)
-          Text(store.menuBarText)
-            .font(AppTypography.caption.monospacedDigit())
-            .foregroundStyle(.secondary)
+      AppProviderHeader(
+        imageName: "CommandCodeIcon",
+        title: L10n.string(.commandCodeTitle, language: language),
+        subtitle: store.menuBarText,
+        accessibilityLabel: L10n.string(.a11yCommandCodeIcon, language: language)
+      ) {
+        HStack(spacing: 6) {
+          if let plan = store.usage?.planDisplayName {
+            AppStatusBadge(text: plan, tint: AppVisualStyle.accent, showsDot: false)
+          }
+          statusBadge
         }
-        Spacer()
-        if let plan = store.usage?.planDisplayName {
-          Text(plan)
-            .font(AppTypography.badge)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(Color.accentColor.opacity(0.14), in: Capsule())
-            .foregroundStyle(Color.accentColor)
-        }
-        statusBadge
       }
       if let email = store.usage?.user?.email, !email.isEmpty {
         Label(
@@ -78,12 +68,7 @@ struct CommandCodeUsageView: View {
   }
 
   private var statusBadge: some View {
-    Text(statusText)
-      .font(AppTypography.badge)
-      .padding(.horizontal, 8)
-      .padding(.vertical, 3)
-      .background(statusColor.opacity(0.14), in: Capsule())
-      .foregroundStyle(statusColor)
+    AppStatusBadge(text: statusText, tint: statusColor)
   }
 
   private var statusText: String {
@@ -104,13 +89,13 @@ struct CommandCodeUsageView: View {
   private var statusColor: Color {
     switch store.status {
     case .loaded:
-      return .green
+      return AppVisualStyle.positive
     case .idle, .loading:
-      return .blue
+      return AppVisualStyle.accent
     case .notConfigured, .authInvalid:
-      return .orange
+      return AppVisualStyle.warning
     case .networkError, .serverError, .decodingError:
-      return .red
+      return AppVisualStyle.danger
     }
   }
 
@@ -173,6 +158,7 @@ struct CommandCodeUsageView: View {
         .foregroundStyle(.secondary)
       }
     }
+    .appInsetCard()
   }
 
   /// 进度条文案：有差距（实际已用 − 理想已用）时显示“已用 X% · 剩余 Y%（±Z%）”，
@@ -352,32 +338,18 @@ struct CommandCodeUsageView: View {
     usedPercent: Int,
     expected: Double? = nil
   ) -> some View {
-    GeometryReader { geo in
-      ZStack(alignment: .leading) {
-        Capsule()
-          .fill(trackColor)
-        Capsule()
-          .fill(barColor(usedPercent, idealPercent: expected))
-          .frame(width: geo.size.width * CGFloat(min(max(usedPercent, 0), 100)) / 100)
-        if let expected {
-          Rectangle()
-            .fill(.red)
-            .frame(width: 3, height: 6)
-            .position(x: UsageFormatting.markerX(width: geo.size.width, expected: expected), y: 3)
-            .accessibilityLabel(L10n.string(.commandCodeExpectedMarker, language: language))
-        }
-      }
-    }
-    .frame(height: 6)
-  }
-
-  private var trackColor: Color {
-    appearance == .dark ? Color(white: 0.25) : Color(white: 0.85)
+    AppUsageProgressBar(
+      progress: Double(min(max(usedPercent, 0), 100)) / 100,
+      color: barColor(usedPercent, idealPercent: expected),
+      expected: expected,
+      expectedAccessibilityLabel: L10n.string(.commandCodeExpectedMarker, language: language)
+    )
   }
 
   private func barColor(_ usedPercent: Int, idealPercent: Double?) -> Color {
     let gap = idealPercent.map { Double(usedPercent) - $0 }
-    return MenuBarUsageColor.progressColor(forGap: gap).map(Color.init(nsColor:)) ?? .blue
+    return MenuBarUsageColor.detailProgressColor(forGap: gap).map(Color.init(nsColor:))
+      ?? AppVisualStyle.progressBlue
   }
 
   @ViewBuilder
@@ -398,6 +370,7 @@ struct CommandCodeUsageView: View {
           .fixedSize(horizontal: false, vertical: true)
       }
     }
+    .appInsetCard()
   }
 
   private var emptyTitle: String {

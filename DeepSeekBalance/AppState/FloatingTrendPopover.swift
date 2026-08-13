@@ -33,6 +33,7 @@ final class FloatingTrendPopover: NSObject {
     panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
     panel.isOpaque = false
     panel.backgroundColor = .clear
+    panel.appearance = AppVisualStyle.nsAppearance
     panel.hasShadow = true
     panel.isReleasedWhenClosed = false
     panel.hidesOnDeactivate = false
@@ -43,6 +44,7 @@ final class FloatingTrendPopover: NSObject {
     hostingView.sizingOptions = []
     hostingView.translatesAutoresizingMaskIntoConstraints = true
     hostingView.autoresizingMask = [.width, .height]
+    hostingView.appearance = AppVisualStyle.nsAppearance
     panel.contentView = hostingView
     self.panel = panel
     super.init()
@@ -60,7 +62,6 @@ final class FloatingTrendPopover: NSObject {
     guard currentVendor != vendor, let chart = chartProvider?(vendor) else { return }
     currentVendor = vendor
     currentLanguage = language
-
     let card = FloatingTrendCard(
       content: chart,
       period: currentPeriod,
@@ -119,9 +120,10 @@ final class FloatingTrendPopover: NSObject {
     currentVendor = nil
     panel.orderOut(nil)
   }
+
 }
 
-/// 深色小卡片：包裹趋势图视图，使用与悬浮窗相同的 hudWindow 毛玻璃。
+/// 趋势小面板：使用跟随系统外观的中性菜单材质。
 private struct FloatingTrendCard: View {
   var content: AnyView?
   var period: TrendPeriod
@@ -129,15 +131,12 @@ private struct FloatingTrendCard: View {
 
   var body: some View {
     VStack(alignment: .trailing, spacing: 6) {
-      // 当前周期：小号浅色文字，克制地提示单击可切换。
       Text(period.displayName(language: language))
         .font(AppTypography.caption.weight(.medium))
-        .foregroundStyle(Color.white.opacity(0.92))
+        .foregroundStyle(.secondary)
       Group {
         if let content {
           content
-            // 悬浮窗深色半透明背景：坐标轴与说明文字切到更浅的白色层级。
-            .environment(\.trendChartHighContrast, true)
             // 固定图表区域尺寸，避免依赖外部拟合；高度含图例/估算行。
             .frame(width: 280, height: 240)
         } else {
@@ -147,33 +146,28 @@ private struct FloatingTrendCard: View {
     }
     .padding(10)
     .background(
-      RoundedRectangle(cornerRadius: 10, style: .continuous)
-        // 与悬浮窗相同的 hudWindow 毛玻璃材质。
+      RoundedRectangle(cornerRadius: 14, style: .continuous)
         .fill(Color.clear)
-        .overlay(HudWindowMaterial().clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous)))
-        // 深蓝着色叠加，保持与悬浮窗一致的深色基调。
+        .overlay(HudWindowMaterial().clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous)))
         .overlay(
-          // 高透明：趋势卡尽量少遮挡其后的窗口与桌面内容。
-          Color(red: 0.05, green: 0.15, blue: 0.40).opacity(0.22)
-            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-        )
-        .overlay(
-          RoundedRectangle(cornerRadius: 10, style: .continuous)
-            .stroke(Color.white.opacity(0.16), lineWidth: 1)
+          RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .strokeBorder(
+              Color(nsColor: .separatorColor).opacity(0.55),
+              lineWidth: AppVisualStyle.hairlineWidth
+            )
         )
     )
-    .preferredColorScheme(.dark)
+    .preferredColorScheme(.light)
   }
 }
 
-/// 与悬浮窗一致的 hudWindow 毛玻璃材质（SwiftUI 侧 NSVisualEffectView 包装）。
+/// 悬浮面板共用的系统菜单材质。
 struct HudWindowMaterial: NSViewRepresentable {
   func makeNSView(context: Context) -> NSVisualEffectView {
     let view = NSVisualEffectView()
-    view.material = .hudWindow
+    view.material = .menu
     view.blendingMode = .behindWindow
     view.state = .active
-    view.appearance = NSAppearance(named: .darkAqua)
     return view
   }
 

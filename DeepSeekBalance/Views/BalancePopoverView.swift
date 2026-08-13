@@ -1,13 +1,15 @@
 import SwiftUI
 
-/// 弹出面板统一字体层级：正文使用圆体提升可读性，金额使用等宽数字避免刷新时跳动。
+/// 弹出面板统一使用系统字体层级；金额使用等宽数字，刷新时不会横向跳动。
 enum AppTypography {
-  static let title = Font.system(size: 17, weight: .semibold, design: .rounded)
-  static let section = Font.system(size: 13, weight: .semibold, design: .rounded)
-  static let body = Font.system(size: 13, weight: .regular, design: .rounded)
-  static let value = Font.system(size: 16, weight: .semibold, design: .rounded).monospacedDigit()
-  static let caption = Font.system(size: 11, weight: .regular, design: .rounded)
-  static let badge = Font.system(size: 11, weight: .semibold, design: .rounded)
+  static let pageTitle = Font.system(size: 20, weight: .semibold)
+  static let title = Font.system(size: 17, weight: .semibold)
+  static let section = Font.system(size: 13, weight: .semibold)
+  static let body = Font.system(size: 13)
+  /// 详情列数值保持比正文稍强，但不压过分组标题。
+  static let value = Font.system(size: 15, weight: .medium).monospacedDigit()
+  static let caption = Font.system(size: 11)
+  static let badge = Font.system(size: 11, weight: .medium)
 }
 
 /// 实际进度与理想进度的差异分类；阈值按百分比百分点计算。
@@ -126,7 +128,7 @@ struct BalancePopoverView: View {
   @State private var validationMessage: String?
   @State private var openCodeCookieValidationMessage: String?
   @State private var vpsValidationMessage: String?
-  /// 切换栏按钮悬停态，仅用于底纹/描边视觉反馈。
+  /// 切换栏按钮悬停态，仅用于轻量底纹反馈。
   @State private var hoveredTab: UsageTab?
   @Environment(\.controlActiveState) private var controlActiveState
 
@@ -143,9 +145,9 @@ struct BalancePopoverView: View {
 
   // 切换栏的固定高度与上下内边距，与下方 tabSwitcher 的布局一一对应；
   // 页面高度测量值 = 滚动内容高度 + 切换栏这一列，窗口才能完整容纳整页。
-  private static let switcherTopPadding: CGFloat = 10
-  private static let switcherBottomPadding: CGFloat = 6
-  private static let switcherControlHeight: CGFloat = 22
+  private static let switcherTopPadding: CGFloat = 12
+  private static let switcherBottomPadding: CGFloat = 8
+  private static let switcherControlHeight: CGFloat = 42
   private static let switcherColumnHeight =
     switcherTopPadding + switcherControlHeight + switcherBottomPadding
 
@@ -170,7 +172,7 @@ struct BalancePopoverView: View {
         pageStack(for: tabSelection.selectedTab)
           .frame(width: PopoverSizing.contentWidth, alignment: .leading)
           .padding(.horizontal, PopoverSizing.horizontalPadding)
-          .padding(.top, 4)
+          .padding(.top, 2)
           .padding(.bottom, PopoverSizing.horizontalPadding)
           .fixedSize(horizontal: false, vertical: true)
           .background {
@@ -203,10 +205,9 @@ struct BalancePopoverView: View {
       // 保持在窗口顶部，溢出只向下走，避免居中导致切换栏被挤出可视区域。
       alignment: .top
     )
-    // 毛玻璃窗口背景：透过弹窗可见背景内容，跟随系统外观自动切换深浅。
-    // 半透明材质 + 圆角裁切，替代原有不透明纯色背景。
+    // 浅色毛玻璃窗口背景：保留少量环境透光，再叠加中性浅色蒙版。
     .background(windowBackground)
-    .preferredColorScheme(store.appearance.colorScheme)
+    .preferredColorScheme(.light)
     .onAppear {
       refreshStoresAfterFirstFrame()
     }
@@ -234,18 +235,18 @@ struct BalancePopoverView: View {
       switch tab {
       case .deepseek:
         deepSeekQuotaCard
-        card { DeepSeekServiceStatusView(store: statusStore, language: language) }
+        card {
+          DeepSeekServiceStatusView(
+            store: statusStore,
+            language: language
+          )
+        }
         card { trendSection }
         card { keyConfigurationSection }
       case .codex:
-        CodexUsageView(store: codexStore, language: language, appearance: store.appearance)
+        CodexUsageView(store: codexStore, language: language)
           .frame(maxWidth: .infinity, alignment: .leading)
-          .padding(12)
-          .background(cardBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-          .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-              .stroke(cardBorder, lineWidth: 1)
-          }
+          .appCard(level: .elevated)
         card {
           DeepSeekServiceStatusView(
             store: codexStatusStore,
@@ -255,14 +256,9 @@ struct BalancePopoverView: View {
         }
         card { codexTrendSection }
       case .cursor:
-        CursorUsageView(store: cursorStore, language: language, appearance: store.appearance)
+        CursorUsageView(store: cursorStore, language: language)
           .frame(maxWidth: .infinity, alignment: .leading)
-          .padding(12)
-          .background(cardBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-          .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-              .stroke(cardBorder, lineWidth: 1)
-          }
+          .appCard(level: .elevated)
         card {
           DeepSeekServiceStatusView(
             store: cursorStatusStore,
@@ -274,49 +270,31 @@ struct BalancePopoverView: View {
       case .openCode:
         OpenCodeUsageView(
           store: openCodeStore,
-          language: language,
-          appearance: store.appearance
+          language: language
         )
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(cardBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay {
-          RoundedRectangle(cornerRadius: 14, style: .continuous)
-            .stroke(cardBorder, lineWidth: 1)
-        }
+        .appCard(level: .elevated)
         card { openCodeTrendSection }
         card { openCodeCookieConfigurationSection }
       case .vps:
         VPSUsageView(
           store: vpsStore,
-          language: language,
-          appearance: store.appearance
+          language: language
         )
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(cardBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay {
-          RoundedRectangle(cornerRadius: 14, style: .continuous)
-            .stroke(cardBorder, lineWidth: 1)
-        }
+        .appCard(level: .elevated)
         card { vpsTrendSection }
         card { vpsConfigurationSection }
       case .commandCode:
         CommandCodeUsageView(
           store: commandCodeStore,
-          language: language,
-          appearance: store.appearance
+          language: language
         )
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(cardBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay {
-          RoundedRectangle(cornerRadius: 14, style: .continuous)
-            .stroke(cardBorder, lineWidth: 1)
-        }
+        .appCard(level: .elevated)
         card { commandCodeTrendSection }
       }
-      card { footer }
+      card(level: .toolbar, padding: 10) { footer }
     }
     .font(AppTypography.body)
   }
@@ -344,40 +322,40 @@ struct BalancePopoverView: View {
 
   // MARK: - 顶部切换栏
 
-  /// 顶部切换栏：只显示供应商 logo，不显示冗长的“xxx 用量”文字；
-  /// 多个按钮等宽铺满窗口顶部，选中项高亮，常态带底纹、悬停加深。
+  /// 顶部切换栏：图标与短标题共用等宽列，所有按钮、分隔线与内容卡片对齐。
   private var tabSwitcher: some View {
-    HStack(spacing: 4) {
+    HStack(spacing: 5) {
       ForEach(visibleTabs) { tab in
         Button {
           tabSelection.selectedTab = tab
         } label: {
-          Image(vendorLogoName(tab))
-            .renderingMode(.template)
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .frame(height: 13)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .contentShape(Rectangle())
+          HStack(spacing: 5) {
+            Image(vendorLogoName(tab))
+              .renderingMode(.template)
+              .resizable()
+              .aspectRatio(contentMode: .fit)
+              .frame(width: 13, height: 13)
+            Text(tabCompactTitle(tab))
+              .font(.system(size: 10.5, weight: .medium))
+              .lineLimit(1)
+              .minimumScaleFactor(0.72)
+          }
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
+          .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .foregroundStyle(tabSelection.selectedTab == tab ? Color.accentColor : Color.secondary)
+        .foregroundStyle(
+          tabSelection.selectedTab == tab
+            ? Color.primary
+            : (hoveredTab == tab ? Color.primary : Color.secondary)
+        )
         .background {
-          RoundedRectangle(cornerRadius: 6, style: .continuous)
+          RoundedRectangle(cornerRadius: 9, style: .continuous)
             .fill(
               tabSelection.selectedTab == tab
-                ? Color.accentColor.opacity(0.16)
-                : (hoveredTab == tab ? tabHoverBackground : tabBackground)
+                ? AppVisualStyle.insetSurface
+                : (hoveredTab == tab ? tabHoverBackground : Color.clear)
             )
-        }
-        .overlay {
-          if tabSelection.selectedTab == tab || hoveredTab == tab {
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-              .stroke(
-                tabSelection.selectedTab == tab ? Color.accentColor.opacity(0.5) : cardBorder,
-                lineWidth: 1
-              )
-          }
         }
         .onHover { hovering in
           hoveredTab = hovering ? tab : nil
@@ -385,15 +363,30 @@ struct BalancePopoverView: View {
         .accessibilityLabel(L10n.string(tabLabelKey(tab), language: language))
         .accessibilityAddTraits(tabSelection.selectedTab == tab ? .isSelected : [])
       }
+      Rectangle()
+        .fill(AppVisualStyle.divider)
+        .frame(width: AppVisualStyle.hairlineWidth, height: 18)
       pinButton
     }
     .frame(maxWidth: .infinity)
-    // 左右各留与卡片等宽的边距，按钮列与详情卡片左右对齐。
-    .padding(.horizontal, PopoverSizing.horizontalPadding)
     // 固定高度：SwiftUI 在宿主窗口做高度动画时会不断重排内容，切换栏
     // 曾在重排中被压成零高度且无法恢复（切换详情页后切换栏消失）；显式
     // 高度让它在任何动画中间帧都保持完整，切换栏位置也因此稳定。
-    .frame(height: Self.switcherControlHeight)
+    .frame(height: Self.switcherControlHeight - 8)
+    .padding(4)
+    .background(
+      AppVisualStyle.toolbarSurface,
+      in: RoundedRectangle(cornerRadius: 13, style: .continuous)
+    )
+    .overlay {
+      RoundedRectangle(cornerRadius: 13, style: .continuous)
+        .strokeBorder(
+          AppVisualStyle.border,
+          lineWidth: AppVisualStyle.hairlineWidth
+        )
+    }
+    // 外边线与下方所有卡片共用同一左右基线。
+    .padding(.horizontal, PopoverSizing.horizontalPadding)
     .onAppear {
       if !visibleTabs.contains(tabSelection.selectedTab), let first = visibleTabs.first {
         tabSelection.selectedTab = first
@@ -406,9 +399,9 @@ struct BalancePopoverView: View {
     Button { tabSelection.isPinned.toggle() } label: {
       Image(systemName: tabSelection.isPinned ? "pin.fill" : "pin")
         .font(.system(size: 11, weight: .medium))
-        .frame(width: 22, height: 22)
+        .frame(width: 26, height: 26)
         .contentShape(Rectangle())
-        .foregroundStyle(tabSelection.isPinned ? Color.accentColor : .secondary)
+        .foregroundStyle(tabSelection.isPinned ? Color.primary : .secondary)
     }
     .buttonStyle(.plain)
     .accessibilityLabel(
@@ -424,6 +417,17 @@ struct BalancePopoverView: View {
         language: language
       )
     )
+  }
+
+  private func tabCompactTitle(_ tab: UsageTab) -> String {
+    switch tab {
+    case .deepseek: return "DeepSeek"
+    case .codex: return "Codex"
+    case .cursor: return "Cursor"
+    case .openCode: return "OpenCode"
+    case .vps: return "Vultr"
+    case .commandCode: return "Command"
+    }
   }
 
   private func vendorLogoName(_ tab: UsageTab) -> String {
@@ -462,99 +466,83 @@ struct BalancePopoverView: View {
 
   /// 弹出窗口背景：轻量毛玻璃（低通透、低噪点），内容之上保持可读。
   private var windowBackground: some View {
-    VisualEffectBackground()
+    ZStack {
+      VisualEffectBackground()
+      AppVisualStyle.windowTint
+    }
   }
 
   /// DeepSeek 标题与额度内容必须属于同一张卡片。
   private var deepSeekQuotaCard: some View {
     card {
-      VStack(alignment: .leading, spacing: 10) {
+      VStack(alignment: .leading, spacing: 12) {
         header
+        Divider()
+          .overlay(AppVisualStyle.divider)
         balanceSection
         errorMessageView
       }
     }
   }
 
-  /// 卡片底色：浅色为极浅灰（与白色窗口对比），深色为深灰。
+  /// 输入区等少数内嵌控件使用的底色别名；外层卡片统一由 appCard 绘制。
   private var cardBackground: Color {
-    store.appearance == .dark ? Color(white: 0.14) : Color(white: 0.96)
+    AppVisualStyle.insetSurface
   }
 
-  /// 卡片描边：加深以提升对比度，替代毛玻璃分隔。
+  /// 全界面边框统一为 Retina 发丝线，颜色按外观模式统一解析。
   private var cardBorder: Color {
-    store.appearance == .dark ? Color.primary.opacity(0.28) : Color.primary.opacity(0.16)
-  }
-
-  /// 切换栏按钮常态底纹：与卡片底色同系，让按钮在纯色窗口背景上可辨识。
-  private var tabBackground: Color {
-    store.appearance == .dark ? Color(white: 0.14) : Color(white: 0.96)
+    AppVisualStyle.border
   }
 
   /// 切换栏按钮悬停底纹：比常态加深一档，给出鼠标反馈。
   private var tabHoverBackground: Color {
-    store.appearance == .dark ? Color(white: 0.20) : Color(white: 0.90)
+    AppVisualStyle.insetSurface.opacity(0.72)
   }
 
   @ViewBuilder
-  private func card<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+  private func card<Content: View>(
+    level: AppCardLevel = .standard,
+    padding: CGFloat = AppVisualStyle.contentPadding,
+    @ViewBuilder content: () -> Content
+  ) -> some View {
     content()
       .frame(maxWidth: .infinity, alignment: .leading)
-      .padding(12)
-      .background(cardBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-      .overlay {
-        RoundedRectangle(cornerRadius: 14, style: .continuous)
-          .stroke(cardBorder, lineWidth: 1)
-      }
+      .appCard(level: level, padding: padding)
   }
 
 
   // MARK: - 标题区
 
   private var header: some View {
-    HStack(spacing: 10) {
-      Image("DeepSeekIcon")
-        .renderingMode(.template)
-        .resizable()
-        .aspectRatio(contentMode: .fit)
-        .frame(width: 24, height: 24)
-        .padding(8)
-        .accessibilityLabel(L10n.string(.a11yDeepSeekIcon, language: language))
-      VStack(alignment: .leading, spacing: 2) {
-        Text(L10n.string(.tabDeepSeek, language: language))
-          .font(AppTypography.title)
-        Text(store.menuBarText)
-          .font(AppTypography.caption.monospacedDigit())
-          .foregroundStyle(.secondary)
-      }
-      Spacer()
+    AppProviderHeader(
+      imageName: "DeepSeekIcon",
+      title: L10n.string(.tabDeepSeek, language: language),
+      subtitle: store.menuBarText,
+      accessibilityLabel: L10n.string(.a11yDeepSeekIcon, language: language)
+    ) {
       statusBadge
     }
   }
 
   private var statusBadge: some View {
-    Text(store.statusTitle)
-      .font(AppTypography.badge)
-      .padding(.horizontal, 8)
-      .padding(.vertical, 3)
-      .background(statusColor.opacity(0.14), in: Capsule())
-      .foregroundStyle(statusColor)
+    AppStatusBadge(text: store.statusTitle, tint: statusColor)
       .accessibilityLabel(L10n.string(.a11yStatus, language: language, store.statusTitle))
   }
 
   private var statusColor: Color {
     switch store.status {
     case .loaded:
-      return .green
+      return AppVisualStyle.positive
     case .insufficientBalance:
-      return .orange
+      return AppVisualStyle.warning
     case .notConfigured:
       return .secondary
     case .idle, .loading:
-      return .blue
+      return AppVisualStyle.accent
     case .keychainError, .authenticationFailed, .rateLimited, .httpError,
       .networkError, .serverError, .decodingError, .historyStorageError:
-      return .red
+      return AppVisualStyle.danger
     }
   }
 
@@ -565,7 +553,7 @@ struct BalancePopoverView: View {
     VStack(alignment: .leading, spacing: 10) {
       if let balance = store.balance {
         ForEach(balance.balanceInfos) { info in
-          VStack(alignment: .leading, spacing: 4) {
+          VStack(alignment: .leading, spacing: 6) {
             Text(info.currency)
               .font(AppTypography.caption.weight(.semibold))
               .foregroundStyle(.secondary)
@@ -594,6 +582,7 @@ struct BalancePopoverView: View {
               )
             )
           }
+          .appInsetCard()
         }
       } else if store.isRefreshing {
         HStack(spacing: 8) {
@@ -602,9 +591,13 @@ struct BalancePopoverView: View {
           Text(L10n.string(.balanceLoading, language: language))
             .foregroundStyle(.secondary)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .appInsetCard()
       } else {
         Text(L10n.string(.balanceEmpty, language: language))
           .foregroundStyle(.secondary)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .appInsetCard()
       }
 
       if let last = store.lastUpdated {
@@ -665,8 +658,10 @@ struct BalancePopoverView: View {
 
   private var trendSection: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text(L10n.string(.trendTitle, language: language))
-        .font(AppTypography.section)
+      AppSectionHeader(
+        title: L10n.string(.trendTitle, language: language),
+        systemImage: "chart.xyaxis.line"
+      )
 
       usageTrendSummary(deepSeekUsageChangeValue)
 
@@ -727,8 +722,10 @@ struct BalancePopoverView: View {
 
   private var codexTrendSection: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text(L10n.string(.trendTitle, language: language))
-        .font(AppTypography.section)
+      AppSectionHeader(
+        title: L10n.string(.trendTitle, language: language),
+        systemImage: "chart.xyaxis.line"
+      )
 
       let chart = CodexTrendChartView(
         samples: codexStore.historySamples,
@@ -753,8 +750,10 @@ struct BalancePopoverView: View {
 
   private var cursorTrendSection: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text(L10n.string(.trendTitle, language: language))
-        .font(AppTypography.section)
+      AppSectionHeader(
+        title: L10n.string(.trendTitle, language: language),
+        systemImage: "chart.xyaxis.line"
+      )
 
       let chart = CursorTrendChartView(
         samples: cursorStore.historySamples,
@@ -779,8 +778,10 @@ struct BalancePopoverView: View {
 
   private var openCodeTrendSection: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text(L10n.string(.trendTitle, language: language))
-        .font(AppTypography.section)
+      AppSectionHeader(
+        title: L10n.string(.trendTitle, language: language),
+        systemImage: "chart.xyaxis.line"
+      )
 
       let chart = OpenCodeTrendChartView(
         samples: openCodeStore.historySamples,
@@ -806,8 +807,10 @@ struct BalancePopoverView: View {
 
   private var vpsTrendSection: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text(L10n.string(.trendTitle, language: language))
-        .font(AppTypography.section)
+      AppSectionHeader(
+        title: L10n.string(.trendTitle, language: language),
+        systemImage: "chart.xyaxis.line"
+      )
 
       let chart = VPSTrendChartView(
         samples: vpsStore.historySamples,
@@ -837,8 +840,10 @@ struct BalancePopoverView: View {
 
   private var commandCodeTrendSection: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text(L10n.string(.trendTitle, language: language))
-        .font(AppTypography.section)
+      AppSectionHeader(
+        title: L10n.string(.trendTitle, language: language),
+        systemImage: "chart.xyaxis.line"
+      )
 
       let chart = CommandCodeTrendChartView(
         samples: commandCodeStore.historySamples,
@@ -876,8 +881,10 @@ struct BalancePopoverView: View {
 
   private var keyConfigurationSection: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text(L10n.string(.apiKeyTitle, language: language))
-        .font(AppTypography.section)
+      AppSectionHeader(
+        title: L10n.string(.apiKeyTitle, language: language),
+        systemImage: "key"
+      )
 
       SecureField(L10n.string(.apiKeyPlaceholder, language: language), text: $apiKeyInput)
         .textFieldStyle(.roundedBorder)
@@ -892,9 +899,11 @@ struct BalancePopoverView: View {
 
       HStack(spacing: 8) {
         Button(L10n.string(.apiKeySave, language: language)) { saveAndRefresh() }
+          .buttonStyle(.bordered)
         Button(L10n.string(.apiKeyClear, language: language)) {
           Task { await store.clearSavedKey() }
         }
+        .buttonStyle(.bordered)
         Spacer()
       }
       .controlSize(.small)
@@ -937,8 +946,10 @@ struct BalancePopoverView: View {
 
   private var openCodeCookieConfigurationSection: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text(L10n.string(.openCodeCookieTitle, language: language))
-        .font(AppTypography.section)
+      AppSectionHeader(
+        title: L10n.string(.openCodeCookieTitle, language: language),
+        systemImage: "key.viewfinder"
+      )
 
       TextEditor(text: $openCodeCookieInput)
         .font(AppTypography.caption.monospaced())
@@ -960,7 +971,7 @@ struct BalancePopoverView: View {
         .background(cardBackground, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay {
           RoundedRectangle(cornerRadius: 8, style: .continuous)
-            .stroke(cardBorder, lineWidth: 1)
+            .strokeBorder(cardBorder, lineWidth: AppVisualStyle.hairlineWidth)
         }
         .accessibilityLabel(L10n.string(.openCodeCookiePlaceholder, language: language))
 
@@ -980,11 +991,13 @@ struct BalancePopoverView: View {
         Button(L10n.string(.openCodeCookieSave, language: language)) {
           saveOpenCodeCookie()
         }
+        .buttonStyle(.bordered)
         Button(L10n.string(.openCodeCookieClear, language: language)) {
           openCodeStore.clearSavedCookie()
           openCodeCookieInput = ""
           openCodeCookieValidationMessage = nil
         }
+        .buttonStyle(.bordered)
         Spacer()
       }
       .controlSize(.small)
@@ -1028,8 +1041,10 @@ struct BalancePopoverView: View {
 
   private var vpsConfigurationSection: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text(L10n.string(.vpsConfigTitle, language: language))
-        .font(AppTypography.section)
+      AppSectionHeader(
+        title: L10n.string(.vpsConfigTitle, language: language),
+        systemImage: "server.rack"
+      )
 
       SecureField(
         L10n.string(.vpsTokenPlaceholder, language: language),
@@ -1061,12 +1076,14 @@ struct BalancePopoverView: View {
         Button(L10n.string(.vpsConfigSave, language: language)) {
           saveVPSConfiguration()
         }
+        .buttonStyle(.bordered)
         Button(L10n.string(.vpsConfigClear, language: language)) {
           vpsStore.clearConfiguration()
           vpsTokenInput = ""
           vpsInstanceIDInput = ""
           vpsValidationMessage = nil
         }
+        .buttonStyle(.bordered)
         Spacer()
       }
       .controlSize(.small)
@@ -1119,7 +1136,7 @@ struct BalancePopoverView: View {
         ProgressView()
           .controlSize(.small)
       }
-      Button(L10n.string(.footerRefresh, language: language)) {
+      Button {
         Task {
           async let balanceRefresh: Void = store.refreshAll()
           async let codexRefresh: Void = codexStore.refreshIfNeeded(maximumAge: 0)
@@ -1134,7 +1151,10 @@ struct BalancePopoverView: View {
             commandCodeRefresh, codexStatusRefresh, cursorStatusRefresh
           )
         }
+      } label: {
+        Label(L10n.string(.footerRefresh, language: language), systemImage: "arrow.clockwise")
       }
+      .buttonStyle(.bordered)
       .disabled(
         store.isRefreshing || statusStore.loadState == .loading || codexStore.isRefreshing
         || cursorStore.isRefreshing || openCodeStore.isRefreshing || vpsStore.isRefreshing
@@ -1143,9 +1163,12 @@ struct BalancePopoverView: View {
           || cursorStatusStore.loadState == .loading
       )
       Spacer()
-      Button(L10n.string(.footerQuit, language: language)) {
+      Button {
         NSApplication.shared.terminate(nil)
+      } label: {
+        Label(L10n.string(.footerQuit, language: language), systemImage: "power")
       }
+      .buttonStyle(.bordered)
     }
     .controlSize(.small)
   }

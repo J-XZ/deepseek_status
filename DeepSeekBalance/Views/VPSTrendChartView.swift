@@ -13,7 +13,6 @@ struct VPSTrendChartView: View {
 
   @State private var preparedModel: VPSUsageTrendProcessor.ChartModel?
   @State private var selectedDate: Date?
-  @Environment(\.trendChartHighContrast) private var highContrast
 
   init(
     samples: [VPSUsageSample],
@@ -125,7 +124,7 @@ struct VPSTrendChartView: View {
       Rectangle().fill(.clear)
       Text(L10n.string(.vpsTrendWaiting, language: language))
         .font(AppTypography.caption)
-        .foregroundStyle(TrendChartPalette.secondaryText(highContrast: highContrast))
+        .foregroundStyle(TrendChartPalette.secondaryText)
     }
     .frame(height: 180)
     .frame(maxWidth: .infinity)
@@ -134,7 +133,7 @@ struct VPSTrendChartView: View {
   private var exhaustionEstimate: some View {
     Text(exhaustionEstimateText)
       .font(AppTypography.caption)
-      .foregroundStyle(TrendChartPalette.secondaryText(highContrast: highContrast))
+      .foregroundStyle(TrendChartPalette.secondaryText)
       .multilineTextAlignment(.trailing)
       .lineLimit(2)
       .minimumScaleFactor(0.75)
@@ -213,7 +212,7 @@ struct VPSTrendChartView: View {
             selectedSample.bucketStart
           )
         )
-        .foregroundStyle(TrendChartPalette.selection(highContrast: highContrast))
+        .foregroundStyle(TrendChartPalette.selection)
         .lineStyle(TrendChartSelectionStyle.rule)
       }
     }
@@ -225,12 +224,12 @@ struct VPSTrendChartView: View {
     )
     .chartXAxis {
       AxisMarks(values: .automatic(desiredCount: 4)) { value in
-        AxisGridLine().foregroundStyle(TrendChartPalette.grid(highContrast: highContrast))
+        AxisGridLine().foregroundStyle(TrendChartPalette.grid)
         AxisValueLabel {
           if let date = value.as(Date.self) {
             Text(axisLabel(for: date))
               .font(AppTypography.caption)
-              .foregroundStyle(TrendChartPalette.axisText(highContrast: highContrast))
+              .foregroundStyle(TrendChartPalette.axisText)
               .lineLimit(1)
           }
         }
@@ -238,12 +237,12 @@ struct VPSTrendChartView: View {
     }
     .chartYAxis {
       AxisMarks(position: .leading, values: normalizedTicks) { value in
-        AxisGridLine().foregroundStyle(TrendChartPalette.grid(highContrast: highContrast))
+        AxisGridLine().foregroundStyle(TrendChartPalette.grid)
         AxisValueLabel {
           if let normalized = value.as(Double.self) {
             Text(UsageFormatting.formattedGB(denormalized(normalized, in: model.trafficDomain)))
               .font(AppTypography.caption)
-              .foregroundStyle(TrendChartPalette.axisText(highContrast: highContrast))
+              .foregroundStyle(TrendChartPalette.axisText)
           }
         }
       }
@@ -252,7 +251,7 @@ struct VPSTrendChartView: View {
           if let normalized = value.as(Double.self) {
             Text(formattedUSD(denormalized(normalized, in: model.creditDomain)))
               .font(AppTypography.caption)
-              .foregroundStyle(TrendChartPalette.axisText(highContrast: highContrast))
+              .foregroundStyle(TrendChartPalette.axisText)
           }
         }
       }

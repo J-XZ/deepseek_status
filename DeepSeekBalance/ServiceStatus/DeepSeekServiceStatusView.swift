@@ -8,7 +8,11 @@ struct DeepSeekServiceStatusView<Store: ServiceStatusStoring>: View {
   let titleKey: L10nKey
   @State private var isExpanded = false
 
-  init(store: Store, language: AppLanguage, titleKey: L10nKey = .serviceTitle) {
+  init(
+    store: Store,
+    language: AppLanguage,
+    titleKey: L10nKey = .serviceTitle
+  ) {
     self.store = store
     self.language = language
     self.titleKey = titleKey
@@ -20,21 +24,29 @@ struct DeepSeekServiceStatusView<Store: ServiceStatusStoring>: View {
         statusDetails
       } label: {
         HStack {
-          Text(L10n.string(titleKey, language: language))
-            .font(AppTypography.section)
+          AppSectionHeader(
+            title: L10n.string(titleKey, language: language),
+            systemImage: "waveform.path.ecg"
+          )
           Spacer()
           overallBadge
         }
       }
 
       HStack(spacing: 8) {
-        Button(L10n.string(.serviceRefresh, language: language)) {
+        Button {
           Task { await store.refresh() }
+        } label: {
+          Label(L10n.string(.serviceRefresh, language: language), systemImage: "arrow.clockwise")
         }
+        .buttonStyle(.bordered)
         .disabled(store.loadState == .loading)
-        Button(L10n.string(.serviceOpenPage, language: language)) {
+        Button {
           store.openOfficialStatusPage()
+        } label: {
+          Label(L10n.string(.serviceOpenPage, language: language), systemImage: "arrow.up.right.square")
         }
+        .buttonStyle(.bordered)
         Spacer()
       }
       .controlSize(.small)
@@ -89,12 +101,7 @@ struct DeepSeekServiceStatusView<Store: ServiceStatusStoring>: View {
       indicator = store.status?.overall ?? .unknown
       text = overallText(indicator)
     }
-    return Text(text)
-      .font(AppTypography.caption.weight(.medium))
-      .padding(.horizontal, 8)
-      .padding(.vertical, 3)
-      .background(overallColor(indicator).opacity(0.14), in: Capsule())
-      .foregroundStyle(overallColor(indicator))
+    return AppStatusBadge(text: text, tint: overallColor(indicator))
   }
 
   @ViewBuilder
@@ -223,7 +230,7 @@ struct DeepSeekServiceStatusView<Store: ServiceStatusStoring>: View {
     }
     .padding(6)
     .frame(maxWidth: .infinity, alignment: .leading)
-    .background(Color.secondary.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
+    .appInsetCard(padding: 8)
   }
 
   private func maintenanceRow(_ maintenance: DeepSeekServiceStatus.Maintenance) -> some View {
@@ -247,7 +254,7 @@ struct DeepSeekServiceStatusView<Store: ServiceStatusStoring>: View {
     }
     .padding(6)
     .frame(maxWidth: .infinity, alignment: .leading)
-    .background(Color.secondary.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
+    .appInsetCard(padding: 8)
   }
 
   /// 超长远程纯文本截断，避免撑爆弹出窗口。
@@ -276,13 +283,13 @@ struct DeepSeekServiceStatusView<Store: ServiceStatusStoring>: View {
   private func overallColor(_ indicator: OverallIndicator) -> Color {
     switch indicator {
     case .none:
-      return .green
+      return AppVisualStyle.positive
     case .minor, .maintenance:
-      return .orange
+      return AppVisualStyle.warning
     case .major:
-      return .orange
+      return AppVisualStyle.warning
     case .critical:
-      return .red
+      return AppVisualStyle.danger
     case .unknown:
       return .secondary
     }
@@ -308,13 +315,13 @@ struct DeepSeekServiceStatusView<Store: ServiceStatusStoring>: View {
   private func componentColor(_ status: ComponentStatus) -> Color {
     switch status {
     case .operational:
-      return .green
+      return AppVisualStyle.positive
     case .degradedPerformance, .underMaintenance:
-      return .orange
+      return AppVisualStyle.warning
     case .partialOutage:
-      return .orange
+      return AppVisualStyle.warning
     case .majorOutage:
-      return .red
+      return AppVisualStyle.danger
     case .unknown:
       return .secondary
     }

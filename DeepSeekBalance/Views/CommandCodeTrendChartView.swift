@@ -31,7 +31,6 @@ struct CommandCodeTrendChartView: View {
   let period: TrendPeriod
 
   @State private var selectedDate: Date?
-  @Environment(\.trendChartHighContrast) private var highContrast
 
   init(
     samples: [CommandCodeUsageSample],
@@ -82,7 +81,7 @@ struct CommandCodeTrendChartView: View {
     ) {
       Text(exhaustionEstimateText(seconds))
         .font(AppTypography.caption)
-        .foregroundStyle(TrendChartPalette.secondaryText(highContrast: highContrast))
+        .foregroundStyle(TrendChartPalette.secondaryText)
         .multilineTextAlignment(.trailing)
         .lineLimit(2)
         .minimumScaleFactor(0.75)
@@ -128,7 +127,7 @@ struct CommandCodeTrendChartView: View {
         RuleMark(
           x: .value(L10n.string(.chartSelectedTime, language: language), selectedSample.bucketStart)
         )
-        .foregroundStyle(TrendChartPalette.selection(highContrast: highContrast))
+        .foregroundStyle(TrendChartPalette.selection)
         .lineStyle(TrendChartSelectionStyle.rule)
       }
     }
@@ -138,12 +137,12 @@ struct CommandCodeTrendChartView: View {
     return chartWithAxes
       .chartXAxis {
         AxisMarks(values: .automatic(desiredCount: 4)) { value in
-          AxisGridLine().foregroundStyle(TrendChartPalette.grid(highContrast: highContrast))
+          AxisGridLine().foregroundStyle(TrendChartPalette.grid)
           AxisValueLabel {
             if let date = value.as(Date.self) {
               Text(axisLabel(for: date))
                 .font(AppTypography.caption)
-                .foregroundStyle(TrendChartPalette.axisText(highContrast: highContrast))
+                .foregroundStyle(TrendChartPalette.axisText)
                 .lineLimit(1)
             }
           }
@@ -151,12 +150,12 @@ struct CommandCodeTrendChartView: View {
       }
       .chartYAxis {
         AxisMarks(position: .leading) { value in
-          AxisGridLine().foregroundStyle(TrendChartPalette.grid(highContrast: highContrast))
+          AxisGridLine().foregroundStyle(TrendChartPalette.grid)
           AxisValueLabel {
             if let percent = value.as(Double.self) {
               Text("\(Int(percent))%")
                 .font(AppTypography.caption)
-                .foregroundStyle(TrendChartPalette.axisText(highContrast: highContrast))
+                .foregroundStyle(TrendChartPalette.axisText)
             }
           }
         }

@@ -4,7 +4,6 @@ import SwiftUI
 struct VPSUsageView: View {
   @ObservedObject var store: VPSUsageStore
   let language: AppLanguage
-  let appearance: AppAppearance
 
   @Environment(\.controlActiveState) private var controlActiveState
 
@@ -33,8 +32,9 @@ struct VPSUsageView: View {
         )
         .font(AppTypography.caption)
         .foregroundStyle(.secondary)
-        .padding(.leading, 10)
       }
+      Divider()
+        .overlay(AppVisualStyle.divider)
       if let snapshot = store.snapshot {
         usageCard(snapshot)
         cycleCard()
@@ -48,6 +48,8 @@ struct VPSUsageView: View {
           Text(L10n.string(.vpsLoading, language: language))
             .foregroundStyle(.secondary)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .appInsetCard()
       } else {
         emptyView
       }
@@ -55,29 +57,13 @@ struct VPSUsageView: View {
   }
 
   private var headerCard: some View {
-    HStack(spacing: 10) {
-      Image("VultrIcon")
-        .renderingMode(.template)
-        .resizable()
-        .aspectRatio(contentMode: .fit)
-        .frame(width: 24, height: 24)
-        .padding(8)
-        .accessibilityLabel(L10n.string(.a11yVPSIcon, language: language))
-
-      VStack(alignment: .leading, spacing: 2) {
-        Text(L10n.string(.vpsTitle, language: language))
-          .font(AppTypography.title)
-        Text(store.menuBarText(language: language))
-          .font(AppTypography.caption.monospacedDigit())
-          .foregroundStyle(.secondary)
-      }
-      Spacer()
-      Text(store.statusTitle(language: language))
-        .font(AppTypography.badge)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 3)
-        .background(statusColor.opacity(0.14), in: Capsule())
-        .foregroundStyle(statusColor)
+    AppProviderHeader(
+      imageName: "VultrIcon",
+      title: L10n.string(.vpsTitle, language: language),
+      subtitle: store.menuBarText(language: language),
+      accessibilityLabel: L10n.string(.a11yVPSIcon, language: language)
+    ) {
+      AppStatusBadge(text: store.statusTitle(language: language), tint: statusColor)
     }
   }
 
@@ -104,8 +90,7 @@ struct VPSUsageView: View {
         foregroundStyle: creditDropColor
       )
     }
-    .padding(10)
-    .background(cardBackground, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    .appInsetCard()
   }
 
   private func cycleCard() -> some View {
@@ -133,8 +118,7 @@ struct VPSUsageView: View {
         .foregroundStyle(.secondary)
       }
     }
-    .padding(10)
-    .background(cardBackground, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    .appInsetCard()
   }
 
   private var emptyView: some View {
@@ -145,6 +129,8 @@ struct VPSUsageView: View {
         errorText(error.text(language: language))
       }
     }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .appInsetCard()
   }
 
   private func valueRow(
@@ -170,25 +156,20 @@ struct VPSUsageView: View {
       .fixedSize(horizontal: false, vertical: true)
   }
 
-  private var cardBackground: Color {
-    appearance == .dark ? Color(white: 0.14) : Color(white: 0.96)
-  }
-
   private var statusColor: Color {
     switch store.status {
     case .loaded:
-      return .green
+      return AppVisualStyle.positive
     case .idle, .loading:
-      return .blue
+      return AppVisualStyle.accent
     case .notConfigured:
       return .secondary
     case .authInvalid:
-      return .orange
+      return AppVisualStyle.warning
     case .keychainError, .networkError, .serverError, .decodingError:
-      return .red
+      return AppVisualStyle.danger
     }
   }
 
 
 }
-

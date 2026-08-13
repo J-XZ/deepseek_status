@@ -55,6 +55,25 @@ enum MenuBarUsageColor {
     blue: 0.64,
     alpha: 1.0
   )
+  /// 浅色悬浮材质上使用更深、更克制的语义色，确保数字不会消失在背景中。
+  private static let floatingGreen = NSColor(
+    srgbRed: 0.12,
+    green: 0.42,
+    blue: 0.20,
+    alpha: 1.0
+  )
+  private static let floatingAmber = NSColor(
+    srgbRed: 0.62,
+    green: 0.36,
+    blue: 0.03,
+    alpha: 1.0
+  )
+  private static let floatingRed = NSColor(
+    srgbRed: 0.72,
+    green: 0.18,
+    blue: 0.15,
+    alpha: 1.0
+  )
   /// 进度条绿色：低饱和度暗绿（鼠尾草绿），
   /// 避免亮绿色在渐变中过于刺眼、与其他颜色不协调。
   private static let progressGreen = NSColor(
@@ -69,6 +88,31 @@ enum MenuBarUsageColor {
     srgbRed: 0.45,
     green: 0.75,
     blue: 1.0,
+    alpha: 1.0
+  )
+  /// 详情页使用更深的同语义色，确保浅色卡片上的细进度条仍有足够对比度。
+  private static let detailProgressGreen = NSColor(
+    srgbRed: 0.12,
+    green: 0.48,
+    blue: 0.23,
+    alpha: 1.0
+  )
+  private static let detailProgressBlue = NSColor(
+    srgbRed: 0.08,
+    green: 0.42,
+    blue: 0.82,
+    alpha: 1.0
+  )
+  private static let detailProgressAmber = NSColor(
+    srgbRed: 0.72,
+    green: 0.41,
+    blue: 0.04,
+    alpha: 1.0
+  )
+  private static let detailProgressRed = NSColor(
+    srgbRed: 0.78,
+    green: 0.17,
+    blue: 0.14,
     alpha: 1.0
   )
 
@@ -111,6 +155,20 @@ enum MenuBarUsageColor {
     )
   }
 
+  /// 浅色详情卡片专用的高对比连续渐变；阈值与菜单栏进度语义一致。
+  static func detailProgressColor(forGap gap: Double?) -> NSColor? {
+    guard let gap, gap.isFinite else { return nil }
+    return interpolated(
+      value: CGFloat(gap),
+      stops: [
+        (-greenPeakGap, detailProgressGreen),
+        (0, detailProgressBlue),
+        (yellowPeakGap, detailProgressAmber),
+        (redPeakGap, detailProgressRed),
+      ]
+    )
+  }
+
   /// Vultr 风险分同样使用连续渐变：0（安全）→ 0.5（黄）→ 1（红）。
   static func color(forTrafficRisk risk: Double?, isDark: Bool) -> NSColor? {
     guard let risk, risk.isFinite else { return nil }
@@ -120,6 +178,38 @@ enum MenuBarUsageColor {
         (0, brightGreen),
         (0.5, brightYellow),
         (1, brightRed),
+      ]
+    )
+  }
+
+  /// 悬浮窗的差值颜色：0 附近回到黑色标签色，两端使用深绿/深橙/深红。
+  static func floatingColor(for gap: Int?) -> NSColor? {
+    guard let gap, gap != 0 else { return nil }
+    return interpolated(
+      value: CGFloat(gap),
+      stops: [
+        (-greenPeakGap, floatingGreen),
+        (0, NSColor.labelColor),
+        (yellowPeakGap, floatingAmber),
+        (redPeakGap, floatingRed),
+      ]
+    )
+  }
+
+  static func floatingColor(forBalanceDrop dropUSD: Double?) -> NSColor? {
+    guard let dropUSD, dropUSD > 0.5 else { return nil }
+    let gap = min(30, max(0, CGFloat(dropUSD - 0.5) / 4.5 * 30))
+    return floatingColor(for: Int(gap.rounded()))
+  }
+
+  static func floatingColor(forTrafficRisk risk: Double?) -> NSColor? {
+    guard let risk, risk.isFinite else { return nil }
+    return interpolated(
+      value: CGFloat(risk),
+      stops: [
+        (0, floatingGreen),
+        (0.5, floatingAmber),
+        (1, floatingRed),
       ]
     )
   }
@@ -189,6 +279,8 @@ final class MenuBarStatusContentView: NSView {
     let lineHeight: CGFloat?
     let verticalInset: CGFloat
     let lineColors: [NSColor?]
+    /// 悬浮窗使用单独的高对比色，不直接复用菜单栏为深色背景调制的亮色。
+    let floatingLineColors: [NSColor?]
   }
 
   private let horizontalPadding: CGFloat = 4
@@ -263,7 +355,7 @@ final class MenuBarStatusContentView: NSView {
   /// 按「分段 + 分隔符」布局绘制内容，返回内容总宽度（不含 padding）。
   /// 多行分段按 lineHeight 逐行纵向排布；垂直方向按 bounds 居中。
   /// 菜单栏视图与悬浮窗共用，保证两侧文本布局一致。
-  /// defaultTextColor 用于未指定颜色的文本（悬浮窗深色背景上传白色）。
+  /// defaultTextColor 用于未指定颜色的文本；悬浮窗传入系统标签色。
   @discardableResult
   static func drawSegments(
     _ segments: [Segment],
@@ -272,7 +364,8 @@ final class MenuBarStatusContentView: NSView {
     separatorText: String,
     separatorFont: NSFont,
     iconTextSpacing: CGFloat = 4,
-    defaultTextColor: NSColor = .labelColor
+    defaultTextColor: NSColor = .labelColor,
+    useFloatingColors: Bool = false
   ) -> CGFloat {
     guard !segments.isEmpty else { return 0 }
 
@@ -292,8 +385,9 @@ final class MenuBarStatusContentView: NSView {
       let textX = x + iconWidth
 
       for (lineIndex, line) in lines.enumerated() {
-        let lineColor = segment.lineColors.indices.contains(lineIndex)
-          ? segment.lineColors[lineIndex]
+        let colors = useFloatingColors ? segment.floatingLineColors : segment.lineColors
+        let lineColor = colors.indices.contains(lineIndex)
+          ? colors[lineIndex]
           : nil
         let attributedLine = attributedText(
           line,
@@ -370,8 +464,8 @@ final class MenuBarStatusContentView: NSView {
 
 /// 弹出窗口尺寸计算：每个供应商页独立决定目标高度，屏幕可用区域决定硬上限。
 enum PopoverSizing {
-  static let width: CGFloat = 500
-  static let horizontalPadding: CGFloat = 14
+  static let width: CGFloat = 540
+  static let horizontalPadding: CGFloat = 16
   static let contentWidth: CGFloat = width - horizontalPadding * 2
   static let fallbackHeight: CGFloat = 820
   /// 给菜单栏、Dock 和窗口边缘留出安全空间，避免小屏上沿/底部贴边。
@@ -1101,11 +1195,11 @@ final class StatusItemController: NSObject {
 
     guard let contentView = menuBarContentView else { return }
 
-    // 悬浮窗镜像：启用后详情全部由悬浮窗承载（始终按深色风格生成以适配
-    // 深蓝背景），菜单栏只保留一个 DeepSeek 图标。直接使用系统模板渲染的
+    // 悬浮窗镜像：启用后详情全部由悬浮窗承载，颜色与图标按当前外观生成，
+    // 菜单栏只保留一个 DeepSeek 图标。直接使用系统模板渲染的
     // 单图标按钮（squareLength），让系统按标准状态栏图标布局，紧凑无多余空白。
     if FloatingStatusWindow.isEnabled {
-      floatingWindow.setSegments(buildSegments(isDark: true))
+      floatingWindow.setSegments(buildSegments(isDark: false))
       button.image = menuBarIcon(
         named: "DeepSeekIcon",
         size: MenuBarIconLayout.deepSeekMaxDimension
@@ -1190,6 +1284,9 @@ final class StatusItemController: NSObject {
         // 余额下跌渐变与 VPS 信用额度一致：≤ $0.5 无色，$2 黄，$5 红。
         lineColors: [
           MenuBarUsageColor.color(forBalanceDrop: deepseekBalanceDropUSD, isDark: isDark)
+        ],
+        floatingLineColors: [
+          MenuBarUsageColor.floatingColor(forBalanceDrop: deepseekBalanceDropUSD)
         ]
       )
     case .codex:
@@ -1208,6 +1305,9 @@ final class StatusItemController: NSObject {
             for: codexStore.usage?.usageGapPercent,
             isDark: isDark
           )
+        ],
+        floatingLineColors: [
+          MenuBarUsageColor.floatingColor(for: codexStore.usage?.usageGapPercent)
         ]
       )
     case .cursor:
@@ -1230,6 +1330,10 @@ final class StatusItemController: NSObject {
             for: cursorStore.usage?.apiUsageGapPercent,
             isDark: isDark
           )
+        ],
+        floatingLineColors: [
+          MenuBarUsageColor.floatingColor(for: cursorStore.usage?.usageGapPercent),
+          MenuBarUsageColor.floatingColor(for: cursorStore.usage?.apiUsageGapPercent)
         ]
       )
     case .openCode:
@@ -1246,6 +1350,10 @@ final class StatusItemController: NSObject {
         lineColors: [
           MenuBarUsageColor.color(for: openCodeMonthlyGap, isDark: isDark),
           MenuBarUsageColor.color(forBalanceDrop: openCodeZenDrop24h, isDark: isDark)
+        ],
+        floatingLineColors: [
+          MenuBarUsageColor.floatingColor(for: openCodeMonthlyGap),
+          MenuBarUsageColor.floatingColor(forBalanceDrop: openCodeZenDrop24h)
         ]
       )
     case .vps:
@@ -1265,6 +1373,10 @@ final class StatusItemController: NSObject {
             isDark: isDark
           ),
           MenuBarUsageColor.color(forBalanceDrop: vpsCreditDrop24h, isDark: isDark)
+        ],
+        floatingLineColors: [
+          MenuBarUsageColor.floatingColor(forTrafficRisk: vpsStore.trafficForecast?.riskScore),
+          MenuBarUsageColor.floatingColor(forBalanceDrop: vpsCreditDrop24h)
         ]
       )
     case .commandCode:
@@ -1283,6 +1395,9 @@ final class StatusItemController: NSObject {
             for: commandCodeStore.usage?.usageGapPercent,
             isDark: isDark
           )
+        ],
+        floatingLineColors: [
+          MenuBarUsageColor.floatingColor(for: commandCodeStore.usage?.usageGapPercent)
         ]
       )
     }
@@ -1488,7 +1603,7 @@ final class StatusItemController: NSObject {
     }
     tabKeyGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
       guard let self else { return }
-      handleTabKeyDown(event)
+      _ = handleTabKeyDown(event)
     }
   }
 

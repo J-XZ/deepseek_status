@@ -113,38 +113,6 @@
         }
       }
     },
-    "appearance.dark": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dark"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "深色"
-          }
-        }
-      }
-    },
-    "appearance.light": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Light"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "浅色"
-          }
-        }
-      }
-    },
     "apiKey.clear": {
       "localizations": {
         "en": {
@@ -1681,18 +1649,18 @@
         }
       }
     },
-    "settings.appearance": {
+    "settings.general": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Appearance"
+            "value": "General"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "外观"
+            "value": "通用"
           }
         }
       }

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// 通用设置独立小窗内容：语言、外观、开机自启、本地历史清理。
+/// 通用设置独立小窗内容：语言、开机自启、本地历史清理。
 /// 由菜单栏图标右键菜单「设置」打开，不再占用 DeepSeek 额度页面空间。
 struct SettingsView: View {
   @ObservedObject var store: BalanceStore
@@ -10,144 +10,151 @@ struct SettingsView: View {
   var onVisibilityChange: ((MenuBarVendor) -> Void)?
 
   @State private var showClearHistoryConfirmation = false
-  @Environment(\.controlActiveState) private var controlActiveState
-
   private var language: AppLanguage {
     store.language
   }
 
-  private var cardBackground: Color {
-    store.appearance == .dark ? Color(white: 0.14) : Color(white: 0.96)
-  }
-
-  private var cardBorder: Color {
-    store.appearance == .dark ? Color.primary.opacity(0.28) : Color.primary.opacity(0.16)
-  }
-
   var body: some View {
-    VStack(alignment: .leading, spacing: 14) {
-      Text(L10n.string(.settingsTitle, language: language))
-        .font(AppTypography.title)
+    VStack(alignment: .leading, spacing: 16) {
+      HStack(spacing: 12) {
+        Image(systemName: "slider.horizontal.3")
+          .font(.system(size: 19, weight: .medium))
+          .foregroundStyle(.secondary)
+          .frame(width: 32, height: 38)
+        VStack(alignment: .leading, spacing: 2) {
+          Text(L10n.string(.settingsTitle, language: language))
+            .font(AppTypography.pageTitle)
+          Text("DeepSeekBalance")
+            .font(AppTypography.caption)
+            .foregroundStyle(.secondary)
+        }
+      }
 
       settingsGroup {
-          VStack(alignment: .leading, spacing: 10) {
-            HStack {
-              Text(L10n.string(.settingsMenuBar, language: language))
-              Spacer()
-              Text(L10n.string(.settingsMenuBarOrderHint, language: language))
-                .font(AppTypography.caption)
-                .foregroundStyle(.secondary)
-            }
-
-            ForEach(orderedVendors, id: \.rawValue) { vendor in
-              HStack(spacing: 8) {
-                Button {
-                  moveVendor(vendor, offset: -1)
-                } label: {
-                  Image(systemName: "arrow.up")
-                }
-                .buttonStyle(.borderless)
-                .controlSize(.small)
-                .disabled(!canMove(vendor, offset: -1))
-                .help(L10n.string(.settingsMoveUp, language: language))
-
-                Button {
-                  moveVendor(vendor, offset: 1)
-                } label: {
-                  Image(systemName: "arrow.down")
-                }
-                .buttonStyle(.borderless)
-                .controlSize(.small)
-                .disabled(!canMove(vendor, offset: 1))
-                .help(L10n.string(.settingsMoveDown, language: language))
-
-                Text(L10n.string(vendorTitleKey(vendor), language: language))
-                Spacer()
-                Toggle("", isOn: visibilityBinding(for: vendor))
-                  .labelsHidden()
-                  .toggleStyle(.switch)
-                  .controlSize(.small)
-              }
-            }
+        VStack(alignment: .leading, spacing: 10) {
+          HStack(alignment: .firstTextBaseline) {
+            AppSectionHeader(
+              title: L10n.string(.settingsMenuBar, language: language),
+              systemImage: "menubar.rectangle"
+            )
+            Spacer()
+            Text(L10n.string(.settingsMenuBarOrderHint, language: language))
+              .font(AppTypography.caption)
+              .foregroundStyle(.secondary)
           }
+
+          ForEach(orderedVendors, id: \.rawValue) { vendor in
+            HStack(spacing: 10) {
+              HStack(spacing: 0) {
+                moveButton(vendor, offset: -1, systemImage: "chevron.up")
+                Rectangle()
+                  .fill(AppVisualStyle.divider)
+                  .frame(width: AppVisualStyle.hairlineWidth, height: 16)
+                moveButton(vendor, offset: 1, systemImage: "chevron.down")
+              }
+              .background(
+                AppVisualStyle.insetSurface,
+                in: RoundedRectangle(cornerRadius: 7, style: .continuous)
+              )
+              .overlay {
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                  .strokeBorder(
+                    AppVisualStyle.border,
+                    lineWidth: AppVisualStyle.hairlineWidth
+                  )
+              }
+
+              Image(vendorIconName(vendor))
+                .renderingMode(.template)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .foregroundStyle(.secondary)
+                .frame(width: 16, height: 16)
+                .frame(width: 24, height: 28)
+
+              Text(L10n.string(vendorTitleKey(vendor), language: language))
+                .lineLimit(1)
+              Spacer()
+              Toggle("", isOn: visibilityBinding(for: vendor))
+                .labelsHidden()
+                .toggleStyle(.switch)
+                .controlSize(.small)
+            }
+            .frame(height: 34)
+          }
+        }
       }
       .font(AppTypography.body)
 
       settingsGroup {
-          VStack(alignment: .leading, spacing: 12) {
-            HStack {
-              Text(L10n.string(.settingsLanguage, language: language))
-              Spacer()
-              Button(L10n.string(.settingsLanguageSwitch, language: language)) {
-                store.setLanguage(language == .simplifiedChinese ? .english : .simplifiedChinese)
-              }
-              .controlSize(.small)
-              .help(L10n.string(.settingsLanguageSwitchHelp, language: language))
+        VStack(alignment: .leading, spacing: 12) {
+          AppSectionHeader(
+            title: L10n.string(.settingsGeneral, language: language),
+            systemImage: "gearshape"
+          )
+          HStack {
+            Text(L10n.string(.settingsLanguage, language: language))
+            Spacer()
+            Button(L10n.string(.settingsLanguageSwitch, language: language)) {
+              store.setLanguage(language == .simplifiedChinese ? .english : .simplifiedChinese)
             }
+            .controlSize(.small)
+            .help(L10n.string(.settingsLanguageSwitchHelp, language: language))
+          }
 
+          VStack(alignment: .leading, spacing: 6) {
             HStack {
-              Text(L10n.string(.settingsAppearance, language: language))
+              Text(L10n.string(.settingsLaunchAtLogin, language: language))
               Spacer()
-              Picker("", selection: appearanceBinding) {
-                Text(L10n.string(.appearanceLight, language: language))
-                  .tag(AppAppearance.light)
-                Text(L10n.string(.appearanceDark, language: language))
-                  .tag(AppAppearance.dark)
-              }
-              .pickerStyle(.segmented)
-              .labelsHidden()
-              .frame(width: 150)
-            }
-
-            VStack(alignment: .leading, spacing: 6) {
-              HStack {
-                Text(L10n.string(.settingsLaunchAtLogin, language: language))
-                Spacer()
-                Toggle("", isOn: loginBinding)
-                  .labelsHidden()
-                  .toggleStyle(.switch)
-                  .controlSize(.small)
-                  .disabled(loginItemStore.isUpdating)
-              }
-              Text(loginStatusText)
-                .font(AppTypography.caption)
-                .foregroundStyle(.secondary)
-              if let error = loginItemStore.lastError {
-                Text(error)
-                  .font(AppTypography.caption)
-                  .foregroundStyle(.red)
-                  .textSelection(.enabled)
-              }
-              if loginItemStore.status == .requiresApproval {
-                Button(L10n.string(.loginOpenSettings, language: language)) {
-                  loginItemStore.openSystemSettings()
-                }
+              Toggle("", isOn: loginBinding)
+                .labelsHidden()
+                .toggleStyle(.switch)
                 .controlSize(.small)
-              }
+                .disabled(loginItemStore.isUpdating)
             }
-
-            HStack {
-              Text(L10n.string(.settingsLocalHistory, language: language))
-              Spacer()
-              Button(L10n.string(.trendClearHistory, language: language)) {
-                showClearHistoryConfirmation = true
+            Text(loginStatusText)
+              .font(AppTypography.caption)
+              .foregroundStyle(.secondary)
+            if let error = loginItemStore.lastError {
+              Text(error)
+                .font(AppTypography.caption)
+                .foregroundStyle(.red)
+                .textSelection(.enabled)
+            }
+            if loginItemStore.status == .requiresApproval {
+              Button(L10n.string(.loginOpenSettings, language: language)) {
+                loginItemStore.openSystemSettings()
               }
               .controlSize(.small)
             }
           }
+
+          HStack {
+            Text(L10n.string(.settingsLocalHistory, language: language))
+            Spacer()
+            Button(L10n.string(.trendClearHistory, language: language)) {
+              showClearHistoryConfirmation = true
+            }
+            .controlSize(.small)
+          }
+        }
       }
       .font(AppTypography.body)
 
       settingsGroup {
         VStack(alignment: .leading, spacing: 10) {
-          HStack {
-            Text(L10n.string(.settingsFloatingWindow, language: language))
-            Spacer()
+          HStack(spacing: 12) {
+            AppSectionHeader(
+              title: L10n.string(.settingsFloatingWindow, language: language),
+              systemImage: "macwindow.on.rectangle"
+            )
+            Spacer(minLength: 12)
             Toggle("", isOn: floatingWindowBinding)
               .labelsHidden()
               .toggleStyle(.switch)
               .controlSize(.small)
           }
+          Divider()
           HStack {
             Text(L10n.string(.floatingWindowSnapToMenuBar, language: language))
             Spacer()
@@ -160,12 +167,14 @@ struct SettingsView: View {
       }
       .font(AppTypography.body)
 
-      Spacer()
     }
-    .padding(20)
-    .frame(width: 400, alignment: .leading)
-    .background(store.appearance == .dark ? Color.black : Color.white)
-    .preferredColorScheme(store.appearance.colorScheme)
+    .padding(22)
+    .frame(width: 460, alignment: .leading)
+    // 设置窗口按 NSHostingView 的 fittingSize 自适应高度；固定垂直理想尺寸，
+    // 避免无界 Spacer 参与测量后把整组内容压到可视区域之外。
+    .fixedSize(horizontal: false, vertical: true)
+    .background(AppVisualStyle.windowTint)
+    .preferredColorScheme(.light)
     .confirmationDialog(
       L10n.string(.trendClearConfirmTitle, language: language),
       isPresented: $showClearHistoryConfirmation,
@@ -183,12 +192,39 @@ struct SettingsView: View {
   private func settingsGroup<Content: View>(@ViewBuilder content: () -> Content) -> some View {
     content()
       .frame(maxWidth: .infinity, alignment: .leading)
-      .padding(12)
-      .background(cardBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-      .overlay {
-        RoundedRectangle(cornerRadius: 14, style: .continuous)
-          .stroke(cardBorder, lineWidth: 1)
-      }
+      .appCard(padding: 16)
+  }
+
+  private func moveButton(
+    _ vendor: MenuBarVendor,
+    offset: Int,
+    systemImage: String
+  ) -> some View {
+    Button {
+      moveVendor(vendor, offset: offset)
+    } label: {
+      Image(systemName: systemImage)
+        .font(.system(size: 9, weight: .semibold))
+        .frame(width: 25, height: 25)
+        .contentShape(Rectangle())
+    }
+    .buttonStyle(.plain)
+    .foregroundStyle(canMove(vendor, offset: offset) ? Color.secondary : Color.secondary.opacity(0.28))
+    .disabled(!canMove(vendor, offset: offset))
+    .help(
+      L10n.string(offset < 0 ? .settingsMoveUp : .settingsMoveDown, language: language)
+    )
+  }
+
+  private func vendorIconName(_ vendor: MenuBarVendor) -> String {
+    switch vendor {
+    case .deepseek: return "DeepSeekIcon"
+    case .codex: return "CodexIcon"
+    case .cursor: return "CursorIcon"
+    case .openCode: return "OpenCodeIcon"
+    case .vps: return "VultrIcon"
+    case .commandCode: return "CommandCodeIcon"
+    }
   }
 
   /// 菜单栏顺序中的可见供应商（含全部供应商，按已保存顺序排列）。
@@ -239,13 +275,6 @@ struct SettingsView: View {
       set: { newValue in
         Task { await loginItemStore.setEnabled(newValue) }
       }
-    )
-  }
-
-  private var appearanceBinding: Binding<AppAppearance> {
-    Binding(
-      get: { store.appearance },
-      set: { store.setAppearance($0) }
     )
   }
 

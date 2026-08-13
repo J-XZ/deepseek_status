@@ -15,7 +15,6 @@ struct OpenCodeTrendChartView: View {
 
   @State private var preparedModel: OpenCodeTrendProcessor.ChartModel?
   @State private var selectedDate: Date?
-  @Environment(\.trendChartHighContrast) private var highContrast
 
   init(
     samples: [OpenCodeUsageSample],
@@ -116,7 +115,7 @@ struct OpenCodeTrendChartView: View {
         ForEach(Array(estimates.enumerated()), id: \.offset) { _, estimate in
           Text(estimate)
             .font(AppTypography.caption)
-            .foregroundStyle(TrendChartPalette.secondaryText(highContrast: highContrast))
+            .foregroundStyle(TrendChartPalette.secondaryText)
             .multilineTextAlignment(.trailing)
             .lineLimit(2)
             .minimumScaleFactor(0.75)
@@ -188,7 +187,7 @@ struct OpenCodeTrendChartView: View {
   private var waitingView: some View {
     Text(L10n.string(.openCodeTrendWaiting, language: language))
       .font(AppTypography.caption)
-      .foregroundStyle(TrendChartPalette.secondaryText(highContrast: highContrast))
+      .foregroundStyle(TrendChartPalette.secondaryText)
   }
 
   private func combinedChart(_ model: OpenCodeTrendProcessor.ChartModel) -> some View {
@@ -202,7 +201,7 @@ struct OpenCodeTrendChartView: View {
         RuleMark(
           x: .value(L10n.string(.chartSelectedTime, language: language), selectedSample.bucketStart)
         )
-        .foregroundStyle(TrendChartPalette.selection(highContrast: highContrast))
+        .foregroundStyle(TrendChartPalette.selection)
         .lineStyle(TrendChartSelectionStyle.rule)
       }
     }
@@ -215,13 +214,13 @@ struct OpenCodeTrendChartView: View {
     .chartXAxis { xAxis }
     .chartYAxis {
       AxisMarks(position: .leading, values: normalizedAxisTicks) { value in
-        AxisGridLine().foregroundStyle(TrendChartPalette.grid(highContrast: highContrast))
+        AxisGridLine().foregroundStyle(TrendChartPalette.grid)
         AxisTick()
         AxisValueLabel {
           if let number = value.as(Double.self) {
             Text("\(Int(number * 100))%")
               .font(AppTypography.caption)
-              .foregroundStyle(TrendChartPalette.axisText(highContrast: highContrast))
+              .foregroundStyle(TrendChartPalette.axisText)
           }
         }
       }
@@ -232,7 +231,7 @@ struct OpenCodeTrendChartView: View {
             if let number = value.as(Double.self) {
               Text(formattedAxisUSD(zenValue(fromNormalized: number, model: model)))
                 .font(AppTypography.caption)
-                .foregroundStyle(TrendChartPalette.axisText(highContrast: highContrast))
+                .foregroundStyle(TrendChartPalette.axisText)
             }
           }
         }
@@ -272,7 +271,7 @@ struct OpenCodeTrendChartView: View {
         RuleMark(
           x: .value(L10n.string(.chartSelectedTime, language: language), selectedSample.bucketStart)
         )
-        .foregroundStyle(TrendChartPalette.selection(highContrast: highContrast))
+        .foregroundStyle(TrendChartPalette.selection)
         .lineStyle(TrendChartSelectionStyle.rule)
       }
     }
@@ -281,12 +280,12 @@ struct OpenCodeTrendChartView: View {
     .chartXAxis { xAxis }
     .chartYAxis {
       AxisMarks(position: .leading) { value in
-        AxisGridLine().foregroundStyle(TrendChartPalette.grid(highContrast: highContrast))
+        AxisGridLine().foregroundStyle(TrendChartPalette.grid)
         AxisValueLabel {
           if let number = value.as(Double.self) {
             Text(formattedAxisUSD(number))
               .font(AppTypography.caption)
-              .foregroundStyle(TrendChartPalette.axisText(highContrast: highContrast))
+              .foregroundStyle(TrendChartPalette.axisText)
           }
         }
       }
@@ -340,12 +339,12 @@ struct OpenCodeTrendChartView: View {
 
   private var xAxis: some AxisContent {
     AxisMarks(values: .automatic(desiredCount: 4)) { value in
-      AxisGridLine().foregroundStyle(TrendChartPalette.grid(highContrast: highContrast))
+      AxisGridLine().foregroundStyle(TrendChartPalette.grid)
       AxisValueLabel {
         if let date = value.as(Date.self) {
             Text(axisLabel(for: date))
               .font(AppTypography.caption)
-              .foregroundStyle(TrendChartPalette.axisText(highContrast: highContrast))
+              .foregroundStyle(TrendChartPalette.axisText)
               .lineLimit(1)
         }
       }
