@@ -1,7 +1,6 @@
 import Foundation
 
 /// 把 Atlassian Statuspage 官方状态 JSON 映射为展示模型。
-/// 复用 `DeepSeekServiceStatus` 展示结构，三种供应商状态卡片视觉一致。
 enum StatusPageMapper {
   static func map(
     _ response: StatusPageSummaryResponse,

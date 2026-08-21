@@ -1,6 +1,5 @@
 import Foundation
 
-/// One Statuspage JSON feed, three presentation slices.
 enum StatusPageComponentSlice: Equatable, Sendable {
   case all
   case excludingGrokBot

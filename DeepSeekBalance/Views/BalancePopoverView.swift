@@ -304,7 +304,7 @@ struct BalancePopoverView: View {
           language: language
         )
         .frame(maxWidth: .infinity, alignment: .leading)
-          .appCard(level: .elevated)
+        .appCard(level: .elevated)
         card {
           DeepSeekServiceStatusView(
             store: grokBotStatusStore,
