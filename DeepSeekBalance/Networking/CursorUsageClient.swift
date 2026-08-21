@@ -35,15 +35,11 @@ struct CursorUsageClient: CursorUsageFetching {
   }
 
   func fetchUsage(accessToken: String) async throws -> CursorUsageResponse {
-    var request = URLRequest(url: baseURL)
-    request.httpMethod = "POST"
-    request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
-    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-    request.setValue("application/json", forHTTPHeaderField: "Accept")
-    // Cursor 客户端后端要求该协议版本头。
-    request.setValue("1", forHTTPHeaderField: "Connect-Protocol-Version")
-    request.httpBody = Data("{}".utf8)
-    request.timeoutInterval = timeoutInterval
+    let request = CursorConnectRPC.postRequest(
+      url: baseURL,
+      accessToken: accessToken,
+      timeoutInterval: timeoutInterval
+    )
 
     let data: Data
     let response: URLResponse
