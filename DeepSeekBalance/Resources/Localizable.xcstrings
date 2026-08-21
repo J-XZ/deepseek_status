@@ -1617,6 +1617,22 @@
         }
       }
     },
+    "serviceStatus.titleGrokBot": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grok Bot Service Status"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grok Bot 服务状态"
+          }
+        }
+      }
+    },
     "serviceStatus.unavailable": {
       "localizations": {
         "en": {

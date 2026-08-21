@@ -717,7 +717,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       client: StatusPageClient(
         baseURL: URL(string: "https://status.cursor.com")!
       ),
-      officialStatusPageURL: URL(string: "https://status.cursor.com")!
+      officialStatusPageURL: URL(string: "https://status.cursor.com")!,
+      componentSlice: .excludingGrokBot
+    )
+    let grokBotStatusStore = StatusPageStatusStore(
+      client: StatusPageClient(
+        baseURL: URL(string: "https://status.cursor.com")!
+      ),
+      officialStatusPageURL: URL(string: "https://status.cursor.com")!,
+      componentSlice: .grokBotOnly
     )
     // 被隐藏的供应商不显示、不后台收集、不写历史；仅在显示时启停。
     statusStore.setEnabled(visibility.showsDeepSeek)
@@ -730,6 +738,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     grokBotStore.setEnabled(visibility.showsGrokBot)
     codexStatusStore.setEnabled(visibility.showsCodex)
     cursorStatusStore.setEnabled(visibility.showsCursor)
+    grokBotStatusStore.setEnabled(visibility.showsGrokBot)
     statusItemController = StatusItemController(
       store: store,
       statusStore: statusStore,
@@ -742,6 +751,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       grokBotStore: grokBotStore,
       codexStatusStore: codexStatusStore,
       cursorStatusStore: cursorStatusStore,
+      grokBotStatusStore: grokBotStatusStore,
       visibility: visibility
     )
   }
@@ -763,6 +773,7 @@ final class StatusItemController: NSObject {
   private let grokBotStore: GrokBotUsageStore
   private let codexStatusStore: StatusPageStatusStore
   private let cursorStatusStore: StatusPageStatusStore
+  private let grokBotStatusStore: StatusPageStatusStore
 
   private let statusItem: NSStatusItem
   private let popover: NSPopover
@@ -826,6 +837,7 @@ final class StatusItemController: NSObject {
     grokBotStore: GrokBotUsageStore,
     codexStatusStore: StatusPageStatusStore,
     cursorStatusStore: StatusPageStatusStore,
+    grokBotStatusStore: StatusPageStatusStore,
     visibility: MenuBarVendorVisibility = MenuBarVendorVisibility()
   ) {
     self.store = store
@@ -839,6 +851,7 @@ final class StatusItemController: NSObject {
     self.grokBotStore = grokBotStore
     self.codexStatusStore = codexStatusStore
     self.cursorStatusStore = cursorStatusStore
+    self.grokBotStatusStore = grokBotStatusStore
     self.visibility = visibility
     self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     self.popover = NSPopover()
@@ -1454,6 +1467,7 @@ final class StatusItemController: NSObject {
       grokBotStore: grokBotStore,
       codexStatusStore: codexStatusStore,
       cursorStatusStore: cursorStatusStore,
+      grokBotStatusStore: grokBotStatusStore,
       visibility: visibility,
       tabSelection: tabSelection,
       onPageHeightsChange: { [weak self] pageHeights in
@@ -1981,9 +1995,10 @@ final class StatusItemController: NSObject {
       async let statusRefresh: Void = statusStore.refreshIfNeeded(maximumAge: 0)
       async let codexStatusRefresh: Void = codexStatusStore.refreshIfNeeded(maximumAge: 0)
       async let cursorStatusRefresh: Void = cursorStatusStore.refreshIfNeeded(maximumAge: 0)
+      async let grokBotStatusRefresh: Void = grokBotStatusStore.refreshIfNeeded(maximumAge: 0)
       _ = await (
         balanceRefresh, codexRefresh, cursorRefresh, openCodeRefresh, vpsRefresh,
-        statusRefresh, codexStatusRefresh, cursorStatusRefresh
+        statusRefresh, codexStatusRefresh, cursorStatusRefresh, grokBotStatusRefresh
       )
     }
   }
@@ -2027,6 +2042,7 @@ final class StatusItemController: NSObject {
       commandCodeStore.setEnabled(visibility.showsCommandCode)
     case .grokBot:
       grokBotStore.setEnabled(visibility.showsGrokBot)
+      grokBotStatusStore.setEnabled(visibility.showsGrokBot)
     }
     updateTitle()
     validateSelectedTabForVisibility()

@@ -96,6 +96,7 @@ enum L10nKey: String, CaseIterable, Sendable {
   case serviceTitle = "serviceStatus.title"
   case serviceTitleCodex = "serviceStatus.titleCodex"
   case serviceTitleCursor = "serviceStatus.titleCursor"
+  case serviceTitleGrokBot = "serviceStatus.titleGrokBot"
   case serviceLoading = "serviceStatus.loading"
   case serviceUnavailable = "serviceStatus.unavailable"
   case serviceLastUpdated = "serviceStatus.lastUpdated"

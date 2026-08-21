@@ -1,5 +1,12 @@
 import Foundation
 
+/// One Statuspage JSON feed, three presentation slices.
+enum StatusPageComponentSlice: Equatable, Sendable {
+  case all
+  case excludingGrokBot
+  case grokBotOnly
+}
+
 /// Atlassian Statuspage `/api/v2/status.json` 响应。
 struct StatusPageStatusResponse: Codable, Sendable {
   struct Page: Codable, Sendable {
@@ -34,12 +41,18 @@ struct StatusPageIncidentsResponse: Codable, Sendable {
   let incidents: [StatusPageIncident]?
 }
 
+struct StatusPageIncidentComponent: Codable, Sendable {
+  let id: String?
+  let name: String?
+}
+
 struct StatusPageIncident: Codable, Sendable {
   let id: String?
   let name: String?
   let status: String?
   let impact: String?
   let updatedAt: String?
+  let components: [StatusPageIncidentComponent]?
   let incidentUpdates: [StatusPageIncidentUpdate]?
 
   enum CodingKeys: String, CodingKey {
@@ -48,6 +61,7 @@ struct StatusPageIncident: Codable, Sendable {
     case status
     case impact
     case updatedAt = "updated_at"
+    case components
     case incidentUpdates = "incident_updates"
   }
 }

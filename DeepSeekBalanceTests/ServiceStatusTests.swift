@@ -742,6 +742,7 @@ final class StatusPageMapperTests: XCTestCase {
           status: dict["status"] as? String,
           impact: dict["impact"] as? String,
           updatedAt: dict["updated_at"] as? String,
+          components: dict["components"] as? [StatusPageIncidentComponent],
           incidentUpdates: dict["updates"] as? [StatusPageIncidentUpdate]
         )
       }
@@ -842,6 +843,49 @@ final class StatusPageMapperTests: XCTestCase {
       )
     )
     XCTAssertEqual(mapped.overall, .critical)
+  }
+
+  private func liveShapedCursorSummary() -> StatusPageSummaryResponse {
+    makeSummary(
+      indicator: "major",
+      description: "Partial service disruption",
+      components: [
+        ["id": "ide", "name": "IDE", "status": "operational"],
+        ["id": "grok", "name": "Grok Bot", "status": "major_outage"],
+      ]
+    )
+  }
+
+  func testSliceAllIncludesGrokBotAndPageIndicator() {
+    let mapped = StatusPageMapper.map(liveShapedCursorSummary(), slice: .all)
+    XCTAssertEqual(mapped.overall, .major)
+    let names = (mapped.apiComponents + mapped.webChatComponents + mapped.otherComponents)
+      .map(\.name)
+    XCTAssertTrue(names.contains("IDE"))
+    XCTAssertTrue(names.contains("Grok Bot"))
+  }
+
+  func testSliceExcludingGrokBotOmitsGrokBotAndPageIndicator() {
+    let mapped = StatusPageMapper.map(liveShapedCursorSummary(), slice: .excludingGrokBot)
+    XCTAssertEqual(mapped.overall, .none)
+    let names = (mapped.apiComponents + mapped.webChatComponents + mapped.otherComponents)
+      .map(\.name)
+    XCTAssertEqual(names, ["IDE"])
+    XCTAssertFalse(names.contains("Grok Bot"))
+  }
+
+  func testSliceGrokBotOnlyShowsGrokBotStatus() {
+    let mapped = StatusPageMapper.map(liveShapedCursorSummary(), slice: .grokBotOnly)
+    XCTAssertEqual(mapped.overall, .major)
+    let names = (mapped.apiComponents + mapped.webChatComponents + mapped.otherComponents)
+      .map(\.name)
+    XCTAssertEqual(names, ["Grok Bot"])
+  }
+
+  func testGrokBotNameMatcher() {
+    XCTAssertTrue(StatusPageMapper.isGrokBotComponentName("Grok Bot"))
+    XCTAssertTrue(StatusPageMapper.isGrokBotComponentName("grok-bot"))
+    XCTAssertFalse(StatusPageMapper.isGrokBotComponentName("Grok 4"))
   }
 }
 

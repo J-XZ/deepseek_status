@@ -121,6 +121,7 @@ struct BalancePopoverView: View {
   @ObservedObject var grokBotStore: GrokBotUsageStore
   @ObservedObject var codexStatusStore: StatusPageStatusStore
   @ObservedObject var cursorStatusStore: StatusPageStatusStore
+  @ObservedObject var grokBotStatusStore: StatusPageStatusStore
   let visibility: MenuBarVendorVisibility
   @ObservedObject var tabSelection: PopoverTabSelection
   let onPageHeightsChange: ([UsageTab: CGFloat]) -> Void
@@ -303,7 +304,14 @@ struct BalancePopoverView: View {
           language: language
         )
         .frame(maxWidth: .infinity, alignment: .leading)
-        .appCard(level: .elevated)
+          .appCard(level: .elevated)
+        card {
+          DeepSeekServiceStatusView(
+            store: grokBotStatusStore,
+            language: language,
+            titleKey: .serviceTitleGrokBot
+          )
+        }
         card { grokBotTrendSection }
       }
       card(level: .toolbar, padding: 10) { footer }
@@ -326,9 +334,10 @@ struct BalancePopoverView: View {
       async let grokBot = grokBotStore.refreshIfNeeded()
       async let codexStatus = codexStatusStore.refreshIfNeeded()
       async let cursorStatus = cursorStatusStore.refreshIfNeeded()
+      async let grokBotStatus = grokBotStatusStore.refreshIfNeeded()
       _ = await (
         balance, deepSeekStatus, codex, cursor, openCode, vps, commandCode, grokBot, codexStatus,
-        cursorStatus
+        cursorStatus, grokBotStatus
       )
     }
   }
@@ -1180,6 +1189,7 @@ struct BalancePopoverView: View {
         || grokBotStore.isRefreshing
         || codexStatusStore.loadState == .loading
         || cursorStatusStore.loadState == .loading
+        || grokBotStatusStore.loadState == .loading
       {
         ProgressView()
           .controlSize(.small)
@@ -1195,9 +1205,11 @@ struct BalancePopoverView: View {
           async let grokBotRefresh: Void = grokBotStore.refreshIfNeeded(maximumAge: 0)
           async let codexStatusRefresh: Void = codexStatusStore.refreshIfNeeded(maximumAge: 0)
           async let cursorStatusRefresh: Void = cursorStatusStore.refreshIfNeeded(maximumAge: 0)
+          async let grokBotStatusRefresh: Void = grokBotStatusStore.refreshIfNeeded(maximumAge: 0)
           _ = await (
             balanceRefresh, codexRefresh, cursorRefresh, openCodeRefresh, vpsRefresh,
-            commandCodeRefresh, grokBotRefresh, codexStatusRefresh, cursorStatusRefresh
+            commandCodeRefresh, grokBotRefresh, codexStatusRefresh, cursorStatusRefresh,
+            grokBotStatusRefresh
           )
         }
       } label: {
@@ -1211,6 +1223,7 @@ struct BalancePopoverView: View {
         || grokBotStore.isRefreshing
         || codexStatusStore.loadState == .loading
           || cursorStatusStore.loadState == .loading
+          || grokBotStatusStore.loadState == .loading
       )
       Spacer()
       Button {
