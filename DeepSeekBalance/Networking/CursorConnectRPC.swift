@@ -1,6 +1,5 @@
 import Foundation
 
-/// Builds the empty-body Connect POST used by DashboardService RPCs.
 enum CursorConnectRPC {
   static func postRequest(
     url: URL,

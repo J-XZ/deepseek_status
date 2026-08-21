@@ -5941,8 +5941,8 @@
     },
     "grokBot.enterprisePooled": {
       "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Enterprise pooled allowance — no personal weekly meter." } },
-        "zh-Hans": { "stringUnit": { "state": "translated", "value": "企业共享额度 — 无个人每周计量。" } }
+        "en": { "stringUnit": { "state": "translated", "value": "Enterprise pooled allowance. This account has no personal weekly meter." } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "企业共享额度，无个人每周计量。" } }
       }
     },
     "grokBot.trial": {
@@ -5977,7 +5977,7 @@
     },
     "grokBot.authInvalid": {
       "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Sign-in expired — run cursor agent login again" } },
+        "en": { "stringUnit": { "state": "translated", "value": "Sign-in expired. Run cursor agent login again" } },
         "zh-Hans": { "stringUnit": { "state": "translated", "value": "登录已失效，请重新运行 cursor agent login" } }
       }
     },

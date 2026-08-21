@@ -1,9 +1,7 @@
 import Foundation
 
-/// Live Grok Bot reading after Connect JSON is gone.
 struct GrokBotUsageSnapshot: Equatable, Sendable {
   let weekly: GrokBotWeeklyStatus
-  /// `grokPlanLabel` / SuperGrok plan display name. Never a billing dollar figure.
   let planLabel: String?
 }
 

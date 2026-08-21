@@ -190,7 +190,6 @@ private struct ProtobufTimestamp: Decodable {
 
 private struct WireResponse: Decodable {
   let usagePercent: Double?
-  let hasAvailableUsage: Bool?
   let hasNonZeroIncludedLimit: Bool?
   let usesPooledEnterpriseAllowance: Bool?
   let sandTrialCancelable: Bool?
@@ -201,7 +200,6 @@ private struct WireResponse: Decodable {
 
   enum CodingKeys: String, CodingKey {
     case usagePercent
-    case hasAvailableUsage
     case hasNonZeroIncludedLimit
     case usesPooledEnterpriseAllowance
     case sandTrialExpiresAt
@@ -214,7 +212,6 @@ private struct WireResponse: Decodable {
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     usagePercent = try container.decodeIfPresent(Double.self, forKey: .usagePercent)
-    hasAvailableUsage = try container.decodeIfPresent(Bool.self, forKey: .hasAvailableUsage)
     hasNonZeroIncludedLimit = try container.decodeIfPresent(
       Bool.self,
       forKey: .hasNonZeroIncludedLimit

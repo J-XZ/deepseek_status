@@ -56,6 +56,27 @@ final class GrokBotUsageTests: XCTestCase {
     }
   }
 
+  func testParserNoIncludedLimit() throws {
+    let data = Data("""
+      {
+        "hasNonZeroIncludedLimit": false,
+        "usagePercent": 12.0
+      }
+      """.utf8)
+    let snapshot = try GrokBotUsageParser.parse(data)
+    XCTAssertEqual(snapshot.weekly, .noIncludedLimit)
+  }
+
+  func testParserMissingUsagePercentIsNoIncludedLimit() throws {
+    let data = Data("""
+      {
+        "hasNonZeroIncludedLimit": true
+      }
+      """.utf8)
+    let snapshot = try GrokBotUsageParser.parse(data)
+    XCTAssertEqual(snapshot.weekly, .noIncludedLimit)
+  }
+
   func testConnectTimestampProtobufObject() throws {
     let data = Data("""
       {
@@ -107,13 +128,15 @@ final class GrokBotUsageTests: XCTestCase {
       (TestFixtures.grokBotHTTPResponse(statusCode: 200), Data(TestFixtures.grokBotMeteredJSON.utf8))
     }
     let history = InMemoryGrokBotHistoryStore()
+    let clock = FixedClock(date: Date(timeIntervalSince1970: 1_700_000_000))
     let store = GrokBotUsageStore(
       client: makeClient(),
       authProvider: MockCursorAuthProvider(),
-      clock: FixedClock(date: Date(timeIntervalSince1970: 1_700_000_000)),
+      clock: clock,
       startupRefresh: false,
+      startupPrune: false,
       autoRefreshInterval: nil,
-      historyService: GrokBotHistoryService(store: history, clock: SystemClock())
+      historyService: GrokBotHistoryService(store: history, clock: clock)
     )
     await store.refresh()
     XCTAssertEqual(store.status, .loaded)
@@ -140,13 +163,15 @@ final class GrokBotUsageTests: XCTestCase {
       )
     }
     let history = InMemoryGrokBotHistoryStore()
+    let clock = FixedClock(date: Date(timeIntervalSince1970: 1_700_000_000))
     let store = GrokBotUsageStore(
       client: makeClient(),
       authProvider: MockCursorAuthProvider(),
-      clock: FixedClock(date: Date(timeIntervalSince1970: 1_700_000_000)),
+      clock: clock,
       startupRefresh: false,
+      startupPrune: false,
       autoRefreshInterval: nil,
-      historyService: GrokBotHistoryService(store: history, clock: SystemClock())
+      historyService: GrokBotHistoryService(store: history, clock: clock)
     )
     await store.refresh()
     XCTAssertEqual(store.status, .loaded)
