@@ -2,7 +2,7 @@ import Foundation
 
 struct GrokBotUsageSnapshot: Equatable, Sendable {
   let weekly: GrokBotWeeklyStatus
-  let planLabel: String?
+  let planDisplayName: String?
 }
 
 enum GrokBotWeeklyStatus: Equatable, Sendable {

@@ -48,7 +48,7 @@ struct GrokBotUsageView: View {
         accessibilityLabel: L10n.string(.a11yGrokBotIcon, language: language)
       ) {
         HStack(spacing: 6) {
-          if let plan = store.usage?.planLabel, !plan.isEmpty {
+          if let plan = store.usage?.planDisplayName, !plan.isEmpty {
             AppStatusBadge(text: plan, tint: AppVisualStyle.accent, showsDot: false)
           } else if let plan = CursorUsageFormatter.planDisplayName(store.profile?.planTier) {
             AppStatusBadge(text: plan, tint: AppVisualStyle.accent, showsDot: false)

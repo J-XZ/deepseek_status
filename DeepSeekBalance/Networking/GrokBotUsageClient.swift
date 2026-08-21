@@ -83,11 +83,11 @@ enum GrokBotUsageParser {
   }
 
   private static func classify(_ wire: WireResponse) -> GrokBotUsageSnapshot {
-    let planLabel = wire.grokPlanLabel?.nonEmpty ?? wire.includedUsageSuperGrokPlan?.nonEmpty
+    let planDisplayName = wire.grokPlanLabel?.nonEmpty ?? wire.includedUsageSuperGrokPlan?.nonEmpty
     let resetAt = wire.nextResetTimestampUtc
 
     if wire.usesPooledEnterpriseAllowance == true {
-      return GrokBotUsageSnapshot(weekly: .enterprisePooled, planLabel: planLabel)
+      return GrokBotUsageSnapshot(weekly: .enterprisePooled, planDisplayName: planDisplayName)
     }
 
     if let trialExpiresAt = wire.sandTrialExpiresAt {
@@ -95,16 +95,16 @@ enum GrokBotUsageParser {
         expiresAt: trialExpiresAt,
         isCancelable: wire.sandTrialCancelable ?? false
       )
-      return GrokBotUsageSnapshot(weekly: .trial(trial), planLabel: planLabel)
+      return GrokBotUsageSnapshot(weekly: .trial(trial), planDisplayName: planDisplayName)
     }
 
     if wire.hasNonZeroIncludedLimit == false || wire.usagePercent == nil {
-      return GrokBotUsageSnapshot(weekly: .noIncludedLimit, planLabel: planLabel)
+      return GrokBotUsageSnapshot(weekly: .noIncludedLimit, planDisplayName: planDisplayName)
     }
 
     let usedPercent = clampUsedPercent(wire.usagePercent)
     let quota = GrokBotWeeklyQuota(usedPercent: usedPercent, resetsAt: resetAt)
-    return GrokBotUsageSnapshot(weekly: .metered(quota), planLabel: planLabel)
+    return GrokBotUsageSnapshot(weekly: .metered(quota), planDisplayName: planDisplayName)
   }
 
   private static func clampUsedPercent(_ value: Double?) -> Int {
