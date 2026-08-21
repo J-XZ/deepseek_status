@@ -94,7 +94,6 @@ enum StatusPageMapper {
     )
   }
 
-  /// Cursor Statuspage names Grok Bot with spaces or hyphens; bare `Grok` must not match.
   static func isGrokBotComponentName(_ name: String) -> Bool {
     normalizedComponentName(name).contains("grokbot")
   }
