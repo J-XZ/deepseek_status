@@ -15,6 +15,7 @@ final class StatusPageStatusStore: ServiceStatusStoring {
   let clock: any DateProviding
   let refreshInterval: TimeInterval
   let officialStatusPageURL: URL
+  let componentSlice: StatusPageComponentSlice
 
   private var refreshTask: Task<Void, Never>?
   private var autoRefreshTask: Task<Void, Never>?
@@ -23,12 +24,14 @@ final class StatusPageStatusStore: ServiceStatusStoring {
   init(
     client: any StatusPageFetching,
     officialStatusPageURL: URL,
+    componentSlice: StatusPageComponentSlice = .all,
     clock: any DateProviding = SystemClock(),
     refreshInterval: TimeInterval = DataRefreshPolicy.autoRefreshInterval,
     startupRefresh: Bool = true
   ) {
     self.client = client
     self.officialStatusPageURL = officialStatusPageURL
+    self.componentSlice = componentSlice
     self.clock = clock
     self.refreshInterval = refreshInterval
     startAutoRefreshIfNeeded()
@@ -105,7 +108,7 @@ final class StatusPageStatusStore: ServiceStatusStoring {
 
     do {
       let summary = try await client.fetchSummary()
-      status = StatusPageMapper.map(summary)
+      status = StatusPageMapper.map(summary, slice: componentSlice)
       lastSuccessfulUpdate = clock.now()
       isStale = false
       error = nil

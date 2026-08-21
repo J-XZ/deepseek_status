@@ -1617,6 +1617,22 @@
         }
       }
     },
+    "serviceStatus.titleGrokBot": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grok Bot Service Status"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grok Bot 服务状态"
+          }
+        }
+      }
+    },
     "serviceStatus.unavailable": {
       "localizations": {
         "en": {
@@ -5871,6 +5887,144 @@
             "value": "取消固定"
           }
         }
+      }
+    },
+    "tab.grokBot": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Grok Bot" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "Grok Bot" } }
+      }
+    },
+    "grokBot.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Grok Bot Usage" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "Grok Bot 用量" } }
+      }
+    },
+    "grokBot.account": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Account: %@" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "账号：%@" } }
+      }
+    },
+    "grokBot.windowTitle": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Weekly included quota" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "每周包含额度" } }
+      }
+    },
+    "grokBot.windowUsedRemaining": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Used %lld%% · Remaining %lld%%" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "已用 %lld%% · 剩余 %lld%%" } }
+      }
+    },
+    "grokBot.windowUsedRemainingWithGap": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Used %lld%% · Remaining %lld%% (%@)" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "已用 %lld%% · 剩余 %lld%%（%@）" } }
+      }
+    },
+    "grokBot.resetAt": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Resets at %@" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "重置时间：%@" } }
+      }
+    },
+    "grokBot.expectedMarker": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Expected usage marker" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "理想用量标记" } }
+      }
+    },
+    "grokBot.limitAllowed": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Within limit" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "未达上限" } }
+      }
+    },
+    "grokBot.limitReached": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Limit reached" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "已达上限" } }
+      }
+    },
+    "grokBot.noIncludedLimit": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "No included weekly limit on this account." } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "此账号没有包含的每周额度。" } }
+      }
+    },
+    "grokBot.enterprisePooled": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Enterprise pooled allowance. This account has no personal weekly meter." } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "企业共享额度，无个人每周计量。" } }
+      }
+    },
+    "grokBot.trial": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Trial expires" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "试用到期" } }
+      }
+    },
+    "grokBot.loading": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Loading Grok Bot usage…" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "正在加载 Grok Bot 用量…" } }
+      }
+    },
+    "grokBot.empty": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Grok Bot usage is not available yet." } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "Grok Bot 用量暂不可用。" } }
+      }
+    },
+    "grokBot.notConfigured": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Not signed in" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "未登录" } }
+      }
+    },
+    "grokBot.notConfiguredDetail": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Run cursor agent login on this Mac to sign in" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "请先在本机运行 cursor agent login 登录" } }
+      }
+    },
+    "grokBot.authInvalid": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Sign-in expired. Run cursor agent login again" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "登录已失效，请重新运行 cursor agent login" } }
+      }
+    },
+    "grokBot.lastUpdated": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Last updated: %@" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "上次更新：%@" } }
+      }
+    },
+    "menu.showGrokBot": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Grok Bot" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "Grok Bot" } }
+      }
+    },
+    "a11y.grokBotIcon": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Grok Bot" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "Grok Bot" } }
+      }
+    },
+    "a11y.menuBarGrokBot": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Grok Bot usage: %@" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "Grok Bot 用量：%@" } }
+      }
+    },
+    "a11y.grokBotLegend": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Grok Bot weekly remaining trend chart" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "Grok Bot 每周剩余趋势图" } }
       }
     }
   },

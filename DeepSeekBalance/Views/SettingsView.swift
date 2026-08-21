@@ -224,6 +224,7 @@ struct SettingsView: View {
     case .openCode: return "OpenCodeIcon"
     case .vps: return "VultrIcon"
     case .commandCode: return "CommandCodeIcon"
+    case .grokBot: return "GrokBotIcon"
     }
   }
 

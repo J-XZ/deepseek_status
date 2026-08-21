@@ -141,6 +141,15 @@
 		AA0000000000000000000435 /* CommandCodeHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000235 /* CommandCodeHistory.swift */; };
 		AA0000000000000000000436 /* CommandCodeUsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000236 /* CommandCodeUsageView.swift */; };
 		AA0000000000000000000437 /* CommandCodeTrendChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000237 /* CommandCodeTrendChartView.swift */; };
+		AA0000000000000000000438 /* CursorConnectRPC.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000238 /* CursorConnectRPC.swift */; };
+		AA0000000000000000000439 /* GrokBotUsageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000239 /* GrokBotUsageClient.swift */; };
+		AA0000000000000000000440 /* GrokBotUsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000240 /* GrokBotUsageModels.swift */; };
+		AA0000000000000000000441 /* GrokBotUsageSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000241 /* GrokBotUsageSample.swift */; };
+		AA0000000000000000000442 /* GrokBotUsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000242 /* GrokBotUsageStore.swift */; };
+		AA0000000000000000000443 /* GrokBotHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000243 /* GrokBotHistory.swift */; };
+		AA0000000000000000000444 /* LevelDBGrokBotHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000244 /* LevelDBGrokBotHistoryStore.swift */; };
+		AA0000000000000000000445 /* GrokBotUsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000245 /* GrokBotUsageView.swift */; };
+		AA0000000000000000000446 /* GrokBotTrendChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000246 /* GrokBotTrendChartView.swift */; };
 		AA0000000000000000000417 /* OpenCodeUsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000217 /* OpenCodeUsageModels.swift */; };
 		AA0000000000000000000418 /* OpenCodeUsageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000218 /* OpenCodeUsageClient.swift */; };
 		AA0000000000000000000419 /* OpenCodeUsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000219 /* OpenCodeUsageStore.swift */; };
@@ -164,6 +173,10 @@
 		AA0000000000000000000214 /* OpenCodeUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000010F /* OpenCodeUsageTests.swift */; };
 		AA0000000000000000000215 /* VPSUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000110 /* VPSUsageTests.swift */; };
 		AA0000000000000000000216 /* CommandCodeUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000111 /* CommandCodeUsageTests.swift */; };
+		AA0000000000000000000217 /* GrokBotUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000112 /* GrokBotUsageTests.swift */; };
+		AA0000000000000000000218 /* GrokBotHistoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000113 /* GrokBotHistoryTests.swift */; };
+		AA0000000000000000000219 /* GrokBotExhaustionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000114 /* GrokBotExhaustionTests.swift */; };
+		AA000000000000000000021A /* InMemoryGrokBotHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000115 /* InMemoryGrokBotHistoryStore.swift */; };
 		FF0000000000000000000101 /* TimeBucketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000001 /* TimeBucketTests.swift */; };
 		FF0000000000000000000102 /* InMemoryHistoryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000002 /* InMemoryHistoryStoreTests.swift */; };
 		FF0000000000000000000103 /* LevelDBBalanceHistoryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000003 /* LevelDBBalanceHistoryStoreTests.swift */; };
@@ -263,6 +276,15 @@
 		BB0000000000000000000235 /* CommandCodeHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCodeHistory.swift; sourceTree = "<group>"; };
 		BB0000000000000000000236 /* CommandCodeUsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCodeUsageView.swift; sourceTree = "<group>"; };
 		BB0000000000000000000237 /* CommandCodeTrendChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCodeTrendChartView.swift; sourceTree = "<group>"; };
+		BB0000000000000000000238 /* CursorConnectRPC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorConnectRPC.swift; sourceTree = "<group>"; };
+		BB0000000000000000000239 /* GrokBotUsageClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrokBotUsageClient.swift; sourceTree = "<group>"; };
+		BB0000000000000000000240 /* GrokBotUsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrokBotUsageModels.swift; sourceTree = "<group>"; };
+		BB0000000000000000000241 /* GrokBotUsageSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrokBotUsageSample.swift; sourceTree = "<group>"; };
+		BB0000000000000000000242 /* GrokBotUsageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrokBotUsageStore.swift; sourceTree = "<group>"; };
+		BB0000000000000000000243 /* GrokBotHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrokBotHistory.swift; sourceTree = "<group>"; };
+		BB0000000000000000000244 /* LevelDBGrokBotHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelDBGrokBotHistoryStore.swift; sourceTree = "<group>"; };
+		BB0000000000000000000245 /* GrokBotUsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrokBotUsageView.swift; sourceTree = "<group>"; };
+		BB0000000000000000000246 /* GrokBotTrendChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrokBotTrendChartView.swift; sourceTree = "<group>"; };
 		BB0000000000000000000217 /* OpenCodeUsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenCodeUsageModels.swift; sourceTree = "<group>"; };
 		BB0000000000000000000218 /* OpenCodeUsageClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenCodeUsageClient.swift; sourceTree = "<group>"; };
 		BB0000000000000000000219 /* OpenCodeUsageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenCodeUsageStore.swift; sourceTree = "<group>"; };
@@ -299,6 +321,10 @@
 		CC000000000000000000010F /* OpenCodeUsageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenCodeUsageTests.swift; sourceTree = "<group>"; };
 		CC0000000000000000000110 /* VPSUsageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPSUsageTests.swift; sourceTree = "<group>"; };
 		CC0000000000000000000111 /* CommandCodeUsageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCodeUsageTests.swift; sourceTree = "<group>"; };
+		CC0000000000000000000112 /* GrokBotUsageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrokBotUsageTests.swift; sourceTree = "<group>"; };
+		CC0000000000000000000113 /* GrokBotHistoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrokBotHistoryTests.swift; sourceTree = "<group>"; };
+		CC0000000000000000000114 /* GrokBotExhaustionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrokBotExhaustionTests.swift; sourceTree = "<group>"; };
+		CC0000000000000000000115 /* InMemoryGrokBotHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InMemoryGrokBotHistoryStore.swift; sourceTree = "<group>"; };
 		DD0000000000000000000101 /* builder.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/builder.cc"; sourceTree = "<group>"; };
 		DD0000000000000000000102 /* c.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/c.cc"; sourceTree = "<group>"; };
 		DD0000000000000000000103 /* db_impl.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/db_impl.cc"; sourceTree = "<group>"; };
@@ -439,6 +465,7 @@
 				E10000000000000000000006 /* FloatingWindowPlacement.swift */,
 				E1000000000000000000000E /* ScreenObstacleScanner.swift */,
 				BB0000000000000000000234 /* CommandCodeUsageStore.swift */,
+				BB0000000000000000000242 /* GrokBotUsageStore.swift */,
 			);
 			path = AppState;
 			sourceTree = "<group>";
@@ -459,6 +486,8 @@
 				E10000000000000000000016 /* CodexUsageSpeedEvaluator.swift */,
 				BB0000000000000000000230 /* CommandCodeUsageModels.swift */,
 				BB0000000000000000000231 /* CommandCodeUsageSample.swift */,
+				BB0000000000000000000240 /* GrokBotUsageModels.swift */,
+				BB0000000000000000000241 /* GrokBotUsageSample.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -476,6 +505,8 @@
 				BB000000000000000000020F /* CursorAuthProvider.swift */,
 				BB0000000000000000000232 /* CommandCodeUsageClient.swift */,
 				BB0000000000000000000233 /* CommandCodeAuthProvider.swift */,
+				BB0000000000000000000238 /* CursorConnectRPC.swift */,
+				BB0000000000000000000239 /* GrokBotUsageClient.swift */,
 			);
 			path = Networking;
 			sourceTree = "<group>";
@@ -505,6 +536,8 @@
 				BB0000000000000000000226 /* VPSTrendChartView.swift */,
 				BB0000000000000000000236 /* CommandCodeUsageView.swift */,
 				BB0000000000000000000237 /* CommandCodeTrendChartView.swift */,
+				BB0000000000000000000245 /* GrokBotUsageView.swift */,
+				BB0000000000000000000246 /* GrokBotTrendChartView.swift */,
 				BB000000000000000000020C /* SettingsView.swift */,
 				EE000000000000000000000C /* BalanceTrendChartView.swift */,
 				EE000000000000000000000D /* BalanceTrendEmptyView.swift */,
@@ -543,6 +576,10 @@
 				CC000000000000000000010F /* OpenCodeUsageTests.swift */,
 				CC0000000000000000000110 /* VPSUsageTests.swift */,
 				CC0000000000000000000111 /* CommandCodeUsageTests.swift */,
+				CC0000000000000000000112 /* GrokBotUsageTests.swift */,
+				CC0000000000000000000113 /* GrokBotHistoryTests.swift */,
+				CC0000000000000000000114 /* GrokBotExhaustionTests.swift */,
+				CC0000000000000000000115 /* InMemoryGrokBotHistoryStore.swift */,
 				E10000000000000000000008 /* TrendPeriodTests.swift */,
 				E1000000000000000000000A /* FloatingWindowClickInterpreterTests.swift */,
 				E1000000000000000000000C /* FloatingWindowPlacementTests.swift */,
@@ -578,6 +615,8 @@
 				BB0000000000000000000209 /* CodexHistoryService.swift */,
 				BB0000000000000000000215 /* CursorHistoryService.swift */,
 				BB0000000000000000000235 /* CommandCodeHistory.swift */,
+				BB0000000000000000000243 /* GrokBotHistory.swift */,
+				BB0000000000000000000244 /* LevelDBGrokBotHistoryStore.swift */,
 				BB000000000000000000021C /* OpenCodeHistory.swift */,
 				BB0000000000000000000224 /* VPSHistory.swift */,
 			);
@@ -874,6 +913,15 @@
 				AA0000000000000000000435 /* CommandCodeHistory.swift in Sources */,
 				AA0000000000000000000436 /* CommandCodeUsageView.swift in Sources */,
 				AA0000000000000000000437 /* CommandCodeTrendChartView.swift in Sources */,
+				AA0000000000000000000438 /* CursorConnectRPC.swift in Sources */,
+				AA0000000000000000000439 /* GrokBotUsageClient.swift in Sources */,
+				AA0000000000000000000440 /* GrokBotUsageModels.swift in Sources */,
+				AA0000000000000000000441 /* GrokBotUsageSample.swift in Sources */,
+				AA0000000000000000000442 /* GrokBotUsageStore.swift in Sources */,
+				AA0000000000000000000443 /* GrokBotHistory.swift in Sources */,
+				AA0000000000000000000444 /* LevelDBGrokBotHistoryStore.swift in Sources */,
+				AA0000000000000000000445 /* GrokBotUsageView.swift in Sources */,
+				AA0000000000000000000446 /* GrokBotTrendChartView.swift in Sources */,
 				AA0000000000000000000417 /* OpenCodeUsageModels.swift in Sources */,
 				AA0000000000000000000418 /* OpenCodeUsageClient.swift in Sources */,
 				AA0000000000000000000419 /* OpenCodeUsageStore.swift in Sources */,
@@ -918,6 +966,10 @@
 				AA0000000000000000000214 /* OpenCodeUsageTests.swift in Sources */,
 				AA0000000000000000000215 /* VPSUsageTests.swift in Sources */,
 				AA0000000000000000000216 /* CommandCodeUsageTests.swift in Sources */,
+				AA0000000000000000000217 /* GrokBotUsageTests.swift in Sources */,
+				AA0000000000000000000218 /* GrokBotHistoryTests.swift in Sources */,
+				AA0000000000000000000219 /* GrokBotExhaustionTests.swift in Sources */,
+				AA000000000000000000021A /* InMemoryGrokBotHistoryStore.swift in Sources */,
 				E10000000000000000000007 /* TrendPeriodTests.swift in Sources */,
 				E10000000000000000000009 /* FloatingWindowClickInterpreterTests.swift in Sources */,
 				E1000000000000000000000B /* FloatingWindowPlacementTests.swift in Sources */,

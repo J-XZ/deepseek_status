@@ -1,15 +1,15 @@
 import Foundation
 
 /// 把 Atlassian Statuspage 官方状态 JSON 映射为展示模型。
-/// 复用 `DeepSeekServiceStatus` 展示结构，三种供应商状态卡片视觉一致。
 enum StatusPageMapper {
-  static func map(_ response: StatusPageSummaryResponse) -> DeepSeekServiceStatus {
-    // 整体状态：Atlassian 用 indicator 字段，取值与 OverallIndicator 一致。
+  static func map(
+    _ response: StatusPageSummaryResponse,
+    slice: StatusPageComponentSlice = .all
+  ) -> DeepSeekServiceStatus {
     let indicatorRaw = response.status.status?.indicator
     let reportedOverall = OverallIndicator.from(raw: indicatorRaw)
     let overallDescription = response.status.status?.description ?? ""
 
-    // 组件：group 分组组件跳过（其下子组件已有独立状态）。
     let components = (response.components.components ?? []).filter {
       !($0.group ?? false)
     }
@@ -17,7 +17,8 @@ enum StatusPageMapper {
     let mappedComponents: [DeepSeekServiceStatus.Component] = components.compactMap {
       component -> DeepSeekServiceStatus.Component? in
       guard let name = component.name?.trimmingCharacters(in: .whitespacesAndNewlines),
-        !name.isEmpty
+        !name.isEmpty,
+        componentBelongsToSlice(name, slice: slice)
       else {
         return nil
       }
@@ -39,12 +40,12 @@ enum StatusPageMapper {
         && !DeepSeekStatusMapper.isWebChatComponent($0.name)
     }
 
-    // 事故：只展示未解决事故（investigating / identified / monitoring）。
     let incidents = (response.incidents.incidents ?? [])
       .compactMap { incident -> DeepSeekServiceStatus.Incident? in
         let status = IncidentStatus.from(raw: incident.status)
         guard status == .investigating || status == .identified || status == .monitoring,
-          let name = incident.name, !name.isEmpty
+          let name = incident.name, !name.isEmpty,
+          incidentBelongsToSlice(incident, slice: slice)
         else {
           return nil
         }
@@ -61,16 +62,25 @@ enum StatusPageMapper {
 
     let sawIncidents = !incidents.isEmpty
 
-    // 取整体 indicator 与组件最差状态中更严重的一方（含 severity 1 的 degraded）。
     let worstComponentSeverity = mappedComponents
       .map { DeepSeekStatusMapper.severity($0.status) }
       .max() ?? 0
     let fromComponents = indicator(fromComponentSeverity: worstComponentSeverity)
-    let effectiveOverall = mergeOverall(
-      reported: reportedOverall,
-      fromComponents: fromComponents,
-      sawIncidents: sawIncidents
-    )
+    let effectiveOverall: OverallIndicator
+    switch slice {
+    case .all:
+      effectiveOverall = mergeOverall(
+        reported: reportedOverall,
+        fromComponents: fromComponents,
+        sawIncidents: sawIncidents
+      )
+    case .excludingGrokBot, .grokBotOnly:
+      if fromComponents == .none {
+        effectiveOverall = sawIncidents ? .unknown : .none
+      } else {
+        effectiveOverall = fromComponents
+      }
+    }
 
     return DeepSeekServiceStatus(
       overall: effectiveOverall,
@@ -82,6 +92,63 @@ enum StatusPageMapper {
       incidents: incidents,
       scheduledMaintenances: []
     )
+  }
+
+  static func isGrokBotComponentName(_ name: String) -> Bool {
+    normalizedComponentName(name).contains("grokbot")
+  }
+
+  static func componentBelongsToSlice(_ name: String, slice: StatusPageComponentSlice) -> Bool {
+    let isGrokBot = isGrokBotComponentName(name)
+    switch slice {
+    case .all:
+      return true
+    case .excludingGrokBot:
+      return !isGrokBot
+    case .grokBotOnly:
+      return isGrokBot
+    }
+  }
+
+  private static func normalizedComponentName(_ name: String) -> String {
+    name.lowercased()
+      .replacingOccurrences(of: " ", with: "")
+      .replacingOccurrences(of: "-", with: "")
+      .replacingOccurrences(of: "_", with: "")
+  }
+
+  private static func incidentReferencedComponentNames(_ incident: StatusPageIncident) -> [String] {
+    if let components = incident.components, !components.isEmpty {
+      return components.compactMap(\.name).filter { !$0.isEmpty }
+    }
+    if let name = incident.name, !name.isEmpty {
+      return [name]
+    }
+    return []
+  }
+
+  private static func incidentAffectsGrokBot(_ incident: StatusPageIncident) -> Bool {
+    incidentReferencedComponentNames(incident).contains { isGrokBotComponentName($0) }
+  }
+
+  private static func incidentAffectsOnlyGrokBot(_ incident: StatusPageIncident) -> Bool {
+    let names = incidentReferencedComponentNames(incident)
+    guard !names.isEmpty else { return false }
+    return names.allSatisfy { isGrokBotComponentName($0) }
+  }
+
+  private static func incidentBelongsToSlice(
+    _ incident: StatusPageIncident,
+    slice: StatusPageComponentSlice
+  ) -> Bool {
+    switch slice {
+    case .all:
+      return true
+    case .grokBotOnly:
+      return incidentAffectsGrokBot(incident)
+    case .excludingGrokBot:
+      return !incidentAffectsOnlyGrokBot(incident)
+    }
   }
 
   /// 组件严重度 → 整体指示：1/2 → minor，3 → major。
