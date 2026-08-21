@@ -72,6 +72,7 @@ enum UsageTab: String, CaseIterable, Identifiable, Hashable {
   case openCode
   case vps
   case commandCode
+  case grokBot
 
   var id: String { rawValue }
 
@@ -90,6 +91,8 @@ enum UsageTab: String, CaseIterable, Identifiable, Hashable {
       return .vps
     case .commandCode:
       return .commandCode
+    case .grokBot:
+      return .grokBot
     }
   }
 }
@@ -115,6 +118,7 @@ struct BalancePopoverView: View {
   @ObservedObject var openCodeStore: OpenCodeUsageStore
   @ObservedObject var vpsStore: VPSUsageStore
   @ObservedObject var commandCodeStore: CommandCodeUsageStore
+  @ObservedObject var grokBotStore: GrokBotUsageStore
   @ObservedObject var codexStatusStore: StatusPageStatusStore
   @ObservedObject var cursorStatusStore: StatusPageStatusStore
   let visibility: MenuBarVendorVisibility
@@ -293,6 +297,14 @@ struct BalancePopoverView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .appCard(level: .elevated)
         card { commandCodeTrendSection }
+      case .grokBot:
+        GrokBotUsageView(
+          store: grokBotStore,
+          language: language
+        )
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .appCard(level: .elevated)
+        card { grokBotTrendSection }
       }
       card(level: .toolbar, padding: 10) { footer }
     }
@@ -311,10 +323,11 @@ struct BalancePopoverView: View {
       async let openCode = openCodeStore.refreshIfNeeded()
       async let vps = vpsStore.refreshIfNeeded()
       async let commandCode = commandCodeStore.refreshIfNeeded()
+      async let grokBot = grokBotStore.refreshIfNeeded()
       async let codexStatus = codexStatusStore.refreshIfNeeded()
       async let cursorStatus = cursorStatusStore.refreshIfNeeded()
       _ = await (
-        balance, deepSeekStatus, codex, cursor, openCode, vps, commandCode, codexStatus,
+        balance, deepSeekStatus, codex, cursor, openCode, vps, commandCode, grokBot, codexStatus,
         cursorStatus
       )
     }
@@ -427,6 +440,7 @@ struct BalancePopoverView: View {
     case .openCode: return "OpenCode"
     case .vps: return "Vultr"
     case .commandCode: return "Command"
+    case .grokBot: return "Grok"
     }
   }
 
@@ -444,6 +458,8 @@ struct BalancePopoverView: View {
       return "VultrIcon"
     case .commandCode:
       return "CommandCodeIcon"
+    case .grokBot:
+      return "GrokBotIcon"
     }
   }
 
@@ -461,6 +477,8 @@ struct BalancePopoverView: View {
       return .tabVPS
     case .commandCode:
       return .tabCommandCode
+    case .grokBot:
+      return .tabGrokBot
     }
   }
 
@@ -864,6 +882,35 @@ struct BalancePopoverView: View {
     }
   }
 
+  // MARK: - Grok Bot 趋势区
+
+  private var grokBotTrendSection: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      AppSectionHeader(
+        title: L10n.string(.trendTitle, language: language),
+        systemImage: "chart.xyaxis.line"
+      )
+
+      let chart = GrokBotTrendChartView(
+        samples: grokBotStore.historySamples,
+        language: language,
+        now: grokBotStore.clock.now(),
+        resetsAt: grokBotStore.usage?.meteredQuota?.resetsAt
+      )
+      usageTrendSummary(chart.usageChangeValue)
+
+      if grokBotStore.historySamples.count >= 2 {
+        chart
+      } else {
+        BalanceTrendEmptyView(historyUnavailable: false, language: language)
+      }
+
+      Text(L10n.string(.trendLocalNote, language: language))
+        .font(AppTypography.caption)
+        .foregroundStyle(.secondary)
+    }
+  }
+
   // MARK: - 错误提示
 
   @ViewBuilder
@@ -1130,6 +1177,7 @@ struct BalancePopoverView: View {
       if store.isRefreshing || statusStore.loadState == .loading || codexStore.isRefreshing
         || cursorStore.isRefreshing || openCodeStore.isRefreshing || vpsStore.isRefreshing
         || commandCodeStore.isRefreshing
+        || grokBotStore.isRefreshing
         || codexStatusStore.loadState == .loading
         || cursorStatusStore.loadState == .loading
       {
@@ -1144,11 +1192,12 @@ struct BalancePopoverView: View {
           async let openCodeRefresh: Void = openCodeStore.refreshIfNeeded(maximumAge: 0)
           async let vpsRefresh: Void = vpsStore.refreshIfNeeded(maximumAge: 0)
           async let commandCodeRefresh: Void = commandCodeStore.refreshIfNeeded(maximumAge: 0)
+          async let grokBotRefresh: Void = grokBotStore.refreshIfNeeded(maximumAge: 0)
           async let codexStatusRefresh: Void = codexStatusStore.refreshIfNeeded(maximumAge: 0)
           async let cursorStatusRefresh: Void = cursorStatusStore.refreshIfNeeded(maximumAge: 0)
           _ = await (
             balanceRefresh, codexRefresh, cursorRefresh, openCodeRefresh, vpsRefresh,
-            commandCodeRefresh, codexStatusRefresh, cursorStatusRefresh
+            commandCodeRefresh, grokBotRefresh, codexStatusRefresh, cursorStatusRefresh
           )
         }
       } label: {
@@ -1159,6 +1208,7 @@ struct BalancePopoverView: View {
         store.isRefreshing || statusStore.loadState == .loading || codexStore.isRefreshing
         || cursorStore.isRefreshing || openCodeStore.isRefreshing || vpsStore.isRefreshing
         || commandCodeStore.isRefreshing
+        || grokBotStore.isRefreshing
         || codexStatusStore.loadState == .loading
           || cursorStatusStore.loadState == .loading
       )

@@ -19,6 +19,8 @@ enum AppDisplayError: Equatable, Sendable {
   case cursorAuthInvalid
   case commandCodeNotConfigured
   case commandCodeAuthInvalid
+  case grokBotNotConfigured
+  case grokBotAuthInvalid
   case unknown
 
   func text(language: AppLanguage) -> String {
@@ -61,6 +63,10 @@ enum AppDisplayError: Equatable, Sendable {
       return L10n.string(.commandCodeNotConfigured, language: language)
     case .commandCodeAuthInvalid:
       return L10n.string(.commandCodeAuthInvalid, language: language)
+    case .grokBotNotConfigured:
+      return L10n.string(.grokBotNotConfigured, language: language)
+    case .grokBotAuthInvalid:
+      return L10n.string(.grokBotAuthInvalid, language: language)
     case .unknown:
       return L10n.string(.errorUnknown, language: language)
     }
