@@ -291,7 +291,7 @@ final class FloatingWindowPlacementTests: XCTestCase {
       cellSize: 8,
       origin: CGPoint(x: 0, y: 0),
       content: content,
-      colors: colors,
+      colors: colors
     )
     let snapshot = ScreenSnapshot(obstacles: [], grid: grid)
     let origin = tryUnwrap(
