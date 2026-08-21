@@ -402,15 +402,17 @@ final class CursorUsageTests: XCTestCase {
       )
     }
     let history = InMemoryCursorHistoryStore()
+    let clock = FixedClock(date: Date(timeIntervalSince1970: 1_700_000_000))
     let store = CursorUsageStore(
       client: makeClient(),
       authProvider: MockCursorAuthProvider(
         profile: CursorProfileInfo(planTier: "Pro+", email: "user@example.com")
       ),
-      clock: FixedClock(date: Date(timeIntervalSince1970: 1_700_000_000)),
+      clock: clock,
       startupRefresh: false,
+      startupPrune: false,
       autoRefreshInterval: nil,
-      historyService: CursorHistoryService(store: history, clock: SystemClock())
+      historyService: CursorHistoryService(store: history, clock: clock)
     )
     await store.refresh()
     XCTAssertEqual(store.status, .loaded)
