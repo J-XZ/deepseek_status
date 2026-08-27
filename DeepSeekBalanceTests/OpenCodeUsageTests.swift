@@ -68,11 +68,11 @@ final class OpenCodeUsageTests: XCTestCase {
     )
   }
 
-  func testParsesGoWindowsAndNormalizesFractionalPercent() throws {
+  func testKeepsSubPercentUsageOnTheZeroToOneHundredScale() throws {
     let page = """
     subscription: { id: "sub_1" },
-    rollingUsage: { usagePercent: 0.25, resetInSec: 3600 },
-    weeklyUsage: { usagePercent: 35, resetInSec: 7200 },
+    rollingUsage: { usagePercent: 0.6, resetInSec: 3600 },
+    weeklyUsage: { usagePercent: 0.25, resetInSec: 7200 },
     monthlyUsage: { usagePercent: 42.5, resetInSec: 10800 }
     """
 
@@ -82,9 +82,29 @@ final class OpenCodeUsageTests: XCTestCase {
         now: Date(timeIntervalSince1970: 1_750_000_000)
       )
     )
-    XCTAssertEqual(subscription.rolling?.usedPercent, 25)
-    XCTAssertEqual(subscription.weekly?.usedPercent, 35)
+    XCTAssertEqual(subscription.rolling?.usedPercent, 1)
+    XCTAssertEqual(subscription.rolling?.remainingPercent, 99)
+    XCTAssertEqual(subscription.weekly?.usedPercent, 0)
     XCTAssertEqual(subscription.monthly?.usedPercent, 43)
+  }
+
+  func testKeepsLargeUsagePercentUnscaled() throws {
+    let page = """
+    subscription: { id: "sub_1" },
+    rollingUsage: { usagePercent: 60, resetInSec: 3600 },
+    weeklyUsage: { usagePercent: 60.4, resetInSec: 7200 },
+    monthlyUsage: { usagePercent: 99.6, resetInSec: 10800 }
+    """
+
+    let subscription = try XCTUnwrap(
+      try OpenCodeUsageClient.parseGoSubscription(
+        text: page,
+        now: Date(timeIntervalSince1970: 1_750_000_000)
+      )
+    )
+    XCTAssertEqual(subscription.rolling?.usedPercent, 60)
+    XCTAssertEqual(subscription.weekly?.usedPercent, 60)
+    XCTAssertEqual(subscription.monthly?.usedPercent, 100)
   }
 
   func testParsesCurrentSolidStartGoWindowShape() throws {
@@ -151,6 +171,36 @@ final class OpenCodeUsageTests: XCTestCase {
     XCTAssertEqual(subscription.rolling?.usedPercent, 1)
     XCTAssertEqual(subscription.weekly?.usedPercent, 2)
     XCTAssertEqual(subscription.monthly?.usedPercent, 3)
+  }
+
+  func testKeepsSubPercentUsageInSolidStartAndJSONWindows() throws {
+    let solidStart = """
+    subscription: null,
+    subscriptionID: null,
+    subscriptionPlan: null,
+    SubscriptionID: "sub_active",
+    rollingUsage:$R[36]={status:"ok",resetInSec:17808,usagePercent:0.6},
+    weeklyUsage:$R[37]={status:"ok",resetInSec:499713,usagePercent:0.6},
+    monthlyUsage:$R[38]={status:"ok",resetInSec:2676166,usagePercent:60}
+    """
+    let json = """
+      {
+        "subscription": {"id": "sub_1"},
+        "rollingUsage": {"usagePercent": 0.6, "resetInSec": 3600},
+        "weeklyUsage": {"usagePercent": 0.6, "resetInSec": 7200},
+        "monthlyUsage": {"usagePercent": 60, "resetInSec": 10800}
+      }
+    """
+    let now = Date(timeIntervalSince1970: 1_750_000_000)
+
+    for page in [solidStart, json] {
+      let subscription = try XCTUnwrap(
+        try OpenCodeUsageClient.parseGoSubscription(text: page, now: now)
+      )
+      XCTAssertEqual(subscription.rolling?.usedPercent, 1)
+      XCTAssertEqual(subscription.weekly?.usedPercent, 1)
+      XCTAssertEqual(subscription.monthly?.usedPercent, 60)
+    }
   }
 
   func testHistorySampleStoresAllGoWindowsAndZenBalance() throws {
