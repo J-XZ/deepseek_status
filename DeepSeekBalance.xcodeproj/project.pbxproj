@@ -110,6 +110,7 @@
 		EE000000000000000000010B /* RefreshCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE000000000000000000000B /* RefreshCoordinator.swift */; };
 		EE000000000000000000010C /* BalanceTrendChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE000000000000000000000C /* BalanceTrendChartView.swift */; };
 		EE000000000000000000010D /* BalanceTrendEmptyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE000000000000000000000D /* BalanceTrendEmptyView.swift */; };
+		EE0000000000000000000211 /* ResetAtCaption.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE0000000000000000000201 /* ResetAtCaption.swift */; };
 		EE000000000000000000010E /* libleveldb.a in Frameworks */ = {isa = PBXBuildFile; fileRef = EE0000000000000000000040 /* libleveldb.a */; };
 		AA0000000000000000000401 /* CodexUsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000201 /* CodexUsageModels.swift */; };
 		AA0000000000000000000402 /* CodexUsageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000202 /* CodexUsageClient.swift */; };
@@ -177,6 +178,7 @@
 		AA0000000000000000000218 /* GrokBotHistoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000113 /* GrokBotHistoryTests.swift */; };
 		AA0000000000000000000219 /* GrokBotExhaustionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000114 /* GrokBotExhaustionTests.swift */; };
 		AA000000000000000000021A /* InMemoryGrokBotHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000115 /* InMemoryGrokBotHistoryStore.swift */; };
+		AA000000000000000000021B /* CompactRemainingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000116 /* CompactRemainingTests.swift */; };
 		FF0000000000000000000101 /* TimeBucketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000001 /* TimeBucketTests.swift */; };
 		FF0000000000000000000102 /* InMemoryHistoryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000002 /* InMemoryHistoryStoreTests.swift */; };
 		FF0000000000000000000103 /* LevelDBBalanceHistoryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000003 /* LevelDBBalanceHistoryStoreTests.swift */; };
@@ -325,6 +327,7 @@
 		CC0000000000000000000113 /* GrokBotHistoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrokBotHistoryTests.swift; sourceTree = "<group>"; };
 		CC0000000000000000000114 /* GrokBotExhaustionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrokBotExhaustionTests.swift; sourceTree = "<group>"; };
 		CC0000000000000000000115 /* InMemoryGrokBotHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InMemoryGrokBotHistoryStore.swift; sourceTree = "<group>"; };
+		CC0000000000000000000116 /* CompactRemainingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompactRemainingTests.swift; sourceTree = "<group>"; };
 		DD0000000000000000000101 /* builder.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/builder.cc"; sourceTree = "<group>"; };
 		DD0000000000000000000102 /* c.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/c.cc"; sourceTree = "<group>"; };
 		DD0000000000000000000103 /* db_impl.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/db_impl.cc"; sourceTree = "<group>"; };
@@ -376,6 +379,7 @@
 		EE000000000000000000000B /* RefreshCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshCoordinator.swift; sourceTree = "<group>"; };
 		EE000000000000000000000C /* BalanceTrendChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BalanceTrendChartView.swift; sourceTree = "<group>"; };
 		EE000000000000000000000D /* BalanceTrendEmptyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BalanceTrendEmptyView.swift; sourceTree = "<group>"; };
+		EE0000000000000000000201 /* ResetAtCaption.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResetAtCaption.swift; sourceTree = "<group>"; };
 		EE000000000000000000000E /* LevelDBBridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LevelDBBridge.h; sourceTree = "<group>"; };
 		EE0000000000000000000040 /* libleveldb.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libleveldb.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		FF0000000000000000000001 /* TimeBucketTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeBucketTests.swift; sourceTree = "<group>"; };
@@ -525,6 +529,7 @@
 			isa = PBXGroup;
 			children = (
 				A90000000000000000000201 /* AppVisualStyle.swift */,
+				EE0000000000000000000201 /* ResetAtCaption.swift */,
 				BB0000000000000000000008 /* BalancePopoverView.swift */,
 				BB0000000000000000000205 /* CodexUsageView.swift */,
 				BB0000000000000000000211 /* CursorUsageView.swift */,
@@ -580,6 +585,7 @@
 				CC0000000000000000000113 /* GrokBotHistoryTests.swift */,
 				CC0000000000000000000114 /* GrokBotExhaustionTests.swift */,
 				CC0000000000000000000115 /* InMemoryGrokBotHistoryStore.swift */,
+				CC0000000000000000000116 /* CompactRemainingTests.swift */,
 				E10000000000000000000008 /* TrendPeriodTests.swift */,
 				E1000000000000000000000A /* FloatingWindowClickInterpreterTests.swift */,
 				E1000000000000000000000C /* FloatingWindowPlacementTests.swift */,
@@ -849,6 +855,7 @@
 				AA0000000000000000000106 /* KeychainStore.swift in Sources */,
 				AA0000000000000000000108 /* BalancePopoverView.swift in Sources */,
 				A90000000000000000000101 /* AppVisualStyle.swift in Sources */,
+				EE0000000000000000000211 /* ResetAtCaption.swift in Sources */,
 				EE0000000000000000000101 /* BalanceSample.swift in Sources */,
 				EE0000000000000000000102 /* BalanceTrendModels.swift in Sources */,
 				EE0000000000000000000103 /* BalanceHistoryStoring.swift in Sources */,
@@ -970,6 +977,7 @@
 				AA0000000000000000000218 /* GrokBotHistoryTests.swift in Sources */,
 				AA0000000000000000000219 /* GrokBotExhaustionTests.swift in Sources */,
 				AA000000000000000000021A /* InMemoryGrokBotHistoryStore.swift in Sources */,
+				AA000000000000000000021B /* CompactRemainingTests.swift in Sources */,
 				E10000000000000000000007 /* TrendPeriodTests.swift in Sources */,
 				E10000000000000000000009 /* FloatingWindowClickInterpreterTests.swift in Sources */,
 				E1000000000000000000000B /* FloatingWindowPlacementTests.swift in Sources */,
@@ -1168,7 +1176,7 @@
 				CODE_SIGN_ENTITLEMENTS = DeepSeekBalance/DeepSeekBalance.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				HEADER_SEARCH_PATHS = (
@@ -1180,7 +1188,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 3.0.12;
+				MARKETING_VERSION = 3.0.13;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lc++",
@@ -1200,7 +1208,7 @@
 				CODE_SIGN_ENTITLEMENTS = DeepSeekBalance/DeepSeekBalance.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				HEADER_SEARCH_PATHS = (
@@ -1212,7 +1220,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 3.0.12;
+				MARKETING_VERSION = 3.0.13;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lc++",
@@ -1230,7 +1238,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1242,7 +1250,7 @@
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 3.0.12;
+				MARKETING_VERSION = 3.0.13;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jxz.deepseekbalance.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -1255,7 +1263,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1267,7 +1275,7 @@
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 3.0.12;
+				MARKETING_VERSION = 3.0.13;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jxz.deepseekbalance.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;

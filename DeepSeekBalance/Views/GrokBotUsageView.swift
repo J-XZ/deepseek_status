@@ -138,15 +138,16 @@ struct GrokBotUsageView: View {
         }
         usageBar(quota: quota)
         if let resetsAt = quota.resetsAt {
-          Text(L10n.string(
-            .grokBotResetAt,
-            language: language,
-            resetsAt.formatted(
-              Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
-            )
-          ))
-          .font(AppTypography.caption)
-          .foregroundStyle(.secondary)
+          ResetAtCaption(
+            label: L10n.string(
+              .grokBotResetAt,
+              language: language,
+              resetsAt.formatted(
+                Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
+              )
+            ),
+            until: resetsAt
+          )
         }
       }
 

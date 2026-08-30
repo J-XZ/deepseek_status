@@ -255,18 +255,18 @@ struct OpenCodeUsageView: View {
           language: language
         )
       )
+      // resetAt is now + resetInSec; capture from store.clock, not TimelineView's context.date.
       if let reset = window.resetAt(now: now) {
-        Text(
-          L10n.string(
+        ResetAtCaption(
+          label: L10n.string(
             .openCodeResetAt,
             language: language,
             reset.formatted(
               Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
             )
-          )
+          ),
+          until: reset
         )
-        .font(AppTypography.caption)
-        .foregroundStyle(.secondary)
       }
     }
   }

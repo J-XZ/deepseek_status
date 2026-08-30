@@ -229,15 +229,16 @@ struct CursorUsageView: View {
           end: billingCycleEnd
         )
       )
-      Text(L10n.string(
-        .cursorResetAt,
-        language: language,
-        billingCycleEnd.formatted(
-          Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
-        )
-      ))
-      .font(AppTypography.caption)
-      .foregroundStyle(.secondary)
+      ResetAtCaption(
+        label: L10n.string(
+          .cursorResetAt,
+          language: language,
+          billingCycleEnd.formatted(
+            Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
+          )
+        ),
+        until: billingCycleEnd
+      )
     }
     .padding(.bottom, 2)
   }

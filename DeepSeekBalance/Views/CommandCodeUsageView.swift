@@ -213,15 +213,16 @@ struct CommandCodeUsageView: View {
         expected: expectedPercent(start: periodStart, end: periodEnd)
       )
       if let periodEnd {
-        Text(L10n.string(
-          .commandCodeResetAt,
-          language: language,
-          periodEnd.formatted(
-            Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
-          )
-        ))
-        .font(AppTypography.caption)
-        .foregroundStyle(.secondary)
+        ResetAtCaption(
+          label: L10n.string(
+            .commandCodeResetAt,
+            language: language,
+            periodEnd.formatted(
+              Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
+            )
+          ),
+          until: periodEnd
+        )
       }
     }
     .padding(.bottom, 2)
@@ -264,15 +265,16 @@ struct CommandCodeUsageView: View {
         expected: nil
       )
       if let resetAt = limit.resetAtDate {
-        Text(L10n.string(
-          .commandCodeWindowResetAt,
-          language: language,
-          resetAt.formatted(
-            Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
-          )
-        ))
-        .font(AppTypography.caption)
-        .foregroundStyle(.secondary)
+        ResetAtCaption(
+          label: L10n.string(
+            .commandCodeWindowResetAt,
+            language: language,
+            resetAt.formatted(
+              Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
+            )
+          ),
+          until: resetAt
+        )
       }
     }
   }

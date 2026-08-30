@@ -286,15 +286,16 @@ struct CodexUsageView: View {
         resetAt: window.resetAt,
         locale: language.locale
       ) {
-        Text(L10n.string(
-          .codexResetAt,
-          language: language,
-          reset.formatted(
-            Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
-          )
-        ))
-        .font(AppTypography.caption)
-        .foregroundStyle(.secondary)
+        ResetAtCaption(
+          label: L10n.string(
+            .codexResetAt,
+            language: language,
+            reset.formatted(
+              Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
+            )
+          ),
+          until: reset
+        )
       }
     }
     .padding(.bottom, 2)

@@ -31,6 +31,13 @@ enum AppVisualStyle {
     blue: 0.82,
     alpha: 1
   ))
+  /// Remaining-time tint on reset captions; cooler and less saturated than `progressBlue`.
+  static let remainingBlueGray = Color(nsColor: NSColor(
+    srgbRed: 0.36,
+    green: 0.48,
+    blue: 0.62,
+    alpha: 1
+  ))
 
   static let cardCornerRadius: CGFloat = 12
   static let insetCornerRadius: CGFloat = 9
