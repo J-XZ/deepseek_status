@@ -218,6 +218,7 @@ final class OpenCodeUsageStore: ObservableObject {
 
     let cookieStore = self.cookieStore
     let savedCookie: String?
+    let apiKey: String?
     do {
       savedCookie = try await Task.detached(priority: .utility) {
         try cookieStore.readCookieHeader()
@@ -227,21 +228,39 @@ final class OpenCodeUsageStore: ObservableObject {
       lastDisplayError = .keychain(error.localizedDescription)
       return
     }
-    guard let savedCookie, !savedCookie.isEmpty else {
+    apiKey = await Task.detached(priority: .utility) {
+      OpenCodeAPIKeyLoader.load()
+    }.value
+
+    let cookieHeader: String?
+    if let savedCookie, !savedCookie.isEmpty {
+      hasSavedCookie = true
+      cookieHeader = try? OpenCodeCookieParser.parse(savedCookie)
+    } else {
       hasSavedCookie = false
-      status = .notConfigured
-      lastDisplayError = nil
-      historySamples = []
+      cookieHeader = nil
+    }
+    guard cookieHeader != nil || apiKey != nil else {
+      if savedCookie?.isEmpty == false {
+        status = .authInvalid
+        lastDisplayError = .invalidCookie
+      } else {
+        status = .notConfigured
+        lastDisplayError = nil
+        historySamples = []
+      }
       return
     }
-    let cookieHeader = savedCookie
-    hasSavedCookie = true
 
-    let credentialID = Self.credentialID(for: cookieHeader)
+    let credentialID = Self.credentialID(for: cookieHeader ?? apiKey ?? "")
     historySamples = (try? await historyService.recentSamples(credentialID: credentialID)) ?? []
 
     do {
-      let response = try await client.fetchUsage(cookieHeader: cookieHeader, now: clock.now())
+      let response = try await client.fetchUsage(
+        cookieHeader: cookieHeader,
+        apiKey: apiKey,
+        now: clock.now()
+      )
       snapshot = response
       lastUpdated = response.updatedAt
       status = .loaded

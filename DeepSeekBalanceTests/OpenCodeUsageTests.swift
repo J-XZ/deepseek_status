@@ -30,177 +30,46 @@ final class OpenCodeUsageTests: XCTestCase {
     )
   }
 
-  func testParsesNoSubscriptionPage() throws {
-    let page = """
-    <script>
-    subscription: null,
-    subscriptionID: null,
-    subscriptionPlan: null,
-    lite: null,
-    liteSubscriptionID: null
-    </script>
+  func testParsesNetscapeCookieKeepsConsoleSession() throws {
+    let content = """
+    # Netscape HTTP Cookie File
+    opencode.ai\tFALSE\t/\tTRUE\t1793979736\t__Host-console_session\tst_session
+    opencode.ai\tFALSE\t/\tFALSE\t1817197991\tauth\tfake-session-token
+    opencode.ai\tFALSE\t/\tFALSE\t1817197991\tother\tignored
     """
 
-    XCTAssertNil(
-      try OpenCodeUsageClient.parseGoSubscription(
-        text: page,
-        now: Date(timeIntervalSince1970: 1_750_000_000)
-      )
+    XCTAssertEqual(
+      try OpenCodeCookieParser.parse(content),
+      "__Host-console_session=st_session; auth=fake-session-token"
     )
   }
 
-  func testIgnoresNumericMonthlyMetadataWhenSubscriptionFieldsAreNull() throws {
-    let page = """
-    subscription: null,
-    subscriptionID: null,
-    subscriptionPlan: null,
-    lite: null,
-    liteSubscriptionID: null,
-    monthlyUsage: 4,
-    timeMonthlyUsageUpdated: 1750000000
+  func testParsesOfficialGoUsage() throws {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    let reset = try XCTUnwrap(formatter.date(from: "2025-06-15T12:00:00.000Z"))
+    let now = reset.addingTimeInterval(-3200)
+    let payload = """
+    {"usage":{"rolling":{"status":"ok","percent":4,"resetsAt":"2025-06-15T12:00:00.000Z"},
+    "weekly":{"status":"ok","percent":9.4,"resetsAt":"2025-06-16T00:00:00.000Z"},
+    "monthly":{"status":"ok","percent":0.6,"resetsAt":"2025-07-15T12:00:00.000Z"}}}
     """
-
-    XCTAssertNil(
-      try OpenCodeUsageClient.parseGoSubscription(
-        text: page,
-        now: Date(timeIntervalSince1970: 1_750_000_000)
-      )
-    )
-  }
-
-  func testKeepsSubPercentUsageOnTheZeroToOneHundredScale() throws {
-    let page = """
-    subscription: { id: "sub_1" },
-    rollingUsage: { usagePercent: 0.6, resetInSec: 3600 },
-    weeklyUsage: { usagePercent: 0.25, resetInSec: 7200 },
-    monthlyUsage: { usagePercent: 42.5, resetInSec: 10800 }
-    """
-
     let subscription = try XCTUnwrap(
-      try OpenCodeUsageClient.parseGoSubscription(
-        text: page,
-        now: Date(timeIntervalSince1970: 1_750_000_000)
-      )
+      OpenCodeUsageClient.parseGoUsage(data: Data(payload.utf8), now: now)
     )
-    XCTAssertEqual(subscription.rolling?.usedPercent, 1)
-    XCTAssertEqual(subscription.rolling?.remainingPercent, 99)
-    XCTAssertEqual(subscription.weekly?.usedPercent, 0)
-    XCTAssertEqual(subscription.monthly?.usedPercent, 43)
+    XCTAssertEqual(subscription.rolling?.usedPercent, 4)
+    XCTAssertEqual(subscription.weekly?.usedPercent, 9)
+    XCTAssertEqual(subscription.monthly?.usedPercent, 1)
+    XCTAssertEqual(subscription.rolling?.resetInSec, 3200)
   }
 
-  func testKeepsLargeUsagePercentUnscaled() throws {
-    let page = """
-    subscription: { id: "sub_1" },
-    rollingUsage: { usagePercent: 60, resetInSec: 3600 },
-    weeklyUsage: { usagePercent: 60.4, resetInSec: 7200 },
-    monthlyUsage: { usagePercent: 99.6, resetInSec: 10800 }
-    """
-
-    let subscription = try XCTUnwrap(
-      try OpenCodeUsageClient.parseGoSubscription(
-        text: page,
-        now: Date(timeIntervalSince1970: 1_750_000_000)
-      )
+  func testParsesZenBalanceFromMicroCents() throws {
+    let payload = #"{"balanceMicroCents":"161741486","availableMicroCents":"161741486"}"#
+    XCTAssertEqual(
+      try XCTUnwrap(OpenCodeUsageClient.parseZenBalanceUSD(data: Data(payload.utf8))),
+      1.61741486,
+      accuracy: 0.00000001
     )
-    XCTAssertEqual(subscription.rolling?.usedPercent, 60)
-    XCTAssertEqual(subscription.weekly?.usedPercent, 60)
-    XCTAssertEqual(subscription.monthly?.usedPercent, 100)
-  }
-
-  func testParsesCurrentSolidStartGoWindowShape() throws {
-    let page = """
-    subscription: null,
-    subscriptionID: null,
-    subscriptionPlan: null,
-    SubscriptionID: "sub_active",
-    rollingUsage:$R[36]={status:"ok",resetInSec:17808,usagePercent:1},
-    weeklyUsage:$R[37]={status:"ok",resetInSec:499713,usagePercent:12},
-    monthlyUsage:$R[38]={status:"ok",resetInSec:2676166,usagePercent:34}
-    """
-
-    let subscription = try XCTUnwrap(
-      try OpenCodeUsageClient.parseGoSubscription(
-        text: page,
-        now: Date(timeIntervalSince1970: 1_750_000_000)
-      )
-    )
-    XCTAssertEqual(subscription.rolling?.usedPercent, 1)
-    XCTAssertEqual(subscription.rolling?.resetInSec, 17808)
-    XCTAssertEqual(subscription.weekly?.usedPercent, 12)
-    XCTAssertEqual(subscription.weekly?.resetInSec, 499713)
-    XCTAssertEqual(subscription.monthly?.usedPercent, 34)
-    XCTAssertEqual(subscription.monthly?.resetInSec, 2676166)
-  }
-
-  func testParsesCapturedSolidStartPageWithLiteSubscriptionAndZeroMonthlyUsage() throws {
-    let page = """
-    $R[31]={mine:!0,useBalance:!1,rollingUsage:$R[33]={status:"ok",resetInSec:8629,usagePercent:3},weeklyUsage:$R[34]={status:"ok",resetInSec:490560,usagePercent:1},monthlyUsage:$R[35]={status:"ok",resetInSec:2667013,usagePercent:0}}
-    subscription:null,subscriptionID:null,subscriptionPlan:null,lite:$R[38]={},liteSubscriptionID:"sub_lite_active"
-    """
-
-    let subscription = try XCTUnwrap(
-      try OpenCodeUsageClient.parseGoSubscription(
-        text: page,
-        now: Date(timeIntervalSince1970: 1_785_808_349)
-      )
-    )
-    XCTAssertEqual(subscription.rolling?.usedPercent, 3)
-    XCTAssertEqual(subscription.rolling?.resetInSec, 8629)
-    XCTAssertEqual(subscription.weekly?.usedPercent, 1)
-    XCTAssertEqual(subscription.weekly?.resetInSec, 490560)
-    XCTAssertEqual(subscription.monthly?.usedPercent, 0)
-    XCTAssertEqual(subscription.monthly?.resetInSec, 2667013)
-  }
-
-  func testKeepsIntegerOnePercentInJSONWindow() throws {
-    let page = """
-      {
-        "subscription": {"id": "sub_1"},
-        "rollingUsage": {"usagePercent": 1, "resetInSec": 3600},
-        "weeklyUsage": {"usagePercent": 2, "resetInSec": 7200},
-        "monthlyUsage": {"usagePercent": 3, "resetInSec": 10800}
-      }
-    """
-
-    let subscription = try XCTUnwrap(
-      try OpenCodeUsageClient.parseGoSubscription(
-        text: page,
-        now: Date(timeIntervalSince1970: 1_750_000_000)
-      )
-    )
-    XCTAssertEqual(subscription.rolling?.usedPercent, 1)
-    XCTAssertEqual(subscription.weekly?.usedPercent, 2)
-    XCTAssertEqual(subscription.monthly?.usedPercent, 3)
-  }
-
-  func testKeepsSubPercentUsageInSolidStartAndJSONWindows() throws {
-    let solidStart = """
-    subscription: null,
-    subscriptionID: null,
-    subscriptionPlan: null,
-    SubscriptionID: "sub_active",
-    rollingUsage:$R[36]={status:"ok",resetInSec:17808,usagePercent:0.6},
-    weeklyUsage:$R[37]={status:"ok",resetInSec:499713,usagePercent:0.6},
-    monthlyUsage:$R[38]={status:"ok",resetInSec:2676166,usagePercent:60}
-    """
-    let json = """
-      {
-        "subscription": {"id": "sub_1"},
-        "rollingUsage": {"usagePercent": 0.6, "resetInSec": 3600},
-        "weeklyUsage": {"usagePercent": 0.6, "resetInSec": 7200},
-        "monthlyUsage": {"usagePercent": 60, "resetInSec": 10800}
-      }
-    """
-    let now = Date(timeIntervalSince1970: 1_750_000_000)
-
-    for page in [solidStart, json] {
-      let subscription = try XCTUnwrap(
-        try OpenCodeUsageClient.parseGoSubscription(text: page, now: now)
-      )
-      XCTAssertEqual(subscription.rolling?.usedPercent, 1)
-      XCTAssertEqual(subscription.weekly?.usedPercent, 1)
-      XCTAssertEqual(subscription.monthly?.usedPercent, 60)
-    }
   }
 
   func testHistorySampleStoresAllGoWindowsAndZenBalance() throws {
@@ -255,55 +124,87 @@ final class OpenCodeUsageTests: XCTestCase {
     XCTAssertEqual(sample.zenBalanceUSD, 5.5)
   }
 
-  func testParsesZenBalanceInBillingUnits() throws {
-    XCTAssertEqual(
-      try XCTUnwrap(OpenCodeUsageClient.parseZenBalance(text: "balance: 548407681")),
-      5.48407681,
-      accuracy: 0.00000001
+  func testClientUsesOfficialGoAndConsoleEndpoints() async throws {
+    let session = MockURLProtocol.makeSession()
+    let now = Date(timeIntervalSince1970: 1_750_000_000)
+    MockURLProtocol.requestHandler = { request in
+      let url = try XCTUnwrap(request.url)
+      let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!
+      switch url.path {
+      case "/zen/go/v1/usage":
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer test-key")
+        let body = """
+        {"usage":{"rolling":{"status":"ok","percent":4,"resetsAt":"2025-06-15T12:00:00.000Z"},
+        "weekly":{"status":"ok","percent":9,"resetsAt":"2025-06-16T00:00:00.000Z"},
+        "monthly":{"status":"ok","percent":12,"resetsAt":"2025-07-15T12:00:00.000Z"}}}
+        """
+        return (response, Data(body.utf8))
+      case "/console/api/orgs":
+        return (response, Data(#"[{"id":"wrk_test123","name":"test"}]"#.utf8))
+      case "/console/api/user":
+        return (response, Data(#"{"id":"acc_1","email":"user@example.com"}"#.utf8))
+      case "/console/api/billing/status":
+        XCTAssertEqual(request.value(forHTTPHeaderField: "x-org-id"), "wrk_test123")
+        return (response, Data(#"{"balanceMicroCents":"548407681"}"#.utf8))
+      default:
+        return (
+          HTTPURLResponse(url: url, statusCode: 404, httpVersion: nil, headerFields: nil)!,
+          Data()
+        )
+      }
+    }
+    defer { MockURLProtocol.reset() }
+
+    let client = OpenCodeUsageClient(session: session)
+    let snapshot = try await client.fetchUsage(
+      cookieHeader: "__Host-console_session=st_session",
+      apiKey: "test-key",
+      now: now
     )
-    XCTAssertEqual(
-      try XCTUnwrap(OpenCodeUsageClient.parseZenBalance(text: "{\"balance\": 5.5}")),
-      5.5,
-      accuracy: 0.00000001
-    )
+
+    XCTAssertEqual(snapshot.workspaceID, "wrk_test123")
+    XCTAssertEqual(snapshot.accountEmail, "user@example.com")
+    XCTAssertEqual(snapshot.goSubscription?.monthly?.usedPercent, 12)
+    XCTAssertEqual(snapshot.zenBalanceUSD ?? 0, 5.48407681, accuracy: 0.00000001)
   }
 
-  func testClientReturnsZenWhenGoIsNotSubscribed() async throws {
+  func testClientKeepsZenWhenGoSubscriptionIsMissing() async throws {
     let session = MockURLProtocol.makeSession()
     MockURLProtocol.requestHandler = { request in
       let url = try XCTUnwrap(request.url)
-      if url.path == "/_server" {
-        let id = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?
-          .first(where: { $0.name == "id" })?.value
-        if id == "def39973159c7f0483d8793a822b8dbb10d067e12c65455fcb4608459ba0234f" {
-          return (
-            HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!,
-            Data(#"id: "wrk_test123""#.utf8)
-          )
-        }
+      if url.path == "/zen/go/v1/usage" {
+        return (
+          HTTPURLResponse(url: url, statusCode: 403, httpVersion: nil, headerFields: nil)!,
+          Data(#"{"type":"error","error":{"type":"EntitlementError"}}"#.utf8)
+        )
+      }
+      if url.path == "/console/api/orgs" {
         return (
           HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!,
-          Data("balance: 548407681".utf8)
+          Data(#"[{"id":"wrk_test123"}]"#.utf8)
+        )
+      }
+      if url.path == "/console/api/billing/status" {
+        return (
+          HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!,
+          Data(#"{"balanceMicroCents":100000000}"#.utf8)
         )
       }
       return (
         HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!,
-        Data("subscription: null, subscriptionID: null, lite: null, liteSubscriptionID: null".utf8)
+        Data(#"{"email":"user@example.com"}"#.utf8)
       )
     }
     defer { MockURLProtocol.reset() }
 
     let client = OpenCodeUsageClient(session: session)
     let snapshot = try await client.fetchUsage(
-      cookieHeader: "auth=fake-session-token",
+      cookieHeader: "__Host-console_session=st_session",
+      apiKey: "test-key",
       now: Date(timeIntervalSince1970: 1_750_000_000)
     )
-
-    XCTAssertEqual(snapshot.workspaceID, "wrk_test123")
     XCTAssertNil(snapshot.goSubscription)
-    XCTAssertEqual(snapshot.zenBalanceUSD ?? 0, 5.48407681, accuracy: 0.00000001)
-    XCTAssertNil(snapshot.accountEmail)
-    XCTAssertEqual(MockURLProtocol.recordedRequestCount, 4)
+    XCTAssertEqual(snapshot.zenBalanceUSD ?? 0, 1, accuracy: 0.00000001)
   }
 
   private func historySample(at offset: TimeInterval, balance: Double) -> OpenCodeUsageSample {

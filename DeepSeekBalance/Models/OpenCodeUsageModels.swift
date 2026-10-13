@@ -134,10 +134,10 @@ enum OpenCodeCookieInputError: Error, Equatable, Sendable {
 /// - 指向该文件的本机绝对路径（支持 `~` 开头）；
 /// - 作为便捷兼容形式的 `auth=value` Cookie Header。
 ///
-/// 请求只保留 OpenCode 登录所需的 `auth` / `__Host-auth`，不会把完整 Cookie
-/// 文件或原始内容写入历史记录。
+/// 请求只保留控制台会话 `__Host-console_session`，以及旧登录 Cookie
+/// `auth` / `__Host-auth`。不会把完整 Cookie 文件写入历史记录。
 enum OpenCodeCookieParser {
-  static let acceptedCookieNames = ["auth", "__Host-auth"]
+  static let acceptedCookieNames = ["__Host-console_session", "auth", "__Host-auth"]
 
   static func parse(_ rawInput: String, fileManager: FileManager = .default) throws -> String {
     let input = rawInput.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -179,12 +179,18 @@ enum OpenCodeCookieParser {
       candidates[name] = value
     }
 
-    for name in acceptedCookieNames {
-      if let value = candidates[name] {
-        return "\(name)=\(value)"
-      }
+    guard let header = cookieHeader(from: candidates) else {
+      throw OpenCodeCookieInputError.cookieNotFound
     }
-    throw OpenCodeCookieInputError.cookieNotFound
+    return header
+  }
+
+  private static func cookieHeader(from candidates: [String: String]) -> String? {
+    let parts = acceptedCookieNames.compactMap { name -> String? in
+      guard let value = candidates[name] else { return nil }
+      return "\(name)=\(value)"
+    }
+    return parts.isEmpty ? nil : parts.joined(separator: "; ")
   }
 
   private static func parseCookieHeader(_ input: String) -> String? {
@@ -197,6 +203,7 @@ enum OpenCodeCookieParser {
       withoutPrefix = input
     }
 
+    var candidates: [String: String] = [:]
     for part in withoutPrefix.split(separator: ";", omittingEmptySubsequences: true) {
       let pair = part.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
       guard pair.count == 2 else { continue }
@@ -204,9 +211,9 @@ enum OpenCodeCookieParser {
       guard acceptedCookieNames.contains(name) else { continue }
       let value = pair[1].trimmingCharacters(in: .whitespacesAndNewlines)
       guard !value.isEmpty else { continue }
-      return "\(name)=\(value)"
+      candidates[name] = value
     }
-    return nil
+    return cookieHeader(from: candidates)
   }
 
   private static func isOpenCodeDomain(_ domain: String) -> Bool {

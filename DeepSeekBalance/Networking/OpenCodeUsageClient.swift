@@ -1,14 +1,58 @@
 import Foundation
 
 protocol OpenCodeUsageFetching: Sendable {
-  func fetchUsage(cookieHeader: String, now: Date) async throws -> OpenCodeUsageSnapshot
+  func fetchUsage(
+    cookieHeader: String?,
+    apiKey: String?,
+    now: Date
+  ) async throws -> OpenCodeUsageSnapshot
 }
 
-/// 读取 OpenCode Web 页面使用的内部 Server Function 数据。
+/// 从本机 OpenCode CLI 的 `auth.json` 读取 Zen / Go API Key。
+/// 优先 `opencode-go`，否则使用 `opencode`。
+enum OpenCodeAPIKeyLoader {
+  static func authFileURL(
+    fileManager: FileManager = .default,
+    environment: [String: String] = ProcessInfo.processInfo.environment
+  ) -> URL {
+    if let dataHome = environment["XDG_DATA_HOME"], !dataHome.isEmpty {
+      return URL(fileURLWithPath: dataHome, isDirectory: true)
+        .appendingPathComponent("opencode/auth.json")
+    }
+    return fileManager.homeDirectoryForCurrentUser
+      .appendingPathComponent(".local/share/opencode/auth.json")
+  }
+
+  static func load(
+    fileURL: URL? = nil,
+    fileManager: FileManager = .default
+  ) -> String? {
+    let url = fileURL ?? authFileURL(fileManager: fileManager)
+    guard fileManager.fileExists(atPath: url.path),
+      let data = try? Data(contentsOf: url),
+      let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+    else {
+      return nil
+    }
+    for name in ["opencode-go", "opencode"] {
+      guard let entry = object[name] as? [String: Any],
+        let key = entry["key"] as? String
+      else {
+        continue
+      }
+      let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
+      if !trimmed.isEmpty {
+        return trimmed
+      }
+    }
+    return nil
+  }
+}
+
+/// 用官方接口读取 OpenCode Go 用量和 Zen 余额。
 ///
-/// OpenCode 的 Go 页面是 Solid 生成的 HTML/JavaScript，不保证返回 JSON；因此客户端
-/// 同时支持 JSON、序列化对象和页面内的字段文本三种形式。请求只使用 Cookie，不保存
-/// 页面或 Cookie 内容。
+/// Go 用量：`GET https://opencode.ai/zen/go/v1/usage`，使用本机 API Key。
+/// Zen 余额和账号：`https://opencode.ai/console/api/...`，使用控制台会话 Cookie。
 struct OpenCodeUsageClient: OpenCodeUsageFetching {
   enum APIError: Error, Equatable, Sendable {
     case invalidCookie
@@ -21,15 +65,9 @@ struct OpenCodeUsageClient: OpenCodeUsageFetching {
     case cancelled
   }
 
-  private static let baseURL = URL(string: "https://opencode.ai")!
-  private static let serverURL = URL(string: "https://opencode.ai/_server")!
-  private static let workspaceServerID =
-    "def39973159c7f0483d8793a822b8dbb10d067e12c65455fcb4608459ba0234f"
-  private static let billingServerID =
-    "c83b78a614689c38ebee981f9b39a8b377716db85c1fd7dbab604adc02d3313d"
-  private static let userAgent =
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-      + "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+  private static let goUsageURL = URL(string: "https://opencode.ai/zen/go/v1/usage")!
+  private static let consoleAPI = URL(string: "https://opencode.ai/console/api")!
+  private static let userAgent = "DeepSeekBalance"
 
   let session: URLSession
   let timeoutInterval: TimeInterval
@@ -42,157 +80,282 @@ struct OpenCodeUsageClient: OpenCodeUsageFetching {
     self.timeoutInterval = timeoutInterval
   }
 
-  func fetchUsage(cookieHeader: String, now: Date = Date()) async throws -> OpenCodeUsageSnapshot {
-    let normalizedCookie: String
-    do {
-      normalizedCookie = try OpenCodeCookieParser.parse(cookieHeader)
-    } catch {
+  func fetchUsage(
+    cookieHeader: String?,
+    apiKey: String?,
+    now: Date = Date()
+  ) async throws -> OpenCodeUsageSnapshot {
+    let normalizedCookie = cookieHeader.flatMap { header -> String? in
+      let trimmed = header.trimmingCharacters(in: .whitespacesAndNewlines)
+      guard !trimmed.isEmpty else { return nil }
+      return try? OpenCodeCookieParser.parse(trimmed)
+    }
+    let trimmedKey = apiKey?.trimmingCharacters(in: .whitespacesAndNewlines)
+    let key = (trimmedKey?.isEmpty == false) ? trimmedKey : nil
+    guard normalizedCookie != nil || key != nil else {
       throw APIError.invalidCookie
     }
 
-    let workspaceID = try await fetchWorkspaceID(cookieHeader: normalizedCookie)
-    let goPage = try await fetchGoPage(
-      workspaceID: workspaceID,
-      cookieHeader: normalizedCookie
-    )
-    let goSubscription = try Self.parseGoSubscription(text: goPage, now: now)
-    let zenText = try await fetchZenBilling(
-      workspaceID: workspaceID,
-      cookieHeader: normalizedCookie
-    )
-    guard let zenBalanceUSD = Self.parseZenBalance(text: zenText) else {
-      throw APIError.decodingFailed
-    }
-    let membersText = try? await fetchMembersPage(
-      workspaceID: workspaceID,
-      cookieHeader: normalizedCookie
-    )
-    let accountEmail = membersText.flatMap(Self.parseEmail(text:))
+    async let goTask = fetchGo(apiKey: key, now: now)
+    async let consoleTask = fetchConsole(cookieHeader: normalizedCookie)
+    let go = await goTask
+    let console = await consoleTask
+    return try Self.snapshot(go: go, console: console, now: now)
+  }
 
-    return OpenCodeUsageSnapshot(
-      workspaceID: workspaceID,
-      accountEmail: accountEmail,
-      goSubscription: goSubscription,
-      zenBalanceUSD: zenBalanceUSD,
-      updatedAt: now
+  // MARK: - Go usage
+
+  private enum GoFetch: Sendable {
+    case missing
+    case notSubscribed
+    case subscription(OpenCodeGoSubscription)
+    case failure(APIError)
+  }
+
+  private func fetchGo(apiKey: String?, now: Date) async -> GoFetch {
+    guard let apiKey else { return .missing }
+    var request = URLRequest(url: Self.goUsageURL)
+    request.httpMethod = "GET"
+    request.timeoutInterval = timeoutInterval
+    request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+    request.setValue("application/json", forHTTPHeaderField: "Accept")
+    request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
+    do {
+      let response = try await send(request)
+      switch response.statusCode {
+      case 200:
+        guard let subscription = Self.parseGoUsage(data: response.body, now: now) else {
+          return .failure(.decodingFailed)
+        }
+        return .subscription(subscription)
+      case 401:
+        return .failure(.unauthorized)
+      case 403:
+        return .notSubscribed
+      case 500...599:
+        return .failure(.server(statusCode: response.statusCode))
+      default:
+        return .failure(.httpError(statusCode: response.statusCode))
+      }
+    } catch let error as APIError {
+      return .failure(error)
+    } catch {
+      return .failure(.noNetwork)
+    }
+  }
+
+  static func parseGoUsage(data: Data, now: Date) -> OpenCodeGoSubscription? {
+    guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+      let usage = object["usage"] as? [String: Any]
+    else {
+      return nil
+    }
+    let rolling = window(named: "rolling", kind: .rolling, usage: usage, now: now)
+    let weekly = window(named: "weekly", kind: .weekly, usage: usage, now: now)
+    let monthly = window(named: "monthly", kind: .monthly, usage: usage, now: now)
+    guard rolling != nil || weekly != nil || monthly != nil else { return nil }
+    return OpenCodeGoSubscription(
+      rolling: rolling,
+      weekly: weekly,
+      monthly: monthly,
+      renewsAt: nil
     )
   }
 
-  // MARK: - HTTP
-
-  private struct ServerRequest {
-    let serverID: String
-    let args: String?
-    let method: String
-    let referer: URL
+  private static func window(
+    named name: String,
+    kind: OpenCodeUsageWindow.Kind,
+    usage: [String: Any],
+    now: Date
+  ) -> OpenCodeUsageWindow? {
+    guard let entry = usage[name] as? [String: Any],
+      let percent = doubleValue(entry["percent"]),
+      percent.isFinite,
+      let resetsAt = dateValue(entry["resetsAt"])
+    else {
+      return nil
+    }
+    let used = max(0, min(100, Int(percent.rounded())))
+    let resetInSec = max(0, Int(resetsAt.timeIntervalSince(now)))
+    return OpenCodeUsageWindow(kind: kind, usedPercent: used, resetInSec: resetInSec)
   }
 
-  private func fetchWorkspaceID(cookieHeader: String) async throws -> String {
-    let request = ServerRequest(
-      serverID: Self.workspaceServerID,
-      args: nil,
-      method: "GET",
-      referer: Self.baseURL
-    )
-    let initial = try await fetchServerText(request: request, cookieHeader: cookieHeader)
-    if Self.looksSignedOut(text: initial) {
-      throw APIError.unauthorized
-    }
+  // MARK: - Console billing
 
-    if let workspaceID = Self.parseWorkspaceIDs(text: initial).first {
-      return workspaceID
-    }
-
-    // 某些服务端版本只响应 POST；这是同一个只读函数的兼容回退。
-    let fallback = ServerRequest(
-      serverID: Self.workspaceServerID,
-      args: "[]",
-      method: "POST",
-      referer: Self.baseURL
-    )
-    let fallbackText = try await fetchServerText(request: fallback, cookieHeader: cookieHeader)
-    if Self.looksSignedOut(text: fallbackText) {
-      throw APIError.unauthorized
-    }
-    guard let workspaceID = Self.parseWorkspaceIDs(text: fallbackText).first else {
-      throw APIError.decodingFailed
-    }
-    return workspaceID
+  private struct ConsoleFetch: Sendable {
+    var workspaceID: String?
+    var email: String?
+    var zenBalanceUSD: Double?
+    var failure: APIError?
   }
 
-  private func fetchGoPage(workspaceID: String, cookieHeader: String) async throws -> String {
-    let url = Self.baseURL.appendingPathComponent("workspace")
-      .appendingPathComponent(workspaceID)
-      .appendingPathComponent("go")
+  private func fetchConsole(cookieHeader: String?) async -> ConsoleFetch {
+    guard let cookieHeader else { return ConsoleFetch() }
+    do {
+      let orgsResponse = try await send(
+        consoleRequest(path: "orgs", cookieHeader: cookieHeader, orgID: nil)
+      )
+      if orgsResponse.statusCode == 401 || orgsResponse.statusCode == 403 {
+        return ConsoleFetch(failure: .unauthorized)
+      }
+      guard (200...299).contains(orgsResponse.statusCode) else {
+        return ConsoleFetch(failure: Self.httpFailure(orgsResponse.statusCode))
+      }
+      guard let workspaceID = Self.parseWorkspaceID(data: orgsResponse.body) else {
+        return ConsoleFetch(failure: .decodingFailed)
+      }
+
+      async let userResponse = send(
+        consoleRequest(path: "user", cookieHeader: cookieHeader, orgID: nil)
+      )
+      async let billingResponse = send(
+        consoleRequest(path: "billing/status", cookieHeader: cookieHeader, orgID: workspaceID)
+      )
+      let user = try await userResponse
+      let billing = try await billingResponse
+      let email = (200...299).contains(user.statusCode)
+        ? Self.parseEmail(data: user.body)
+        : nil
+      if billing.statusCode == 401 || billing.statusCode == 403 {
+        return ConsoleFetch(workspaceID: workspaceID, email: email, failure: .unauthorized)
+      }
+      guard (200...299).contains(billing.statusCode) else {
+        return ConsoleFetch(
+          workspaceID: workspaceID,
+          email: email,
+          failure: Self.httpFailure(billing.statusCode)
+        )
+      }
+      guard let balance = Self.parseZenBalanceUSD(data: billing.body) else {
+        return ConsoleFetch(workspaceID: workspaceID, email: email, failure: .decodingFailed)
+      }
+      return ConsoleFetch(workspaceID: workspaceID, email: email, zenBalanceUSD: balance)
+    } catch let error as APIError {
+      return ConsoleFetch(failure: error)
+    } catch {
+      return ConsoleFetch(failure: .noNetwork)
+    }
+  }
+
+  private func consoleRequest(
+    path: String,
+    cookieHeader: String,
+    orgID: String?
+  ) -> URLRequest {
+    var url = Self.consoleAPI
+    for part in path.split(separator: "/") where !part.isEmpty {
+      url.appendPathComponent(String(part))
+    }
     var request = URLRequest(url: url)
     request.httpMethod = "GET"
     request.timeoutInterval = timeoutInterval
     request.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
+    request.setValue("application/json", forHTTPHeaderField: "Accept")
     request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
-    request.setValue(
-      "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      forHTTPHeaderField: "Accept"
-    )
-    return try await fetchText(request: request)
+    if let orgID {
+      request.setValue(orgID, forHTTPHeaderField: "x-org-id")
+    }
+    return request
   }
 
-  private func fetchZenBilling(workspaceID: String, cookieHeader: String) async throws -> String {
-    let argsData = try JSONSerialization.data(withJSONObject: [workspaceID])
-    guard let args = String(data: argsData, encoding: .utf8) else {
-      throw APIError.decodingFailed
+  static func parseWorkspaceID(data: Data) -> String? {
+    guard let orgs = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+      return nil
     }
-    let referer = Self.baseURL.appendingPathComponent("workspace")
-      .appendingPathComponent(workspaceID)
-      .appendingPathComponent("zen")
-    let request = ServerRequest(
-      serverID: Self.billingServerID,
-      args: args,
-      method: "GET",
-      referer: referer
-    )
-    return try await fetchServerText(request: request, cookieHeader: cookieHeader)
+    for org in orgs {
+      if let id = org["id"] as? String, id.hasPrefix("wrk_") || id.hasPrefix("org_") {
+        return id
+      }
+    }
+    return nil
   }
 
-  private func fetchServerText(
-    request serverRequest: ServerRequest,
-    cookieHeader: String
-  ) async throws -> String {
-    var components = URLComponents(
-      url: Self.serverURL,
-      resolvingAgainstBaseURL: false
-    )
-    var queryItems = [URLQueryItem(name: "id", value: serverRequest.serverID)]
-    if serverRequest.method.uppercased() == "GET", let args = serverRequest.args {
-      queryItems.append(URLQueryItem(name: "args", value: args))
+  static func parseEmail(data: Data) -> String? {
+    guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+      let email = object["email"] as? String
+    else {
+      return nil
     }
-    components?.queryItems = queryItems
-    guard let url = components?.url else { throw APIError.decodingFailed }
-
-    var urlRequest = URLRequest(url: url)
-    urlRequest.httpMethod = serverRequest.method
-    urlRequest.timeoutInterval = timeoutInterval
-    urlRequest.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
-    urlRequest.setValue(serverRequest.serverID, forHTTPHeaderField: "X-Server-Id")
-    urlRequest.setValue(
-      "server-fn:\(UUID().uuidString)",
-      forHTTPHeaderField: "X-Server-Instance"
-    )
-    urlRequest.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
-    urlRequest.setValue(Self.baseURL.absoluteString, forHTTPHeaderField: "Origin")
-    urlRequest.setValue(serverRequest.referer.absoluteString, forHTTPHeaderField: "Referer")
-    urlRequest.setValue(
-      "text/javascript, application/json;q=0.9, */*;q=0.8",
-      forHTTPHeaderField: "Accept"
-    )
-
-    if serverRequest.method.uppercased() != "GET", let args = serverRequest.args {
-      urlRequest.httpBody = args.data(using: .utf8)
-      urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-    }
-    return try await fetchText(request: urlRequest)
+    let trimmed = email.trimmingCharacters(in: .whitespacesAndNewlines)
+    return trimmed.contains("@") ? trimmed : nil
   }
 
-  private func fetchText(request: URLRequest) async throws -> String {
+  /// `balanceMicroCents` 是 10^-8 美元。字段可能是字符串或数字。
+  static func parseZenBalanceUSD(data: Data) -> Double? {
+    guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+      let raw = doubleValue(object["balanceMicroCents"]),
+      raw.isFinite
+    else {
+      return nil
+    }
+    return raw / 100_000_000
+  }
+
+  // MARK: - Merge
+
+  private static func snapshot(
+    go: GoFetch,
+    console: ConsoleFetch,
+    now: Date
+  ) throws -> OpenCodeUsageSnapshot {
+    let subscription: OpenCodeGoSubscription?
+    switch go {
+    case .subscription(let value):
+      subscription = value
+    case .missing, .notSubscribed:
+      subscription = nil
+    case .failure:
+      subscription = nil
+    }
+
+    let hasGo = {
+      if case .subscription = go { return true }
+      if case .notSubscribed = go { return true }
+      return false
+    }()
+    let hasZen = console.zenBalanceUSD != nil
+    if hasGo || hasZen {
+      return OpenCodeUsageSnapshot(
+        workspaceID: console.workspaceID ?? "opencode",
+        accountEmail: console.email,
+        goSubscription: subscription,
+        zenBalanceUSD: console.zenBalanceUSD,
+        updatedAt: now
+      )
+    }
+
+    if let failure = preferredFailure(go: go, console: console) {
+      throw failure
+    }
+    throw APIError.decodingFailed
+  }
+
+  private static func preferredFailure(go: GoFetch, console: ConsoleFetch) -> APIError? {
+    let failures: [APIError] = [
+      console.failure,
+      { if case .failure(let error) = go { return error } else { return nil } }(),
+    ].compactMap { $0 }
+    if failures.contains(.unauthorized) {
+      return .unauthorized
+    }
+    return failures.first
+  }
+
+  private static func httpFailure(_ statusCode: Int) -> APIError {
+    if (500...599).contains(statusCode) {
+      return .server(statusCode: statusCode)
+    }
+    return .httpError(statusCode: statusCode)
+  }
+
+  // MARK: - HTTP
+
+  private struct HTTPBody {
+    let statusCode: Int
+    let body: Data
+  }
+
+  private func send(_ request: URLRequest) async throws -> HTTPBody {
     let data: Data
     let response: URLResponse
     do {
@@ -211,475 +374,39 @@ struct OpenCodeUsageClient: OpenCodeUsageFetching {
     } catch {
       throw APIError.noNetwork
     }
-
-    guard let httpResponse = response as? HTTPURLResponse else {
+    guard let http = response as? HTTPURLResponse else {
       throw APIError.noNetwork
     }
-    switch httpResponse.statusCode {
-    case 200...299:
-      guard let text = String(data: data, encoding: .utf8) else {
-        throw APIError.decodingFailed
-      }
-      return text
-    case 401, 403:
-      throw APIError.unauthorized
-    case 500...599:
-      throw APIError.server(statusCode: httpResponse.statusCode)
-    default:
-      throw APIError.httpError(statusCode: httpResponse.statusCode)
-    }
-  }
-
-  // MARK: - 页面解析
-
-  static func parseGoSubscription(text: String, now: Date) throws -> OpenCodeGoSubscription? {
-    if looksSignedOut(text: text) {
-      throw APIError.unauthorized
-    }
-
-    // OpenCode 的无订阅页面仍然会输出一组 subscription/lite 字段，并且可能
-    // 带有 monthlyUsage 等页面元数据。订阅字段是权威状态，必须先判断它，
-    // 不能因为页面中出现一个数字字段就把用户显示成已订阅。
-    let subscriptionMarker = subscriptionMarker(in: text)
-    if subscriptionMarker == .none {
-      return nil
-    }
-
-    if let parsed = parseSubscriptionJSON(text: text, now: now) {
-      return parsed
-    }
-
-    let rolling = parseTextWindow(named: "rollingUsage", kind: .rolling, text: text)
-    let weekly = parseTextWindow(named: "weeklyUsage", kind: .weekly, text: text)
-    let monthly = parseTextWindow(named: "monthlyUsage", kind: .monthly, text: text)
-    if rolling != nil || weekly != nil || monthly != nil {
-      return OpenCodeGoSubscription(
-        rolling: rolling,
-        weekly: weekly,
-        monthly: monthly,
-        renewsAt: parseTextDate(named: "renewAt", text: text)
-          ?? parseTextDate(named: "renew_at", text: text)
-      )
-    }
-
-    if subscriptionMarker == .active {
-      return OpenCodeGoSubscription(
-        rolling: nil,
-        weekly: nil,
-        monthly: nil,
-        renewsAt: nil
-      )
-    }
-    throw APIError.decodingFailed
-  }
-
-  static func parseZenBalance(text: String) -> Double? {
-    if let data = text.data(using: .utf8),
-      let object = try? JSONSerialization.jsonObject(with: data),
-      let raw = findBalance(in: object)
-    {
-      return normalizedZenBalance(raw)
-    }
-
-    let pattern = #"(?:[\"']?balance[\"']?)\s*:\s*([+-]?[0-9]+(?:\.[0-9]+)?)"#
-    guard let raw = extractDouble(pattern: pattern, text: text) else { return nil }
-    return normalizedZenBalance(raw)
-  }
-
-  private static func parseSubscriptionJSON(
-    text: String,
-    now: Date
-  ) -> OpenCodeGoSubscription? {
-    guard let data = text.data(using: .utf8),
-      let object = try? JSONSerialization.jsonObject(with: data)
-    else {
-      return nil
-    }
-    return findSubscription(in: object, now: now)
-  }
-
-  private static func findSubscription(in object: Any, now: Date) -> OpenCodeGoSubscription? {
-    if let dictionary = object as? [String: Any] {
-      let rolling = firstDictionary(
-        in: dictionary,
-        keys: ["rollingUsage", "rolling", "rolling_usage", "rollingWindow", "rolling_window"]
-      ).flatMap { parseWindow(dictionary: $0, kind: .rolling, now: now) }
-      let weekly = firstDictionary(
-        in: dictionary,
-        keys: ["weeklyUsage", "weekly", "weekly_usage", "weeklyWindow", "weekly_window"]
-      ).flatMap { parseWindow(dictionary: $0, kind: .weekly, now: now) }
-      let monthly = firstDictionary(
-        in: dictionary,
-        keys: ["monthlyUsage", "monthly", "monthly_usage", "monthlyWindow", "monthly_window"]
-      ).flatMap { parseWindow(dictionary: $0, kind: .monthly, now: now) }
-
-      if rolling != nil || weekly != nil || monthly != nil {
-        return OpenCodeGoSubscription(
-          rolling: rolling,
-          weekly: weekly,
-          monthly: monthly,
-          renewsAt: dateValue(from: firstValue(in: dictionary, keys: ["renewAt", "renew_at"]))
-        )
-      }
-
-      if let usage = dictionary["usage"] {
-        if let nested = findSubscription(in: usage, now: now) {
-          return nested
-        }
-      }
-      for value in dictionary.values {
-        if let nested = findSubscription(in: value, now: now) {
-          return nested
-        }
-      }
-      return nil
-    }
-
-    if let array = object as? [Any] {
-      for value in array {
-        if let nested = findSubscription(in: value, now: now) {
-          return nested
-        }
-      }
-    }
-    return nil
-  }
-
-  private static func parseWindow(
-    dictionary: [String: Any],
-    kind: OpenCodeUsageWindow.Kind,
-    now: Date
-  ) -> OpenCodeUsageWindow? {
-    let percentKeys = [
-      "usagePercent", "usedPercent", "percentUsed", "percent", "usage_percent",
-      "used_percent", "utilization", "utilizationPercent", "utilization_percent", "usage"
-    ]
-    var percent: Double?
-    for key in percentKeys {
-      if let value = doubleValue(dictionary[key]) {
-        percent = value
-        break
-      }
-    }
-    if percent == nil {
-      let used = ["used", "usage", "consumed", "count", "usedTokens"].compactMap {
-        doubleValue(dictionary[$0])
-      }.first
-      let limit = ["limit", "total", "quota", "max", "cap", "tokenLimit"].compactMap {
-        doubleValue(dictionary[$0])
-      }.first
-      if let used, let limit, limit > 0 {
-        percent = used / limit * 100
-      }
-    }
-    guard let resolvedPercent = percent, resolvedPercent.isFinite else { return nil }
-    let boundedPercent = max(0, min(100, Int(resolvedPercent.rounded())))
-
-    let resetKeys = [
-      "resetInSec", "resetInSeconds", "resetSeconds", "reset_sec", "reset_in_sec",
-      "resetsInSec", "resetsInSeconds", "resetIn", "resetSec"
-    ]
-    var resetInSec = resetKeys.compactMap { intValue(dictionary[$0]) }.first
-    if resetInSec == nil {
-      let resetAtKeys = [
-        "resetAt", "resetsAt", "reset_at", "resets_at", "nextReset", "next_reset"
-      ]
-      if let resetAt = resetAtKeys.compactMap({ dateValue(from: dictionary[$0]) }).first {
-        resetInSec = max(0, Int(resetAt.timeIntervalSince(now)))
-      }
-    }
-    return OpenCodeUsageWindow(
-      kind: kind,
-      usedPercent: boundedPercent,
-      resetInSec: resetInSec
-    )
-  }
-
-  private static func parseTextWindow(
-    named name: String,
-    kind: OpenCodeUsageWindow.Kind,
-    text: String
-  ) -> OpenCodeUsageWindow? {
-    let escapedName = NSRegularExpression.escapedPattern(for: name)
-    // SolidStart 当前页面会把窗口对象写成
-    // `rollingUsage:$R[36]={...}`，而不是直接写成 `rollingUsage:{...}`。
-    // `$R[n]=` 是页面序列化引用，不是用量数据本身。
-    let pattern = #"(?is)(?:[\"']?"# + escapedName
-      + #"[\"']?)\s*:\s*(?:\$R\[\d+\]\s*=\s*)?\{([^{}]*)\}"#
-    guard let body = extractString(pattern: pattern, capture: 1, text: text) else {
-      return nil
-    }
-    let percentPattern = #"(?i)(?:[\"']?(?:usagePercent|usedPercent|percentUsed|percent|usage_percent|used_percent|utilization|utilizationPercent|utilization_percent)[\"']?)\s*:\s*([+-]?[0-9]+(?:\.[0-9]+)?)"#
-    guard let percent = extractDouble(pattern: percentPattern, text: body), percent.isFinite else {
-      return nil
-    }
-    let resetPattern = #"(?i)(?:[\"']?(?:resetInSec|resetInSeconds|resetSeconds|reset_sec|reset_in_sec|resetsInSec|resetsInSeconds|resetIn|resetSec)[\"']?)\s*:\s*([0-9]+)"#
-    let resetInSec = extractInt(pattern: resetPattern, text: body)
-    return OpenCodeUsageWindow(
-      kind: kind,
-      usedPercent: max(0, min(100, Int(percent.rounded()))),
-      resetInSec: resetInSec
-    )
-  }
-
-  private enum SubscriptionMarker: Equatable {
-    case unknown
-    case none
-    case active
-  }
-
-  private static func subscriptionMarker(in text: String) -> SubscriptionMarker {
-    let names = ["subscription", "subscriptionID", "subscriptionPlan", "lite", "liteSubscriptionID"]
-    var found = false
-
-    for name in names {
-      let escaped = NSRegularExpression.escapedPattern(for: name)
-      let pattern = #"(?:[\"']?"# + escaped
-        + #"[\"']?)\s*:\s*([^\s,}\]]+)"#
-      guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
-        continue
-      }
-      let range = NSRange(text.startIndex..<text.endIndex, in: text)
-      for match in regex.matches(in: text, options: [], range: range) {
-        guard let valueRange = Range(match.range(at: 1), in: text) else { continue }
-        found = true
-        let normalized = String(text[valueRange])
-          .trimmingCharacters(in: .whitespacesAndNewlines)
-          .trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
-          .lowercased()
-        if !["", "null", "nil", "undefined", "false"].contains(normalized) {
-          return .active
-        }
-      }
-    }
-
-    return found ? .none : .unknown
-  }
-
-  private static func parseTextDate(named name: String, text: String) -> Date? {
-    let escaped = NSRegularExpression.escapedPattern(for: name)
-    let pattern = #"(?:[\"']?"# + escaped
-      + #"[\"']?)\s*:\s*(?:new\s+Date\(\s*)?([0-9]{10,13})"#
-    guard let value = extractDouble(pattern: pattern, text: text) else { return nil }
-    return dateValue(from: value)
-  }
-
-  // MARK: - 通用解析工具
-
-  private static func firstDictionary(
-    in dictionary: [String: Any],
-    keys: [String]
-  ) -> [String: Any]? {
-    for key in keys {
-      if let value = dictionary[key] as? [String: Any] {
-        return value
-      }
-    }
-    return nil
-  }
-
-  private static func firstValue(in dictionary: [String: Any], keys: [String]) -> Any? {
-    for key in keys {
-      if let value = dictionary[key] {
-        return value
-      }
-    }
-    return nil
+    return HTTPBody(statusCode: http.statusCode, body: data)
   }
 
   private static func doubleValue(_ value: Any?) -> Double? {
-    let number: Double?
     switch value {
     case let value as Double:
-      number = value
+      return value.isFinite ? value : nil
     case let value as NSNumber:
-      number = value.doubleValue
+      let number = value.doubleValue
+      return number.isFinite ? number : nil
     case let value as String:
-      number = Double(value.trimmingCharacters(in: .whitespacesAndNewlines))
-    default:
-      number = nil
-    }
-    guard let number, number.isFinite else { return nil }
-    return number
-  }
-
-  private static func intValue(_ value: Any?) -> Int? {
-    switch value {
-    case let value as Int:
-      return value
-    case let value as NSNumber:
-      return value.intValue
-    case let value as String:
-      return Int(value.trimmingCharacters(in: .whitespacesAndNewlines))
+      return Double(value.trimmingCharacters(in: .whitespacesAndNewlines))
     default:
       return nil
     }
   }
 
-  private static func dateValue(from value: Any?) -> Date? {
-    if let number = doubleValue(value) {
-      if number > 1_000_000_000_000 {
-        return Date(timeIntervalSince1970: number / 1000)
-      }
-      if number > 1_000_000_000 {
-        return Date(timeIntervalSince1970: number)
-      }
+  private static func dateValue(_ value: Any?) -> Date? {
+    guard let string = value as? String else { return nil }
+    let fractional = ISO8601DateFormatter()
+    fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    if let date = fractional.date(from: string) {
+      return date
     }
-    if let string = value as? String {
-      let formatter = ISO8601DateFormatter()
-      formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-      return formatter.date(from: string) ?? ISO8601DateFormatter().date(from: string)
-    }
-    return nil
-  }
-
-  private static func extractString(
-    pattern: String,
-    capture: Int,
-    text: String
-  ) -> String? {
-    guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
-      return nil
-    }
-    let range = NSRange(text.startIndex..<text.endIndex, in: text)
-    guard let match = regex.firstMatch(in: text, options: [], range: range),
-      let captureRange = Range(match.range(at: capture), in: text)
-    else {
-      return nil
-    }
-    return String(text[captureRange])
-  }
-
-  private static func extractDouble(pattern: String, text: String) -> Double? {
-    guard let string = extractString(pattern: pattern, capture: 1, text: text) else {
-      return nil
-    }
-    return Double(string)
-  }
-
-  private static func extractInt(pattern: String, text: String) -> Int? {
-    guard let string = extractString(pattern: pattern, capture: 1, text: text) else {
-      return nil
-    }
-    return Int(string)
-  }
-
-  private static func findBalance(in object: Any) -> Double? {
-    if let dictionary = object as? [String: Any] {
-      for (key, value) in dictionary where key.lowercased() == "balance" {
-        if let value = doubleValue(value) {
-          return value
-        }
-      }
-      for value in dictionary.values {
-        if let nested = findBalance(in: value) {
-          return nested
-        }
-      }
-    } else if let array = object as? [Any] {
-      for value in array {
-        if let nested = findBalance(in: value) {
-          return nested
-        }
-      }
-    }
-    return nil
-  }
-
-  private func fetchMembersPage(workspaceID: String, cookieHeader: String) async throws -> String {
-    let url = Self.baseURL.appendingPathComponent("workspace")
-      .appendingPathComponent(workspaceID)
-      .appendingPathComponent("members")
-    var request = URLRequest(url: url)
-    request.httpMethod = "GET"
-    request.timeoutInterval = timeoutInterval
-    request.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
-    request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
-    request.setValue(
-      "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      forHTTPHeaderField: "Accept"
-    )
-    return try await fetchText(request: request)
-  }
-
-  /// 从 workspace members 页面的 HTML 或 JSON 中提取注册邮箱。
-  /// 先尝试 JSON 中 `"email":"xxx"`，再尝试纯文本邮箱模式。
-  static func parseEmail(text: String) -> String? {
-    // JSON 中的 email 字段：`"email":"user@example.com"`
-    let jsonPattern = ##""email"\s*:\s*"([^"]+)""## + "i"
-    if let jsonEmail = Self.extractString(pattern: jsonPattern, capture: 1, text: text) {
-      let trimmed = jsonEmail.trimmingCharacters(in: .whitespacesAndNewlines)
-      if !trimmed.isEmpty, trimmed.contains("@") { return trimmed }
-    }
-    // 纯文本邮箱模式
-    let emailPattern = #"([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})"#
-    if let raw = Self.extractString(pattern: emailPattern, capture: 1, text: text) {
-      let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-      if !trimmed.isEmpty { return trimmed }
-    }
-    return nil
-  }
-
-  /// Zen billing 接口返回以 1e-8 美元为单位的整数；兼容已经是美元的小数响应。
-  private static func normalizedZenBalance(_ raw: Double) -> Double? {
-    guard raw.isFinite else { return nil }
-    let value = abs(raw) >= 1_000 ? raw / 100_000_000 : raw
-    return value.isFinite ? value : nil
-  }
-
-  static func parseWorkspaceIDs(text: String) -> [String] {
-    let pattern = #"wrk_[A-Za-z0-9]+"#
-    guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
-      return []
-    }
-    let range = NSRange(text.startIndex..<text.endIndex, in: text)
-    var result: [String] = []
-    for match in regex.matches(in: text, options: [], range: range) {
-      guard let matchRange = Range(match.range, in: text) else { continue }
-      let id = String(text[matchRange])
-      if !result.contains(id) {
-        result.append(id)
-      }
-    }
-    return result
-  }
-
-  static func looksSignedOut(text: String) -> Bool {
-    let lower = text.lowercased()
-    return lower.contains("auth/authorize")
-      || lower.contains("not associated with an account")
-      || lower.contains("actor of type \"public\"")
-      || lower.contains("<title>login")
-      || lower.contains("<title>sign in")
+    return ISO8601DateFormatter().date(from: string)
   }
 
   private static func makeDefaultSession() -> URLSession {
     let configuration = URLSessionConfiguration.ephemeral
     configuration.httpCookieStorage = nil
-    return URLSession(
-      configuration: configuration,
-      delegate: RedirectGuardDelegate(),
-      delegateQueue: nil
-    )
-  }
-
-  private final class RedirectGuardDelegate: NSObject, URLSessionTaskDelegate {
-    func urlSession(
-      _ session: URLSession,
-      task: URLSessionTask,
-      willPerformHTTPRedirection response: HTTPURLResponse,
-      newRequest request: URLRequest,
-      completionHandler: @escaping (URLRequest?) -> Void
-    ) {
-      let sourceHost = task.originalRequest?.url?.host?.lowercased()
-      let destinationHost = request.url?.host?.lowercased()
-      guard sourceHost == destinationHost,
-        request.url?.scheme?.lowercased() == "https"
-      else {
-        completionHandler(nil)
-        return
-      }
-      completionHandler(request)
-    }
+    return URLSession(configuration: configuration)
   }
 }
