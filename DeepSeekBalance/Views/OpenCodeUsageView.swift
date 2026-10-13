@@ -5,12 +5,6 @@ struct OpenCodeUsageView: View {
   @ObservedObject var store: OpenCodeUsageStore
   let language: AppLanguage
 
-  @Environment(\.controlActiveState) private var controlActiveState
-
-  private var amountForegroundStyle: Color {
-    controlActiveState == .inactive ? .secondary : .primary
-  }
-
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
       headerCard
@@ -28,11 +22,7 @@ struct OpenCodeUsageView: View {
         zenCard(snapshot)
         goCard(snapshot)
         if let error = store.lastDisplayError {
-          Text(error.text(language: language))
-            .font(AppTypography.caption)
-            .foregroundStyle(.red)
-            .textSelection(.enabled)
-            .fixedSize(horizontal: false, vertical: true)
+          AppErrorText(text: error.text(language: language))
         }
       } else if store.isRefreshing || store.status == .loading {
         // 加载占位卡与真实卡等高：加载期间页面高度不塌缩，窗口不会先缩后涨、
@@ -96,38 +86,25 @@ struct OpenCodeUsageView: View {
 
   private func zenCard(_ snapshot: OpenCodeUsageSnapshot) -> some View {
     VStack(alignment: .leading, spacing: 8) {
-      HStack {
-        serviceTitle(
-          imageName: "OpenCodeZenIcon",
-          title: L10n.string(.openCodeZenTitle, language: language)
-        )
-        Spacer()
-        if let balance = snapshot.zenBalanceUSD {
-          Text(UsageFormatting.formattedUSD(balance, locale: language.locale))
-            .font(AppTypography.value)
-            .foregroundStyle(amountForegroundStyle)
-        } else {
-          Text(L10n.string(.openCodeNoData, language: language))
-            .font(AppTypography.caption)
-            .foregroundStyle(.secondary)
-        }
-      }
+      ServiceCardAmountHeader(
+        imageName: "OpenCodeZenIcon",
+        title: L10n.string(.openCodeZenTitle, language: language),
+        value: snapshot.zenBalanceUSD.map {
+          UsageFormatting.formattedUSD($0, locale: language.locale)
+        },
+        emptyText: L10n.string(.openCodeNoData, language: language)
+      )
       Text(L10n.string(.openCodeZenDescription, language: language))
         .font(AppTypography.caption)
         .foregroundStyle(.secondary)
       if let last = store.lastUpdated {
-        Label(
-          L10n.string(
+        AppLastUpdatedLabel(
+          text: L10n.string(
             .openCodeLastUpdated,
             language: language,
-            last.formatted(
-              Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
-            )
-          ),
-          systemImage: "clock"
+            UsageFormatting.abbreviatedDateTime(last, locale: language.locale)
+          )
         )
-        .font(AppTypography.caption)
-        .foregroundStyle(.secondary)
       }
     }
     .appInsetCard()
@@ -136,18 +113,18 @@ struct OpenCodeUsageView: View {
   private func goCard(_ snapshot: OpenCodeUsageSnapshot) -> some View {
     VStack(alignment: .leading, spacing: 10) {
       HStack {
-        serviceTitle(
+        ServiceCardTitle(
           imageName: "OpenCodeGoIcon",
           title: L10n.string(.openCodeGoTitle, language: language)
         )
         Spacer()
-        Text(
-          snapshot.goSubscription == nil
-            ? L10n.string(.openCodeNoSubscription, language: language)
-            : L10n.string(.openCodeSubscribed, language: language)
+        AppLimitBadge(
+          text: L10n.string(
+            snapshot.goSubscription == nil ? .openCodeNoSubscription : .openCodeSubscribed,
+            language: language
+          ),
+          isReached: snapshot.goSubscription == nil
         )
-        .font(AppTypography.badge)
-        .foregroundStyle(snapshot.goSubscription == nil ? .red : .green)
       }
 
       if let subscription = snapshot.goSubscription, !subscription.windows.isEmpty {
@@ -155,7 +132,7 @@ struct OpenCodeUsageView: View {
           windowRow(window)
         }
       } else if snapshot.goSubscription == nil {
-        OpenCodeProgressBar(progress: 0, color: .red)
+        AppUsageProgressBar(progress: 0, color: .red)
         Text(L10n.string(.openCodeNoSubscriptionDetail, language: language))
           .font(AppTypography.caption)
           .foregroundStyle(.red)
@@ -172,7 +149,7 @@ struct OpenCodeUsageView: View {
   private var loadingZenCard: some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack {
-        serviceTitle(
+        ServiceCardTitle(
           imageName: "OpenCodeZenIcon",
           title: L10n.string(.openCodeZenTitle, language: language)
         )
@@ -191,7 +168,7 @@ struct OpenCodeUsageView: View {
   private var loadingGoCard: some View {
     VStack(alignment: .leading, spacing: 10) {
       HStack {
-        serviceTitle(
+        ServiceCardTitle(
           imageName: "OpenCodeGoIcon",
           title: L10n.string(.openCodeGoTitle, language: language)
         )
@@ -199,15 +176,15 @@ struct OpenCodeUsageView: View {
         ProgressView()
           .controlSize(.small)
       }
-      OpenCodeProgressBar(
+      AppUsageProgressBar(
         progress: 0.45,
         color: AppVisualStyle.progressBlue
       )
-      OpenCodeProgressBar(
+      AppUsageProgressBar(
         progress: 0.3,
         color: AppVisualStyle.progressBlue
       )
-      OpenCodeProgressBar(
+      AppUsageProgressBar(
         progress: 0.15,
         color: AppVisualStyle.progressBlue
       )
@@ -216,39 +193,18 @@ struct OpenCodeUsageView: View {
     .appInsetCard()
   }
 
-  private func serviceTitle(imageName: String, title: String) -> some View {
-    HStack(spacing: 6) {
-      Image(imageName)
-        .renderingMode(.template)
-        .resizable()
-        .aspectRatio(contentMode: .fit)
-        .frame(width: 20, height: 20)
-        .accessibilityHidden(true)
-      Text(title)
-    }
-    .font(AppTypography.section)
-  }
-
   private func windowRow(_ window: OpenCodeUsageWindow) -> some View {
     let now = store.clock.now()
     let expected = window.expectedUsedPercent(now: now)
     let gap = window.usageGapPercent(now: now)
 
     return VStack(alignment: .leading, spacing: 4) {
-      HStack(spacing: 8) {
-        Text(windowTitle(window.kind))
-          .font(AppTypography.caption.weight(.semibold))
-          .foregroundStyle(.secondary)
-        Spacer()
-        Text(
-          windowProgressText(window, gap: gap)
-        )
-        .font(AppTypography.caption.monospacedDigit())
-        .foregroundStyle(amountForegroundStyle)
-      }
-      OpenCodeProgressBar(
-        progress: Double(window.usedPercent) / 100,
-        color: progressColor(for: window, expected: expected),
+      AppUsageProgressHeader(
+        title: windowTitle(window.kind),
+        progressText: windowProgressText(window, gap: gap)
+      )
+      AppUsageProgressBar(
+        usedPercent: window.usedPercent,
         expected: expected,
         expectedAccessibilityLabel: L10n.string(
           .openCodeExpectedMarker,
@@ -261,9 +217,7 @@ struct OpenCodeUsageView: View {
           label: L10n.string(
             .openCodeResetAt,
             language: language,
-            reset.formatted(
-              Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
-            )
+            UsageFormatting.abbreviatedDateTime(reset, locale: language.locale)
           ),
           until: reset
         )
@@ -283,13 +237,12 @@ struct OpenCodeUsageView: View {
         window.remainingPercent
       )
     }
-    let signedGap = "\(gap >= 0 ? "+" : "")\(gap)%"
     return L10n.string(
       .openCodeProgressWithGap,
       language: language,
       window.usedPercent,
       window.remainingPercent,
-      signedGap
+      UsageFormatting.signedPercent(gap)
     )
   }
 
@@ -298,11 +251,7 @@ struct OpenCodeUsageView: View {
       Text(L10n.string(.openCodeEmpty, language: language))
         .foregroundStyle(.secondary)
       if let error = store.lastDisplayError {
-        Text(error.text(language: language))
-          .font(AppTypography.caption)
-          .foregroundStyle(.red)
-          .textSelection(.enabled)
-          .fixedSize(horizontal: false, vertical: true)
+        AppErrorText(text: error.text(language: language))
       }
     }
     .frame(maxWidth: .infinity, alignment: .leading)
@@ -318,44 +267,6 @@ struct OpenCodeUsageView: View {
     case .monthly:
       return L10n.string(.openCodeWindowMonthly, language: language)
     }
-  }
-
-  private func progressColor(
-    for window: OpenCodeUsageWindow,
-    expected: Double?
-  ) -> Color {
-    let gap = expected.map { Double(window.usedPercent) - $0 }
-    return MenuBarUsageColor.detailProgressColor(forGap: gap).map(Color.init(nsColor:))
-      ?? AppVisualStyle.progressBlue
-  }
-
-}
-
-struct OpenCodeProgressBar: View {
-  let progress: Double
-  let color: Color
-  let expected: Double?
-  let expectedAccessibilityLabel: String
-
-  init(
-    progress: Double,
-    color: Color,
-    expected: Double? = nil,
-    expectedAccessibilityLabel: String = "Ideal usage"
-  ) {
-    self.progress = progress
-    self.color = color
-    self.expected = expected
-    self.expectedAccessibilityLabel = expectedAccessibilityLabel
-  }
-
-  var body: some View {
-    AppUsageProgressBar(
-      progress: progress,
-      color: color,
-      expected: expected,
-      expectedAccessibilityLabel: expectedAccessibilityLabel
-    )
   }
 
 }

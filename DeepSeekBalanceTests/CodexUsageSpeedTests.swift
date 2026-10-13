@@ -221,7 +221,7 @@ final class CodexUsageSpeedTests: XCTestCase {
     let samples = [
       sample(at: t0.addingTimeInterval(600), remaining: 90),
       sample(at: t0.addingTimeInterval(1800), remaining: 80),
-      // 孤立末样本：蓝线 segments 会丢弃，绿线不应以它为终点。
+      // 显式指定绿线起止，不使用窗口内更晚的样本。
       sample(at: t0.addingTimeInterval(2 * 3600 + 1800), remaining: 70),
     ]
     let result = CodexUsageSpeedEvaluator.evaluate(

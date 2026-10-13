@@ -113,14 +113,7 @@ struct OpenCodeTrendChartView: View {
     if !estimates.isEmpty {
       VStack(alignment: .trailing, spacing: 2) {
         ForEach(Array(estimates.enumerated()), id: \.offset) { _, estimate in
-          Text(estimate)
-            .font(AppTypography.caption)
-            .foregroundStyle(TrendChartPalette.secondaryText)
-            .multilineTextAlignment(.trailing)
-            .lineLimit(2)
-            .minimumScaleFactor(0.75)
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(maxWidth: .infinity, alignment: .trailing)
+          TrendExhaustionCaption(text: estimate)
         }
       }
       .frame(maxWidth: .infinity, alignment: .trailing)
@@ -211,7 +204,7 @@ struct OpenCodeTrendChartView: View {
       domain: series.map(seriesTitle),
       range: series.map(seriesColor)
     )
-    .chartXAxis { xAxis }
+    .chartXAxis { TrendChartAxis.dateMarks(language: language) }
     .chartYAxis {
       AxisMarks(position: .leading, values: normalizedAxisTicks) { value in
         AxisGridLine().foregroundStyle(TrendChartPalette.grid)
@@ -252,6 +245,7 @@ struct OpenCodeTrendChartView: View {
       y: .value(combinedAxisTitle, point.value)
     )
     .foregroundStyle(by: .value(seriesDimensionTitle, seriesTitle(point.series)))
+    .interpolationMethod(.linear)
     .lineStyle(StrokeStyle(lineWidth: 2))
   }
 
@@ -264,6 +258,7 @@ struct OpenCodeTrendChartView: View {
           series: .value(seriesDimensionTitle, zenSeriesTitle)
         )
         .foregroundStyle(by: .value(seriesDimensionTitle, zenSeriesTitle))
+        .interpolationMethod(.linear)
         .lineStyle(StrokeStyle(lineWidth: 2))
       }
 
@@ -277,7 +272,7 @@ struct OpenCodeTrendChartView: View {
     }
     .chartXScale(domain: xDomain)
     .chartYScale(domain: model.zenLower...model.zenUpper)
-    .chartXAxis { xAxis }
+    .chartXAxis { TrendChartAxis.dateMarks(language: language) }
     .chartYAxis {
       AxisMarks(position: .leading) { value in
         AxisGridLine().foregroundStyle(TrendChartPalette.grid)
@@ -337,19 +332,6 @@ struct OpenCodeTrendChartView: View {
     )
   }
 
-  private var xAxis: some AxisContent {
-    AxisMarks(values: .automatic(desiredCount: 4)) { value in
-      AxisGridLine().foregroundStyle(TrendChartPalette.grid)
-      AxisValueLabel {
-        if let date = value.as(Date.self) {
-            Text(axisLabel(for: date))
-              .font(AppTypography.caption)
-              .foregroundStyle(TrendChartPalette.axisText)
-              .lineLimit(1)
-        }
-      }
-    }
-  }
 
   private var normalizedAxisTicks: [Double] {
     [0, 0.25, 0.5, 0.75, 1]
@@ -424,14 +406,6 @@ struct OpenCodeTrendChartView: View {
     model: OpenCodeTrendProcessor.ChartModel
   ) -> Double {
     model.zenLower + value * (model.zenUpper - model.zenLower)
-  }
-
-  private func axisLabel(for date: Date) -> String {
-    let formatter = DateFormatter()
-    formatter.locale = language.locale
-    formatter.calendar = Calendar(identifier: .gregorian)
-    formatter.dateFormat = language == .simplifiedChinese ? "M/d HH:mm" : "MMM d HH:mm"
-    return formatter.string(from: date)
   }
 
   private func formattedAxisUSD(_ value: Double) -> String {

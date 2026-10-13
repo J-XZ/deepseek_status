@@ -228,6 +228,22 @@ struct AppUsageProgressBar: View {
     self.height = height
   }
 
+  /// Metered usage bar: clamps percent, tints by gap from the ideal marker.
+  init(
+    usedPercent: Int,
+    expected: Double? = nil,
+    expectedAccessibilityLabel: String
+  ) {
+    let gap = expected.map { Double(usedPercent) - $0 }
+    self.init(
+      progress: Double(min(max(usedPercent, 0), 100)) / 100,
+      color: MenuBarUsageColor.detailProgressColor(forGap: gap).map(Color.init(nsColor:))
+        ?? AppVisualStyle.progressBlue,
+      expected: expected,
+      expectedAccessibilityLabel: expectedAccessibilityLabel
+    )
+  }
+
   var body: some View {
     GeometryReader { proxy in
       ZStack(alignment: .leading) {
@@ -249,5 +265,150 @@ struct AppUsageProgressBar: View {
     }
     .frame(height: height)
     .accessibilityValue("\(Int(max(0, min(1, progress)) * 100))%")
+  }
+}
+
+/// 卡片内的服务标题：模板图标 + 区块标题（OpenCode Zen、X Subscription 额外积分等共用）。
+struct ServiceCardTitle: View {
+  let imageName: String
+  let title: String
+
+  var body: some View {
+    HStack(spacing: 6) {
+      Image(imageName)
+        .renderingMode(.template)
+        .resizable()
+        .aspectRatio(contentMode: .fit)
+        .frame(width: 20, height: 20)
+        .accessibilityHidden(true)
+      Text(title)
+    }
+    .font(AppTypography.section)
+  }
+}
+
+extension AppVisualStyle {
+  /// Amounts follow the hosting control's active state so popover text dims when unfocused.
+  static func amountForeground(_ controlActiveState: ControlActiveState) -> Color {
+    controlActiveState == .inactive ? .secondary : .primary
+  }
+}
+
+/// Title + value row used by balance, credits, summary, and VPS metric lists.
+struct AppAmountRow: View {
+  let title: String
+  let value: String
+  var valueColor: Color? = nil
+
+  @Environment(\.controlActiveState) private var controlActiveState
+
+  var body: some View {
+    HStack {
+      Text(title)
+        .foregroundStyle(.secondary)
+      Spacer()
+      Text(value)
+        .font(AppTypography.value)
+        .foregroundStyle(valueColor ?? AppVisualStyle.amountForeground(controlActiveState))
+    }
+  }
+}
+
+/// Service-card header with an optional trailing amount (Zen / extra-usage cards).
+struct ServiceCardAmountHeader: View {
+  let imageName: String
+  let title: String
+  let value: String?
+  let emptyText: String
+
+  @Environment(\.controlActiveState) private var controlActiveState
+
+  var body: some View {
+    HStack {
+      ServiceCardTitle(imageName: imageName, title: title)
+      Spacer()
+      if let value {
+        Text(value)
+          .font(AppTypography.value)
+          .foregroundStyle(AppVisualStyle.amountForeground(controlActiveState))
+      } else {
+        Text(emptyText)
+          .font(AppTypography.caption)
+          .foregroundStyle(.secondary)
+      }
+    }
+  }
+}
+
+/// Window row caption: left title + right monospaced used/remaining text.
+struct AppUsageProgressHeader: View {
+  let title: String
+  let progressText: String
+  var progressColor: Color? = nil
+
+  @Environment(\.controlActiveState) private var controlActiveState
+
+  var body: some View {
+    HStack(spacing: 8) {
+      Text(title)
+        .font(AppTypography.caption.weight(.semibold))
+        .foregroundStyle(.secondary)
+      Spacer()
+      Text(progressText)
+        .font(AppTypography.caption.monospacedDigit())
+        .foregroundStyle(progressColor ?? AppVisualStyle.amountForeground(controlActiveState))
+    }
+  }
+}
+
+/// Allowed / reached badge on subscription cards.
+struct AppLimitBadge: View {
+  let text: String
+  var isReached: Bool
+
+  var body: some View {
+    Text(text)
+      .font(AppTypography.badge)
+      .foregroundStyle(isReached ? Color.red : Color.green)
+  }
+}
+
+/// Clock-icon "last updated" caption shared by every vendor usage card.
+struct AppLastUpdatedLabel: View {
+  let text: String
+
+  var body: some View {
+    Label(text, systemImage: "clock")
+      .font(AppTypography.caption)
+      .foregroundStyle(.secondary)
+  }
+}
+
+/// Selectable red error caption used under usage cards, config forms, and status.
+struct AppErrorText: View {
+  let text: String
+
+  var body: some View {
+    Text(text)
+      .font(AppTypography.caption)
+      .foregroundStyle(.red)
+      .textSelection(.enabled)
+      .fixedSize(horizontal: false, vertical: true)
+  }
+}
+
+/// Inset loading placeholder: spinner + caption, matching vendor empty cards.
+struct AppLoadingCard: View {
+  let text: String
+
+  var body: some View {
+    HStack(spacing: 8) {
+      ProgressView()
+        .controlSize(.small)
+      Text(text)
+        .foregroundStyle(.secondary)
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .appInsetCard()
   }
 }

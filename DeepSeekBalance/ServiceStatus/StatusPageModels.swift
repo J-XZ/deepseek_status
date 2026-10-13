@@ -1,11 +1,5 @@
 import Foundation
 
-enum StatusPageComponentSlice: Equatable, Sendable {
-  case all
-  case excludingGrokBot
-  case grokBotOnly
-}
-
 /// Atlassian Statuspage `/api/v2/status.json` 响应。
 struct StatusPageStatusResponse: Codable, Sendable {
   struct Page: Codable, Sendable {

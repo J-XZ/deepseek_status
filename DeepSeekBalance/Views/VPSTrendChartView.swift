@@ -131,14 +131,7 @@ struct VPSTrendChartView: View {
   }
 
   private var exhaustionEstimate: some View {
-    Text(exhaustionEstimateText)
-      .font(AppTypography.caption)
-      .foregroundStyle(TrendChartPalette.secondaryText)
-      .multilineTextAlignment(.trailing)
-      .lineLimit(2)
-      .minimumScaleFactor(0.75)
-      .fixedSize(horizontal: false, vertical: true)
-      .frame(maxWidth: .infinity, alignment: .trailing)
+    TrendExhaustionCaption(text: exhaustionEstimateText)
   }
 
   private var exhaustionEstimateText: String {
@@ -188,6 +181,7 @@ struct VPSTrendChartView: View {
           series: .value("series", trafficSeriesName)
         )
         .foregroundStyle(by: .value("series", trafficSeriesName))
+        .interpolationMethod(.linear)
         .lineStyle(StrokeStyle(lineWidth: 2))
 
         LineMark(
@@ -202,6 +196,7 @@ struct VPSTrendChartView: View {
           series: .value("series", creditSeriesName)
         )
         .foregroundStyle(by: .value("series", creditSeriesName))
+        .interpolationMethod(.linear)
         .lineStyle(StrokeStyle(lineWidth: 2))
       }
 
@@ -222,19 +217,7 @@ struct VPSTrendChartView: View {
       domain: [trafficTitle, creditTitle],
       range: [.blue, .purple]
     )
-    .chartXAxis {
-      AxisMarks(values: .automatic(desiredCount: 4)) { value in
-        AxisGridLine().foregroundStyle(TrendChartPalette.grid)
-        AxisValueLabel {
-          if let date = value.as(Date.self) {
-            Text(axisLabel(for: date))
-              .font(AppTypography.caption)
-              .foregroundStyle(TrendChartPalette.axisText)
-              .lineLimit(1)
-          }
-        }
-      }
-    }
+    .chartXAxis { TrendChartAxis.dateMarks(language: language) }
     .chartYAxis {
       AxisMarks(position: .leading, values: normalizedTicks) { value in
         AxisGridLine().foregroundStyle(TrendChartPalette.grid)
@@ -273,14 +256,6 @@ struct VPSTrendChartView: View {
 
   private func formattedUSD(_ value: Double) -> String {
     String(format: "$%.2f", value)
-  }
-
-  private func axisLabel(for date: Date) -> String {
-    let formatter = DateFormatter()
-    formatter.locale = language.locale
-    formatter.calendar = Calendar(identifier: .gregorian)
-    formatter.dateFormat = language == .simplifiedChinese ? "M/d HH:mm" : "MMM d HH:mm"
-    return formatter.string(from: date)
   }
 
   private func selectionDetail(_ sample: VPSUsageSample) -> some View {

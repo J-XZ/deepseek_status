@@ -2,11 +2,10 @@ import Foundation
 
 @testable import DeepSeekBalance
 
-/// 内存版 Cursor 历史存储，用于测试。
-actor InMemoryCursorHistoryStore: CursorHistoryStoring {
-  private var samples: [CursorUsageSample] = []
+actor InMemoryXSubscriptionHistoryStore: XSubscriptionHistoryStoring {
+  private var samples: [XSubscriptionUsageSample] = []
 
-  func upsert(samples incoming: [CursorUsageSample], credentialID: String) async throws {
+  func upsert(samples incoming: [XSubscriptionUsageSample], credentialID: String) async throws {
     for sample in incoming {
       if let index = samples.firstIndex(where: {
         $0.credentialID == sample.credentialID && $0.bucketStart == sample.bucketStart
@@ -18,7 +17,11 @@ actor InMemoryCursorHistoryStore: CursorHistoryStoring {
     }
   }
 
-  func fetch(credentialID: String, from: Date, to: Date) async throws -> [CursorUsageSample] {
+  func fetch(
+    credentialID: String,
+    from: Date,
+    to: Date
+  ) async throws -> [XSubscriptionUsageSample] {
     samples
       .filter {
         $0.credentialID == credentialID

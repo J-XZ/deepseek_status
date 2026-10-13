@@ -1,7 +1,7 @@
 import Foundation
 
 @MainActor
-final class GrokBotUsageStore: ObservableObject {
+final class XSubscriptionUsageStore: ObservableObject {
   enum Status: Equatable {
     case idle
     case loading
@@ -14,20 +14,19 @@ final class GrokBotUsageStore: ObservableObject {
   }
 
   @Published private(set) var status: Status = .idle
-  @Published private(set) var usage: GrokBotUsageSnapshot?
-  @Published private(set) var profile: CursorProfileInfo?
+  @Published private(set) var usage: XSubscriptionUsageSnapshot?
   @Published private(set) var lastUpdated: Date?
   @Published private(set) var isRefreshing = false
   @Published private(set) var lastDisplayError: AppDisplayError?
-  @Published private(set) var historySamples: [GrokBotUsageSample] = []
+  @Published private(set) var historySamples: [XSubscriptionUsageSample] = []
 
-  let client: any GrokBotUsageFetching
-  let authProvider: any CursorAuthProviding
+  let client: any XSubscriptionUsageFetching
+  let authProvider: any XSubscriptionAuthProviding
   let clock: any DateProviding
   let refreshInterval: TimeInterval
-  let historyService: GrokBotHistoryService
+  let historyService: XSubscriptionHistoryService
 
-  static let credentialID = "grokbot"
+  static let credentialID = "xsubscription"
 
   private var isFetching = false
   private var refreshTask: Task<Void, Never>?
@@ -36,14 +35,14 @@ final class GrokBotUsageStore: ObservableObject {
   private var autoRefreshInterval: TimeInterval?
 
   init(
-    client: any GrokBotUsageFetching = GrokBotUsageClient(),
-    authProvider: any CursorAuthProviding = CursorAuthProvider(),
+    client: any XSubscriptionUsageFetching = XSubscriptionUsageClient(),
+    authProvider: any XSubscriptionAuthProviding = XSubscriptionAuthProvider(),
     clock: any DateProviding = SystemClock(),
     refreshInterval: TimeInterval = DataRefreshPolicy.autoRefreshInterval,
     startupRefresh: Bool = true,
     startupPrune: Bool = true,
     autoRefreshInterval: TimeInterval? = DataRefreshPolicy.autoRefreshInterval,
-    historyService: GrokBotHistoryService? = nil
+    historyService: XSubscriptionHistoryService? = nil
   ) {
     self.client = client
     self.authProvider = authProvider
@@ -133,7 +132,7 @@ final class GrokBotUsageStore: ObservableObject {
       status = .loading
     }
 
-    let authInfo: CursorAuthInfo
+    let authInfo: XSubscriptionAuthInfo
     do {
       authInfo = try authProvider.loadAuthInfo()
     } catch {
@@ -141,12 +140,9 @@ final class GrokBotUsageStore: ObservableObject {
       return
     }
 
-    let profile = await Task.detached { [authProvider] in
-      authProvider.loadProfile()
-    }.value
-    if let profile {
-      self.profile = profile
-    }
+    historySamples = (try? await historyService.recentSamples(
+      credentialID: Self.credentialID
+    )) ?? historySamples
 
     do {
       let snapshot = try await client.fetchUsage(accessToken: authInfo.accessToken)
@@ -161,10 +157,10 @@ final class GrokBotUsageStore: ObservableObject {
           credentialID: Self.credentialID
         )) ?? historySamples
       }
-    } catch GrokBotUsageClient.APIError.cancelled {
+    } catch XSubscriptionUsageClient.APIError.cancelled {
       status = previousStatus
       return
-    } catch let error as GrokBotUsageClient.APIError {
+    } catch let error as XSubscriptionUsageClient.APIError {
       applyClientError(error)
     } catch {
       status = .networkError
@@ -172,7 +168,7 @@ final class GrokBotUsageStore: ObservableObject {
     }
   }
 
-  private func persistHistory(quota: GrokBotWeeklyQuota) async {
+  private func persistHistory(quota: XSubscriptionWeeklyQuota) async {
     let history = historyService
     let sample = history.makeSample(
       remainingPercent: quota.remainingPercent,
@@ -188,22 +184,39 @@ final class GrokBotUsageStore: ObservableObject {
     try? await history.pruneThrottled()
   }
 
-  private static func makeDefaultHistoryService(clock: any DateProviding) -> GrokBotHistoryService {
+  private static func makeDefaultHistoryService(clock: any DateProviding) -> XSubscriptionHistoryService {
     let base = FileManager.default.urls(
       for: .applicationSupportDirectory,
       in: .userDomainMask
     ).first
     guard let base else {
-      return GrokBotHistoryService(store: UnavailableGrokBotHistoryStore(), clock: clock)
+      return XSubscriptionHistoryService(store: UnavailableXSubscriptionHistoryStore(), clock: clock)
     }
     let bundleIdentifier = Bundle.main.bundleIdentifier ?? "com.jxz.deepseekbalance"
-    let directory = base
-      .appendingPathComponent(bundleIdentifier, isDirectory: true)
-      .appendingPathComponent("GrokBotHistory.leveldb", isDirectory: true)
-    if let store = try? LevelDBGrokBotHistoryStore.open(directory: directory) {
-      return GrokBotHistoryService(store: store, clock: clock)
+    let appSupport = base.appendingPathComponent(bundleIdentifier, isDirectory: true)
+    let directory = appSupport.appendingPathComponent(
+      "XSubscriptionHistory.leveldb",
+      isDirectory: true
+    )
+    if let store = try? LevelDBXSubscriptionHistoryStore.open(directory: directory) {
+      Task(priority: .utility) {
+        await XSubscriptionHistoryMigrator.migrateIfNeeded(
+          grokBotDirectory: appSupport.appendingPathComponent(
+            XSubscriptionHistoryMigrator.grokBotDirectoryName,
+            isDirectory: true
+          ),
+          cursorDirectory: appSupport.appendingPathComponent(
+            XSubscriptionHistoryMigrator.cursorDirectoryName,
+            isDirectory: true
+          ),
+          destination: store,
+          credentialID: credentialID,
+          defaults: .standard
+        )
+      }
+      return XSubscriptionHistoryService(store: store, clock: clock)
     }
-    return GrokBotHistoryService(store: UnavailableGrokBotHistoryStore(), clock: clock)
+    return XSubscriptionHistoryService(store: UnavailableXSubscriptionHistoryStore(), clock: clock)
   }
 
   private func applyAuthFailure(previousStatus: Status) {
@@ -213,10 +226,12 @@ final class GrokBotUsageStore: ObservableObject {
       usage = nil
       status = .notConfigured
     }
-    lastDisplayError = previousStatus == .loaded ? .grokBotAuthInvalid : .grokBotNotConfigured
+    lastDisplayError = previousStatus == .loaded
+      ? .xSubscriptionAuthInvalid
+      : .xSubscriptionNotConfigured
   }
 
-  private func applyClientError(_ error: GrokBotUsageClient.APIError) {
+  private func applyClientError(_ error: XSubscriptionUsageClient.APIError) {
     switch error {
     case .cancelled:
       return
@@ -226,7 +241,7 @@ final class GrokBotUsageStore: ObservableObject {
       } else {
         status = .notConfigured
       }
-      lastDisplayError = .grokBotAuthInvalid
+      lastDisplayError = .xSubscriptionAuthInvalid
     case .server(let code):
       status = .serverError
       lastDisplayError = .server(code)

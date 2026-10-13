@@ -5,12 +5,6 @@ struct VPSUsageView: View {
   @ObservedObject var store: VPSUsageStore
   let language: AppLanguage
 
-  @Environment(\.controlActiveState) private var controlActiveState
-
-  private var amountForegroundStyle: Color {
-    controlActiveState == .inactive ? .secondary : .primary
-  }
-
   /// 过去 24 小时信用额度下跌颜色：‑5 红、‑2 黄，否则默认。
   private var creditDropColor: Color? {
     guard let change = UsageHistoryWindow.change24h(
@@ -39,17 +33,10 @@ struct VPSUsageView: View {
         usageCard(snapshot)
         cycleCard()
         if let error = store.lastDisplayError {
-          errorText(error.text(language: language))
+          AppErrorText(text: error.text(language: language))
         }
       } else if store.isRefreshing || store.status == .loading {
-        HStack(spacing: 8) {
-          ProgressView()
-            .controlSize(.small)
-          Text(L10n.string(.vpsLoading, language: language))
-            .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .appInsetCard()
+        AppLoadingCard(text: L10n.string(.vpsLoading, language: language))
       } else {
         emptyView
       }
@@ -80,14 +67,14 @@ struct VPSUsageView: View {
           .truncationMode(.middle)
       }
 
-      valueRow(
+      AppAmountRow(
         title: L10n.string(.vpsRemainingTraffic, language: language),
         value: UsageFormatting.formattedGB(snapshot.remainingBandwidthGB)
       )
-      valueRow(
+      AppAmountRow(
         title: L10n.string(.vpsRemainingCredit, language: language),
         value: UsageFormatting.formattedUSD(snapshot.availableCreditUSD, locale: language.locale),
-        foregroundStyle: creditDropColor
+        valueColor: creditDropColor
       )
     }
     .appInsetCard()
@@ -104,18 +91,13 @@ struct VPSUsageView: View {
       }
 
       if let lastUpdated = store.lastUpdated {
-        Label(
-          L10n.string(
+        AppLastUpdatedLabel(
+          text: L10n.string(
             .vpsLastUpdated,
             language: language,
-            lastUpdated.formatted(
-              Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
-            )
-          ),
-          systemImage: "clock"
+            UsageFormatting.abbreviatedDateTime(lastUpdated, locale: language.locale)
+          )
         )
-        .font(AppTypography.caption)
-        .foregroundStyle(.secondary)
       }
     }
     .appInsetCard()
@@ -126,34 +108,11 @@ struct VPSUsageView: View {
       Text(L10n.string(.vpsEmpty, language: language))
         .foregroundStyle(.secondary)
       if let error = store.lastDisplayError {
-        errorText(error.text(language: language))
+        AppErrorText(text: error.text(language: language))
       }
     }
     .frame(maxWidth: .infinity, alignment: .leading)
     .appInsetCard()
-  }
-
-  private func valueRow(
-    title: String,
-    value: String,
-    foregroundStyle: Color? = nil
-  ) -> some View {
-    HStack {
-      Text(title)
-        .foregroundStyle(.secondary)
-      Spacer()
-      Text(value)
-        .font(AppTypography.value)
-        .foregroundStyle(foregroundStyle ?? amountForegroundStyle)
-    }
-  }
-
-  private func errorText(_ text: String) -> some View {
-    Text(text)
-      .font(AppTypography.caption)
-      .foregroundStyle(.red)
-      .textSelection(.enabled)
-      .fixedSize(horizontal: false, vertical: true)
   }
 
   private var statusColor: Color {

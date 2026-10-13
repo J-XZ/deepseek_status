@@ -7,27 +7,18 @@ import SwiftUI
 enum MenuBarVendor: Int, CaseIterable {
   case deepseek = 0
   case codex = 1
-  case cursor = 2
+  case xSubscription = 2
   case openCode = 3
   case vps = 4
   case commandCode = 5
-  case grokBot = 6
 }
 
-/// 菜单栏数字布局：Cursor 和 OpenCode 的多组用量纵向排列，避免横向挤占空间。
+/// 菜单栏数字布局：OpenCode / Vultr 等多组用量纵向排列，避免横向挤占空间。
 enum MenuBarDisplayLayout {
   static let regularFontSize: CGFloat = 12
-  static let cursorFontSize: CGFloat = 9
-  static let cursorLineHeight: CGFloat = 10
-  static let cursorVerticalInset: CGFloat = 1
-
-  static func cursorText(_ text: String) -> String {
-    text.replacingOccurrences(of: "/", with: "\n")
-  }
-
-  static func cursorLines(_ text: String) -> [String] {
-    cursorText(text).components(separatedBy: "\n")
-  }
+  static let compactFontSize: CGFloat = 9
+  static let compactLineHeight: CGFloat = 10
+  static let compactVerticalInset: CGFloat = 1
 }
 
 enum MenuBarUsageColor {
@@ -251,11 +242,10 @@ enum MenuBarUsageColor {
 enum MenuBarIconLayout {
   static let deepSeekMaxDimension: CGFloat = 16
   static let codexMaxDimension: CGFloat = 13
-  static let cursorMaxDimension: CGFloat = 13
+  static let xSubscriptionMaxDimension: CGFloat = 13
   static let openCodeMaxDimension: CGFloat = 13
   static let vpsMaxDimension: CGFloat = 13
   static let commandCodeMaxDimension: CGFloat = 13
-  static let grokBotMaxDimension: CGFloat = 13
 
   static func fittingSize(_ imageSize: NSSize, maxDimension: CGFloat) -> NSSize {
     guard imageSize.width > 0, imageSize.height > 0, maxDimension > 0 else {
@@ -540,11 +530,13 @@ final class PopoverTabSelection: ObservableObject {
 final class MenuBarVendorVisibility: ObservableObject {
   static let deepseekKey = "menuBar.showDeepSeek"
   static let codexKey = "menuBar.showCodex"
-  static let cursorKey = "menuBar.showCursor"
+  static let xSubscriptionKey = "menuBar.showXSubscription"
+  static let legacyCursorKey = "menuBar.showCursor"
   static let openCodeKey = "menuBar.showOpenCode"
   static let vpsKey = "menuBar.showVPS"
   static let commandCodeKey = "menuBar.showCommandCode"
-  static let grokBotKey = "menuBar.showGrokBot"
+  static let legacyGrokBotKey = "menuBar.showGrokBot"
+  static let legacyGrokBotRawValue = 6
   /// 菜单栏供应商顺序：按 UserDefaults 中保存的 rawValue 序列展开，
   /// 未保存过或包含未知/重复值时按默认顺序兜底。
   static let orderKey = "menuBar.order"
@@ -565,7 +557,13 @@ final class MenuBarVendorVisibility: ObservableObject {
     var result: [MenuBarVendor] = []
     var seen = Set<MenuBarVendor>()
     for raw in rawValues {
-      guard let vendor = MenuBarVendor(rawValue: raw), seen.insert(vendor).inserted else {
+      let mapped: MenuBarVendor?
+      if raw == Self.legacyGrokBotRawValue {
+        mapped = .xSubscription
+      } else {
+        mapped = MenuBarVendor(rawValue: raw)
+      }
+      guard let vendor = mapped, seen.insert(vendor).inserted else {
         continue
       }
       result.append(vendor)
@@ -626,8 +624,16 @@ final class MenuBarVendorVisibility: ObservableObject {
     defaults.object(forKey: Self.codexKey) as? Bool ?? true
   }
 
-  var showsCursor: Bool {
-    defaults.object(forKey: Self.cursorKey) as? Bool ?? true
+  var showsXSubscription: Bool {
+    if let value = defaults.object(forKey: Self.xSubscriptionKey) as? Bool {
+      return value
+    }
+    let cursorVisible = defaults.object(forKey: Self.legacyCursorKey) as? Bool
+    let grokVisible = defaults.object(forKey: Self.legacyGrokBotKey) as? Bool
+    if cursorVisible == nil && grokVisible == nil {
+      return true
+    }
+    return (cursorVisible ?? false) || (grokVisible ?? false)
   }
 
   var showsOpenCode: Bool {
@@ -642,26 +648,20 @@ final class MenuBarVendorVisibility: ObservableObject {
     defaults.object(forKey: Self.commandCodeKey) as? Bool ?? true
   }
 
-  var showsGrokBot: Bool {
-    defaults.object(forKey: Self.grokBotKey) as? Bool ?? true
-  }
-
   func isVisible(_ vendor: MenuBarVendor) -> Bool {
     switch vendor {
     case .deepseek:
       return showsDeepSeek
     case .codex:
       return showsCodex
-    case .cursor:
-      return showsCursor
+    case .xSubscription:
+      return showsXSubscription
     case .openCode:
       return showsOpenCode
     case .vps:
       return showsVPS
     case .commandCode:
       return showsCommandCode
-    case .grokBot:
-      return showsGrokBot
     }
   }
 
@@ -682,11 +682,10 @@ final class MenuBarVendorVisibility: ObservableObject {
     switch vendor {
     case .deepseek: return Self.deepseekKey
     case .codex: return Self.codexKey
-    case .cursor: return Self.cursorKey
+    case .xSubscription: return Self.xSubscriptionKey
     case .openCode: return Self.openCodeKey
     case .vps: return Self.vpsKey
     case .commandCode: return Self.commandCodeKey
-    case .grokBot: return Self.grokBotKey
     }
   }
 }
@@ -702,56 +701,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let loginItemStore = LoginItemStore()
     let store = BalanceStore(statusStore: statusStore, loginItemStore: loginItemStore)
     let codexStore = CodexUsageStore()
-    let cursorStore = CursorUsageStore()
+    let xSubscriptionStore = XSubscriptionUsageStore()
     let openCodeStore = OpenCodeUsageStore()
     let vpsStore = VPSUsageStore()
     let commandCodeStore = CommandCodeUsageStore()
-    let grokBotStore = GrokBotUsageStore()
     let codexStatusStore = StatusPageStatusStore(
       client: StatusPageClient(
         baseURL: URL(string: "https://status.openai.com")!
       ),
       officialStatusPageURL: URL(string: "https://status.openai.com")!
     )
-    let cursorStatusStore = StatusPageStatusStore(
+    let xSubscriptionStatusStore = StatusPageStatusStore(
       client: StatusPageClient(
         baseURL: URL(string: "https://status.cursor.com")!
       ),
-      officialStatusPageURL: URL(string: "https://status.cursor.com")!,
-      componentSlice: .excludingGrokBot
-    )
-    let grokBotStatusStore = StatusPageStatusStore(
-      client: StatusPageClient(
-        baseURL: URL(string: "https://status.cursor.com")!
-      ),
-      officialStatusPageURL: URL(string: "https://status.cursor.com")!,
-      componentSlice: .grokBotOnly
+      officialStatusPageURL: URL(string: "https://status.cursor.com")!
     )
     // 被隐藏的供应商不显示、不后台收集、不写历史；仅在显示时启停。
     statusStore.setEnabled(visibility.showsDeepSeek)
     store.setEnabled(visibility.showsDeepSeek)
     codexStore.setEnabled(visibility.showsCodex)
-    cursorStore.setEnabled(visibility.showsCursor)
+    xSubscriptionStore.setEnabled(visibility.showsXSubscription)
     openCodeStore.setEnabled(visibility.showsOpenCode)
     vpsStore.setEnabled(visibility.showsVPS)
     commandCodeStore.setEnabled(visibility.showsCommandCode)
-    grokBotStore.setEnabled(visibility.showsGrokBot)
     codexStatusStore.setEnabled(visibility.showsCodex)
-    cursorStatusStore.setEnabled(visibility.showsCursor)
-    grokBotStatusStore.setEnabled(visibility.showsGrokBot)
+    xSubscriptionStatusStore.setEnabled(visibility.showsXSubscription)
     statusItemController = StatusItemController(
       store: store,
       statusStore: statusStore,
       loginItemStore: loginItemStore,
       codexStore: codexStore,
-      cursorStore: cursorStore,
+      xSubscriptionStore: xSubscriptionStore,
       openCodeStore: openCodeStore,
       vpsStore: vpsStore,
       commandCodeStore: commandCodeStore,
-      grokBotStore: grokBotStore,
       codexStatusStore: codexStatusStore,
-      cursorStatusStore: cursorStatusStore,
-      grokBotStatusStore: grokBotStatusStore,
+      xSubscriptionStatusStore: xSubscriptionStatusStore,
       visibility: visibility
     )
   }
@@ -766,14 +752,12 @@ final class StatusItemController: NSObject {
   private let statusStore: DeepSeekStatusStore
   private let loginItemStore: LoginItemStore
   private let codexStore: CodexUsageStore
-  private let cursorStore: CursorUsageStore
+  private let xSubscriptionStore: XSubscriptionUsageStore
   private let openCodeStore: OpenCodeUsageStore
   private let vpsStore: VPSUsageStore
   private let commandCodeStore: CommandCodeUsageStore
-  private let grokBotStore: GrokBotUsageStore
   private let codexStatusStore: StatusPageStatusStore
-  private let cursorStatusStore: StatusPageStatusStore
-  private let grokBotStatusStore: StatusPageStatusStore
+  private let xSubscriptionStatusStore: StatusPageStatusStore
 
   private let statusItem: NSStatusItem
   private let popover: NSPopover
@@ -830,28 +814,24 @@ final class StatusItemController: NSObject {
     statusStore: DeepSeekStatusStore,
     loginItemStore: LoginItemStore,
     codexStore: CodexUsageStore,
-    cursorStore: CursorUsageStore,
+    xSubscriptionStore: XSubscriptionUsageStore,
     openCodeStore: OpenCodeUsageStore,
     vpsStore: VPSUsageStore,
     commandCodeStore: CommandCodeUsageStore,
-    grokBotStore: GrokBotUsageStore,
     codexStatusStore: StatusPageStatusStore,
-    cursorStatusStore: StatusPageStatusStore,
-    grokBotStatusStore: StatusPageStatusStore,
+    xSubscriptionStatusStore: StatusPageStatusStore,
     visibility: MenuBarVendorVisibility = MenuBarVendorVisibility()
   ) {
     self.store = store
     self.statusStore = statusStore
     self.loginItemStore = loginItemStore
     self.codexStore = codexStore
-    self.cursorStore = cursorStore
+    self.xSubscriptionStore = xSubscriptionStore
     self.openCodeStore = openCodeStore
     self.vpsStore = vpsStore
     self.commandCodeStore = commandCodeStore
-    self.grokBotStore = grokBotStore
     self.codexStatusStore = codexStatusStore
-    self.cursorStatusStore = cursorStatusStore
-    self.grokBotStatusStore = grokBotStatusStore
+    self.xSubscriptionStatusStore = xSubscriptionStatusStore
     self.visibility = visibility
     self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     self.popover = NSPopover()
@@ -995,13 +975,15 @@ final class StatusItemController: NSObject {
           weeklyWindow: codexStore.usage?.weeklyWindow
         )
       )
-    case .cursor:
+    case .xSubscription:
       chart = AnyView(
-        CursorTrendChartView(
-          samples: cursorStore.historySamples,
+        XSubscriptionTrendChartView(
+          samples: xSubscriptionStore.historySamples,
           language: language,
           now: now,
-          period: floatingTrendPeriod
+          period: floatingTrendPeriod,
+          resetsAt: xSubscriptionStore.usage?.meteredQuota?.resetsAt,
+          currentRemainingPercent: xSubscriptionStore.usage?.meteredQuota?.remainingPercent
         )
       )
     case .openCode:
@@ -1033,16 +1015,6 @@ final class StatusItemController: NSObject {
           language: language,
           now: now,
           period: floatingTrendPeriod
-        )
-      )
-    case .grokBot:
-      chart = AnyView(
-        GrokBotTrendChartView(
-          samples: grokBotStore.historySamples,
-          language: language,
-          now: grokBotStore.clock.now(),
-          period: floatingTrendPeriod,
-          resetsAt: grokBotStore.usage?.meteredQuota?.resetsAt
         )
       )
     }
@@ -1138,8 +1110,8 @@ final class StatusItemController: NSObject {
       ofSize: MenuBarDisplayLayout.regularFontSize,
       weight: .semibold
     )
-    let cursorFont = NSFont.monospacedDigitSystemFont(
-      ofSize: MenuBarDisplayLayout.cursorFontSize,
+    let compactFont = NSFont.monospacedDigitSystemFont(
+      ofSize: MenuBarDisplayLayout.compactFontSize,
       weight: .semibold
     )
     button.font = font
@@ -1208,7 +1180,7 @@ final class StatusItemController: NSObject {
           vpsCreditDrop24h: vpsCreditDrop24h,
           deepseekBalanceDropUSD: deepseekBalanceDropUSD,
           font: font,
-          cursorFont: cursorFont
+          compactFont: compactFont
         )
       }
     }
@@ -1247,8 +1219,12 @@ final class StatusItemController: NSObject {
         return L10n.string(.a11yMenuBar, language: store.language, store.menuBarText)
       case .codex:
         return L10n.string(.a11yMenuBarCodex, language: store.language, codexStore.menuBarText)
-      case .cursor:
-        return L10n.string(.a11yMenuBarCursor, language: store.language, cursorStore.menuBarText)
+      case .xSubscription:
+        return L10n.string(
+          .a11yMenuBarXSubscription,
+          language: store.language,
+          xSubscriptionStore.menuBarText
+        )
       case .openCode:
         return L10n.string(
           .a11yMenuBarOpenCode,
@@ -1266,12 +1242,6 @@ final class StatusItemController: NSObject {
           .a11yMenuBarCommandCode,
           language: store.language,
           commandCodeStore.menuBarText
-        )
-      case .grokBot:
-        return L10n.string(
-          .a11yMenuBarGrokBot,
-          language: store.language,
-          grokBotStore.menuBarText
         )
       }
     }
@@ -1293,7 +1263,7 @@ final class StatusItemController: NSObject {
     vpsCreditDrop24h: Double?,
     deepseekBalanceDropUSD: Double?,
     font: NSFont,
-    cursorFont: NSFont
+    compactFont: NSFont
   ) -> MenuBarStatusContentView.Segment {
     switch vendor {
     case .deepseek:
@@ -1336,30 +1306,31 @@ final class StatusItemController: NSObject {
           MenuBarUsageColor.floatingColor(for: codexStore.usage?.usageGapPercent)
         ]
       )
-    case .cursor:
+    case .xSubscription:
       return MenuBarStatusContentView.Segment(
         icon: menuBarTintedIcon(
-          named: "CursorIcon",
-          size: MenuBarIconLayout.cursorMaxDimension,
+          named: "XSubscriptionIcon",
+          size: MenuBarIconLayout.xSubscriptionMaxDimension,
           isDark: isDark
         ),
-        lines: MenuBarDisplayLayout.cursorLines(cursorStore.menuBarText),
-        font: cursorFont,
-        lineHeight: MenuBarDisplayLayout.cursorLineHeight,
-        verticalInset: MenuBarDisplayLayout.cursorVerticalInset,
+        lines: [xSubscriptionStore.menuBarText],
+        font: font,
+        lineHeight: nil,
+        verticalInset: 0,
         lineColors: [
           MenuBarUsageColor.color(
-            for: cursorStore.usage?.usageGapPercent,
-            isDark: isDark
-          ),
-          MenuBarUsageColor.color(
-            for: cursorStore.usage?.apiUsageGapPercent,
+            for: xSubscriptionStore.usage?.meteredQuota?.usageGapPercent(
+              now: xSubscriptionStore.clock.now()
+            ),
             isDark: isDark
           )
         ],
         floatingLineColors: [
-          MenuBarUsageColor.floatingColor(for: cursorStore.usage?.usageGapPercent),
-          MenuBarUsageColor.floatingColor(for: cursorStore.usage?.apiUsageGapPercent)
+          MenuBarUsageColor.floatingColor(
+            for: xSubscriptionStore.usage?.meteredQuota?.usageGapPercent(
+              now: xSubscriptionStore.clock.now()
+            )
+          )
         ]
       )
     case .openCode:
@@ -1370,9 +1341,9 @@ final class StatusItemController: NSObject {
           isDark: isDark
         ),
         lines: openCodeStore.menuBarLines,
-        font: cursorFont,
-        lineHeight: MenuBarDisplayLayout.cursorLineHeight,
-        verticalInset: MenuBarDisplayLayout.cursorVerticalInset,
+        font: compactFont,
+        lineHeight: MenuBarDisplayLayout.compactLineHeight,
+        verticalInset: MenuBarDisplayLayout.compactVerticalInset,
         lineColors: [
           MenuBarUsageColor.color(for: openCodeMonthlyGap, isDark: isDark),
           MenuBarUsageColor.color(forBalanceDrop: openCodeZenDrop24h, isDark: isDark)
@@ -1390,9 +1361,9 @@ final class StatusItemController: NSObject {
           isDark: isDark
         ),
         lines: vpsStore.menuBarLines(language: store.language),
-        font: cursorFont,
-        lineHeight: MenuBarDisplayLayout.cursorLineHeight,
-        verticalInset: MenuBarDisplayLayout.cursorVerticalInset,
+        font: compactFont,
+        lineHeight: MenuBarDisplayLayout.compactLineHeight,
+        verticalInset: MenuBarDisplayLayout.compactVerticalInset,
         lineColors: [
           MenuBarUsageColor.color(
             forTrafficRisk: vpsStore.trafficForecast?.riskScore,
@@ -1426,29 +1397,6 @@ final class StatusItemController: NSObject {
           MenuBarUsageColor.floatingColor(for: commandCodeStore.usage?.usageGapPercent)
         ]
       )
-    case .grokBot:
-      return MenuBarStatusContentView.Segment(
-        icon: menuBarTintedIcon(
-          named: "GrokBotIcon",
-          size: MenuBarIconLayout.grokBotMaxDimension,
-          isDark: isDark
-        ),
-        lines: [grokBotStore.menuBarText],
-        font: font,
-        lineHeight: nil,
-        verticalInset: 0,
-        lineColors: [
-          MenuBarUsageColor.color(
-            for: grokBotStore.usage?.meteredQuota?.usageGapPercent(now: grokBotStore.clock.now()),
-            isDark: isDark
-          )
-        ],
-        floatingLineColors: [
-          MenuBarUsageColor.floatingColor(
-            for: grokBotStore.usage?.meteredQuota?.usageGapPercent(now: grokBotStore.clock.now())
-          )
-        ]
-      )
     }
   }
 
@@ -1460,14 +1408,12 @@ final class StatusItemController: NSObject {
       statusStore: statusStore,
       loginItemStore: loginItemStore,
       codexStore: codexStore,
-      cursorStore: cursorStore,
+      xSubscriptionStore: xSubscriptionStore,
       openCodeStore: openCodeStore,
       vpsStore: vpsStore,
       commandCodeStore: commandCodeStore,
-      grokBotStore: grokBotStore,
       codexStatusStore: codexStatusStore,
-      cursorStatusStore: cursorStatusStore,
-      grokBotStatusStore: grokBotStatusStore,
+      xSubscriptionStatusStore: xSubscriptionStatusStore,
       visibility: visibility,
       tabSelection: tabSelection,
       onPageHeightsChange: { [weak self] pageHeights in
@@ -1989,16 +1935,17 @@ final class StatusItemController: NSObject {
     Task {
       async let balanceRefresh: Void = store.refreshAll()
       async let codexRefresh: Void = codexStore.refreshIfNeeded(maximumAge: 0)
-      async let cursorRefresh: Void = cursorStore.refreshIfNeeded(maximumAge: 0)
+      async let xSubscriptionRefresh: Void = xSubscriptionStore.refreshIfNeeded(maximumAge: 0)
       async let openCodeRefresh: Void = openCodeStore.refreshIfNeeded(maximumAge: 0)
       async let vpsRefresh: Void = vpsStore.refreshIfNeeded(maximumAge: 0)
       async let statusRefresh: Void = statusStore.refreshIfNeeded(maximumAge: 0)
       async let codexStatusRefresh: Void = codexStatusStore.refreshIfNeeded(maximumAge: 0)
-      async let cursorStatusRefresh: Void = cursorStatusStore.refreshIfNeeded(maximumAge: 0)
-      async let grokBotStatusRefresh: Void = grokBotStatusStore.refreshIfNeeded(maximumAge: 0)
+      async let xSubscriptionStatusRefresh: Void = xSubscriptionStatusStore.refreshIfNeeded(
+        maximumAge: 0
+      )
       _ = await (
-        balanceRefresh, codexRefresh, cursorRefresh, openCodeRefresh, vpsRefresh,
-        statusRefresh, codexStatusRefresh, cursorStatusRefresh, grokBotStatusRefresh
+        balanceRefresh, codexRefresh, xSubscriptionRefresh, openCodeRefresh, vpsRefresh,
+        statusRefresh, codexStatusRefresh, xSubscriptionStatusRefresh
       )
     }
   }
@@ -2031,18 +1978,15 @@ final class StatusItemController: NSObject {
     case .codex:
       codexStore.setEnabled(visibility.showsCodex)
       codexStatusStore.setEnabled(visibility.showsCodex)
-    case .cursor:
-      cursorStore.setEnabled(visibility.showsCursor)
-      cursorStatusStore.setEnabled(visibility.showsCursor)
+    case .xSubscription:
+      xSubscriptionStore.setEnabled(visibility.showsXSubscription)
+      xSubscriptionStatusStore.setEnabled(visibility.showsXSubscription)
     case .openCode:
       openCodeStore.setEnabled(visibility.showsOpenCode)
     case .vps:
       vpsStore.setEnabled(visibility.showsVPS)
     case .commandCode:
       commandCodeStore.setEnabled(visibility.showsCommandCode)
-    case .grokBot:
-      grokBotStore.setEnabled(visibility.showsGrokBot)
-      grokBotStatusStore.setEnabled(visibility.showsGrokBot)
     }
     updateTitle()
     validateSelectedTabForVisibility()
@@ -2082,7 +2026,7 @@ final class StatusItemController: NSObject {
         self?.scheduleTitleUpdate()
       }
       .store(in: &cancellables)
-    cursorStore.objectWillChange
+    xSubscriptionStore.objectWillChange
       .sink { [weak self] _ in
         self?.scheduleTitleUpdate()
       }
@@ -2102,11 +2046,6 @@ final class StatusItemController: NSObject {
         self?.scheduleTitleUpdate()
       }
       .store(in: &cancellables)
-    grokBotStore.objectWillChange
-      .sink { [weak self] _ in
-        self?.scheduleTitleUpdate()
-      }
-      .store(in: &cancellables)
   }
 }
 
@@ -2120,16 +2059,14 @@ extension MenuBarVendor {
       return .menuShowDeepSeek
     case .codex:
       return .menuShowCodex
-    case .cursor:
-      return .menuShowCursor
+    case .xSubscription:
+      return .menuShowXSubscription
     case .openCode:
       return .menuShowOpenCode
     case .vps:
       return .menuShowVPS
     case .commandCode:
       return .menuShowCommandCode
-    case .grokBot:
-      return .menuShowGrokBot
     }
   }
 }

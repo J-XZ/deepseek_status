@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// 官方服务状态卡片（DeepSeek / Codex / Cursor 共用，接受任一状态 store）。
+/// 官方服务状态卡片（DeepSeek / Codex / X Subscription 等共用，接受任一状态 store）。
 /// 远程内容只作为纯文本展示。
 struct DeepSeekServiceStatusView<Store: ServiceStatusStoring>: View {
   @ObservedObject var store: Store
@@ -79,10 +79,7 @@ struct DeepSeekServiceStatusView<Store: ServiceStatusStoring>: View {
       }
 
       if let error = store.error {
-        Text(error.text(language: language))
-          .font(AppTypography.caption)
-          .foregroundStyle(.red)
-          .textSelection(.enabled)
+        AppErrorText(text: error.text(language: language))
       }
     }
   }
@@ -113,9 +110,7 @@ struct DeepSeekServiceStatusView<Store: ServiceStatusStoring>: View {
             L10n.string(
               .serviceLastUpdated,
               language: language,
-              updatedAt.formatted(
-                Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
-              )
+              UsageFormatting.abbreviatedDateTime(updatedAt, locale: language.locale)
             )
           )
           .font(AppTypography.caption)
@@ -212,9 +207,7 @@ struct DeepSeekServiceStatusView<Store: ServiceStatusStoring>: View {
           L10n.string(
             .serviceIncidentUpdated,
             language: language,
-            updatedAt.formatted(
-              Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
-            )
+            UsageFormatting.abbreviatedDateTime(updatedAt, locale: language.locale)
           )
         )
         .font(AppTypography.caption)
@@ -243,9 +236,7 @@ struct DeepSeekServiceStatusView<Store: ServiceStatusStoring>: View {
           L10n.string(
             .serviceIncidentUpdated,
             language: language,
-            updatedAt.formatted(
-              Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
-            )
+            UsageFormatting.abbreviatedDateTime(updatedAt, locale: language.locale)
           )
         )
         .font(AppTypography.caption)

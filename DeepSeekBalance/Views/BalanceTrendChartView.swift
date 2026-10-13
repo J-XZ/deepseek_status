@@ -9,8 +9,103 @@ enum TrendChartPalette {
   static let selection = Color.secondary
 }
 
+/// Shared axis labels and marks so every provider chart ticks the same way.
+enum TrendChartAxis {
+  static func dateLabel(for date: Date, language: AppLanguage) -> String {
+    let formatter = DateFormatter()
+    formatter.locale = language.locale
+    formatter.calendar = Calendar(identifier: .gregorian)
+    formatter.dateFormat = language == .simplifiedChinese ? "M/d HH:mm" : "MMM d HH:mm"
+    return formatter.string(from: date)
+  }
+
+  static func dateMarks(language: AppLanguage) -> some AxisContent {
+    AxisMarks(values: .automatic(desiredCount: 4)) { value in
+      AxisGridLine().foregroundStyle(TrendChartPalette.grid)
+      AxisValueLabel {
+        if let date = value.as(Date.self) {
+          Text(dateLabel(for: date, language: language))
+            .font(AppTypography.caption)
+            .foregroundStyle(TrendChartPalette.axisText)
+            .lineLimit(1)
+        }
+      }
+    }
+  }
+
+  static func percentMarks() -> some AxisContent {
+    AxisMarks(position: .leading) { value in
+      AxisGridLine().foregroundStyle(TrendChartPalette.grid)
+      AxisValueLabel {
+        if let percent = value.as(Double.self) {
+          Text("\(Int(percent))%")
+            .font(AppTypography.caption)
+            .foregroundStyle(TrendChartPalette.axisText)
+        }
+      }
+    }
+  }
+}
+
+/// Exhaustion / forecast caption above every trend chart.
+struct TrendExhaustionCaption: View {
+  let text: String
+
+  var body: some View {
+    Text(text)
+      .font(AppTypography.caption)
+      .foregroundStyle(TrendChartPalette.secondaryText)
+      .multilineTextAlignment(.trailing)
+      .lineLimit(2)
+      .minimumScaleFactor(0.75)
+      .fixedSize(horizontal: false, vertical: true)
+      .frame(maxWidth: .infinity, alignment: .trailing)
+  }
+}
+
+/// Custom dashed-line legend row (Balance totals, Codex speed comparison).
+struct TrendChartLegendItem: View {
+  let label: String
+  let color: Color
+  var dash: [CGFloat] = []
+
+  var body: some View {
+    HStack(spacing: 4) {
+      Path { path in
+        path.move(to: CGPoint(x: 0, y: 3))
+        path.addLine(to: CGPoint(x: 20, y: 3))
+      }
+      .stroke(color, style: StrokeStyle(lineWidth: 2, dash: dash))
+      .frame(width: 20, height: 6)
+      Text(label)
+        .foregroundStyle(TrendChartPalette.secondaryText)
+    }
+  }
+}
+
+/// Hover/popover fallback when a remaining-% chart has fewer than two points.
+struct TrendChartInsufficientSamplesView: View {
+  let remainingPercent: Int?
+  let language: AppLanguage
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      if let remainingPercent {
+        Text("\(remainingPercent)%")
+          .font(AppTypography.value)
+          .foregroundStyle(TrendChartPalette.secondaryText)
+      }
+      Text(L10n.string(.trendSummaryInsufficient, language: language))
+        .font(AppTypography.caption)
+        .foregroundStyle(TrendChartPalette.secondaryText)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+  }
+}
+
 /// 最近 14 天余额趋势图（Apple Swift Charts）。
-/// 存储按 UTC 排序，X 轴按本地时间显示；缺口超过 20 分钟会断开连线。
+/// 存储按 UTC 排序，X 轴按本地时间显示；样本缺口在相邻点之间线性插值，折线不断开。
 struct BalanceTrendChartView: View {
   let samples: [BalanceSample]
   let currency: String
@@ -147,14 +242,7 @@ struct BalanceTrendChartView: View {
         .map { UsageExhaustionPoint(date: $0.date, remaining: $0.value) },
       now: now
     ) {
-      Text(exhaustionEstimateText(seconds))
-        .font(AppTypography.caption)
-        .foregroundStyle(TrendChartPalette.secondaryText)
-        .multilineTextAlignment(.trailing)
-        .lineLimit(2)
-        .minimumScaleFactor(0.75)
-        .fixedSize(horizontal: false, vertical: true)
-        .frame(maxWidth: .infinity, alignment: .trailing)
+      TrendExhaustionCaption(text: exhaustionEstimateText(seconds))
     }
   }
 
@@ -181,6 +269,7 @@ struct BalanceTrendChartView: View {
             series: .value(L10n.string(.chartSegment, language: language), segment.id)
           )
           .foregroundStyle(metricColor(segment.metric))
+          .interpolationMethod(.linear)
           .lineStyle(metricLineStyle(segment.metric))
         }
       }
@@ -198,19 +287,7 @@ struct BalanceTrendChartView: View {
         for: model.segments.flatMap(\.points).map(\.value).max() ?? 1
       )
     )
-    .chartXAxis {
-      AxisMarks(values: .automatic(desiredCount: 4)) { value in
-        AxisGridLine().foregroundStyle(TrendChartPalette.grid)
-        AxisValueLabel {
-          if let date = value.as(Date.self) {
-            Text(axisLabel(for: date))
-              .font(AppTypography.caption)
-              .foregroundStyle(TrendChartPalette.axisText)
-              .lineLimit(1)
-          }
-        }
-      }
-    }
+    .chartXAxis { TrendChartAxis.dateMarks(language: language) }
     .chartYAxis {
       AxisMarks(position: .leading) { value in
         AxisGridLine().foregroundStyle(TrendChartPalette.grid)
@@ -238,33 +315,12 @@ struct BalanceTrendChartView: View {
 
   private var legend: some View {
     HStack(spacing: 14) {
-      legendItem(label: L10n.string(.legendTotal, language: language), color: .blue, dash: [])
-      legendItem(label: L10n.string(.legendToppedUp, language: language), color: .green, dash: [])
-      legendItem(label: L10n.string(.legendGranted, language: language), color: .orange, dash: [])
+      TrendChartLegendItem(label: L10n.string(.legendTotal, language: language), color: .blue)
+      TrendChartLegendItem(label: L10n.string(.legendToppedUp, language: language), color: .green)
+      TrendChartLegendItem(label: L10n.string(.legendGranted, language: language), color: .orange)
       Spacer()
     }
     .font(AppTypography.caption)
-  }
-
-  private func legendItem(label: String, color: Color, dash: [CGFloat]) -> some View {
-    HStack(spacing: 4) {
-      Path { path in
-        path.move(to: CGPoint(x: 0, y: 3))
-        path.addLine(to: CGPoint(x: 20, y: 3))
-      }
-      .stroke(color, style: StrokeStyle(lineWidth: 2, dash: dash))
-      .frame(width: 20, height: 6)
-      Text(label)
-        .foregroundStyle(TrendChartPalette.secondaryText)
-    }
-  }
-
-  private func axisLabel(for date: Date) -> String {
-    let formatter = DateFormatter()
-    formatter.locale = language.locale
-    formatter.calendar = Calendar(identifier: .gregorian)
-    formatter.dateFormat = language == .simplifiedChinese ? "M/d HH:mm" : "MMM d HH:mm"
-    return formatter.string(from: date)
   }
 
   private func selectionDetail(_ sample: BalanceSample) -> some View {
@@ -393,11 +449,7 @@ struct TrendChartSelectionDetail: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 3) {
-      Text(
-        date.formatted(
-          Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
-        )
-      )
+      Text(UsageFormatting.abbreviatedDateTime(date, locale: language.locale))
         .font(AppTypography.caption.weight(.medium))
         .foregroundStyle(TrendChartPalette.secondaryText)
       ForEach(Array(values.enumerated()), id: \.offset) { _, value in

@@ -34,6 +34,12 @@ final class MockURLProtocol: URLProtocol {
     return recordedRequests.map { $0.value(forHTTPHeaderField: "Authorization") }
   }
 
+  static func recordedRequestsSnapshot() -> [URLRequest] {
+    lock.lock()
+    defer { lock.unlock() }
+    return recordedRequests
+  }
+
   static var recordedRequestCount: Int {
     lock.lock()
     defer { lock.unlock() }
@@ -61,11 +67,39 @@ final class MockURLProtocol: URLProtocol {
 
   override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
 
+  /// URLSession 常把 `httpBody` 转成 `httpBodyStream`；测试需要能读到原始 JSON。
+  static func httpBody(from request: URLRequest) -> Data? {
+    if let body = request.httpBody { return body }
+    guard let stream = request.httpBodyStream else { return nil }
+    stream.open()
+    defer { stream.close() }
+    var data = Data()
+    let bufferSize = 1024
+    let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
+    defer { buffer.deallocate() }
+    while stream.hasBytesAvailable {
+      let read = stream.read(buffer, maxLength: bufferSize)
+      if read <= 0 { break }
+      data.append(buffer, count: read)
+    }
+    return data.isEmpty ? nil : data
+  }
+
+  private static func requestWithMaterializedBody(_ request: URLRequest) -> URLRequest {
+    guard request.httpBody == nil, let body = httpBody(from: request) else {
+      return request
+    }
+    var copy = request
+    copy.httpBody = body
+    return copy
+  }
+
   override func startLoading() {
+    let materialized = Self.requestWithMaterializedBody(request)
     Self.lock.lock()
     let handler = Self.requestHandler
     let shouldHold = Self.holdRequests
-    Self.recordedRequests.append(request)
+    Self.recordedRequests.append(materialized)
     Self.lock.unlock()
 
     if shouldHold {
@@ -82,7 +116,7 @@ final class MockURLProtocol: URLProtocol {
     }
 
     do {
-      let (response, data) = try handler(request)
+      let (response, data) = try handler(materialized)
       client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
       client?.urlProtocol(self, didLoad: data)
       client?.urlProtocolDidFinishLoading(self)

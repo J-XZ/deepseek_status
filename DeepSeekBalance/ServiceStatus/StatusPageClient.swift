@@ -1,6 +1,6 @@
 import Foundation
 
-/// Atlassian Statuspage 状态获取抽象（Codex / Cursor 官方状态页均为该托管格式）。
+/// Atlassian Statuspage 状态获取抽象（Codex / X Subscription 官方状态页均为该托管格式）。
 protocol StatusPageFetching: Sendable {
   func fetchSummary() async throws -> StatusPageSummaryResponse
 }

@@ -124,16 +124,7 @@
 		AA000000000000000000040A /* CodexTrendChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000020A /* CodexTrendChartView.swift */; };
 		AA000000000000000000040B /* SettingsWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000020B /* SettingsWindow.swift */; };
 		AA000000000000000000040C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000020C /* SettingsView.swift */; };
-		AA000000000000000000040D /* CursorUsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000020D /* CursorUsageModels.swift */; };
-		AA000000000000000000040E /* CursorUsageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000020E /* CursorUsageClient.swift */; };
-		AA000000000000000000040F /* CursorAuthProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000020F /* CursorAuthProvider.swift */; };
-		AA0000000000000000000410 /* CursorUsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000210 /* CursorUsageStore.swift */; };
-		AA0000000000000000000411 /* CursorUsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000211 /* CursorUsageView.swift */; };
-		AA0000000000000000000412 /* CursorUsageSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000212 /* CursorUsageSample.swift */; };
-		AA0000000000000000000413 /* CursorHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000213 /* CursorHistory.swift */; };
-		AA0000000000000000000414 /* LevelDBCursorHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000214 /* LevelDBCursorHistoryStore.swift */; };
-		AA0000000000000000000415 /* CursorHistoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000215 /* CursorHistoryService.swift */; };
-		AA0000000000000000000416 /* CursorTrendChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000216 /* CursorTrendChartView.swift */; };
+		AA000000000000000000040F /* XSubscriptionAuthProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000000000000000000020F /* XSubscriptionAuthProvider.swift */; };
 		AA0000000000000000000430 /* CommandCodeUsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000230 /* CommandCodeUsageModels.swift */; };
 		AA0000000000000000000431 /* CommandCodeUsageSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000231 /* CommandCodeUsageSample.swift */; };
 		AA0000000000000000000432 /* CommandCodeUsageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000232 /* CommandCodeUsageClient.swift */; };
@@ -142,15 +133,15 @@
 		AA0000000000000000000435 /* CommandCodeHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000235 /* CommandCodeHistory.swift */; };
 		AA0000000000000000000436 /* CommandCodeUsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000236 /* CommandCodeUsageView.swift */; };
 		AA0000000000000000000437 /* CommandCodeTrendChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000237 /* CommandCodeTrendChartView.swift */; };
-		AA0000000000000000000438 /* CursorConnectRPC.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000238 /* CursorConnectRPC.swift */; };
-		AA0000000000000000000439 /* GrokBotUsageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000239 /* GrokBotUsageClient.swift */; };
-		AA0000000000000000000440 /* GrokBotUsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000240 /* GrokBotUsageModels.swift */; };
-		AA0000000000000000000441 /* GrokBotUsageSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000241 /* GrokBotUsageSample.swift */; };
-		AA0000000000000000000442 /* GrokBotUsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000242 /* GrokBotUsageStore.swift */; };
-		AA0000000000000000000443 /* GrokBotHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000243 /* GrokBotHistory.swift */; };
-		AA0000000000000000000444 /* LevelDBGrokBotHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000244 /* LevelDBGrokBotHistoryStore.swift */; };
-		AA0000000000000000000445 /* GrokBotUsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000245 /* GrokBotUsageView.swift */; };
-		AA0000000000000000000446 /* GrokBotTrendChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000246 /* GrokBotTrendChartView.swift */; };
+		AA0000000000000000000438 /* XSubscriptionConnectRPC.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000238 /* XSubscriptionConnectRPC.swift */; };
+		AA0000000000000000000439 /* XSubscriptionUsageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000239 /* XSubscriptionUsageClient.swift */; };
+		AA0000000000000000000440 /* XSubscriptionUsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000240 /* XSubscriptionUsageModels.swift */; };
+		AA0000000000000000000441 /* XSubscriptionUsageSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000241 /* XSubscriptionUsageSample.swift */; };
+		AA0000000000000000000442 /* XSubscriptionUsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000242 /* XSubscriptionUsageStore.swift */; };
+		AA0000000000000000000443 /* XSubscriptionHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000243 /* XSubscriptionHistory.swift */; };
+		AA0000000000000000000444 /* LevelDBXSubscriptionHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000244 /* LevelDBXSubscriptionHistoryStore.swift */; };
+		AA0000000000000000000445 /* XSubscriptionUsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000245 /* XSubscriptionUsageView.swift */; };
+		AA0000000000000000000446 /* XSubscriptionTrendChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000246 /* XSubscriptionTrendChartView.swift */; };
 		AA0000000000000000000417 /* OpenCodeUsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000217 /* OpenCodeUsageModels.swift */; };
 		AA0000000000000000000418 /* OpenCodeUsageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000218 /* OpenCodeUsageClient.swift */; };
 		AA0000000000000000000419 /* OpenCodeUsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000219 /* OpenCodeUsageStore.swift */; };
@@ -168,16 +159,13 @@
 		AA000000000000000000020E /* MenuBarVendorVisibilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000109 /* MenuBarVendorVisibilityTests.swift */; };
 		AA000000000000000000020F /* InMemoryCodexHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000010A /* InMemoryCodexHistoryStore.swift */; };
 		AA0000000000000000000210 /* CodexHistoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000010B /* CodexHistoryTests.swift */; };
-		AA0000000000000000000211 /* InMemoryCursorHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000010C /* InMemoryCursorHistoryStore.swift */; };
-		AA0000000000000000000212 /* CursorUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000010D /* CursorUsageTests.swift */; };
-		AA0000000000000000000213 /* CursorHistoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000010E /* CursorHistoryTests.swift */; };
 		AA0000000000000000000214 /* OpenCodeUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000010F /* OpenCodeUsageTests.swift */; };
 		AA0000000000000000000215 /* VPSUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000110 /* VPSUsageTests.swift */; };
 		AA0000000000000000000216 /* CommandCodeUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000111 /* CommandCodeUsageTests.swift */; };
-		AA0000000000000000000217 /* GrokBotUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000112 /* GrokBotUsageTests.swift */; };
-		AA0000000000000000000218 /* GrokBotHistoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000113 /* GrokBotHistoryTests.swift */; };
-		AA0000000000000000000219 /* GrokBotExhaustionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000114 /* GrokBotExhaustionTests.swift */; };
-		AA000000000000000000021A /* InMemoryGrokBotHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000115 /* InMemoryGrokBotHistoryStore.swift */; };
+		AA0000000000000000000217 /* XSubscriptionUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000112 /* XSubscriptionUsageTests.swift */; };
+		AA0000000000000000000218 /* XSubscriptionHistoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000113 /* XSubscriptionHistoryTests.swift */; };
+		AA0000000000000000000219 /* XSubscriptionExhaustionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000114 /* XSubscriptionExhaustionTests.swift */; };
+		AA000000000000000000021A /* InMemoryXSubscriptionHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000115 /* InMemoryXSubscriptionHistoryStore.swift */; };
 		AA000000000000000000021B /* CompactRemainingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000116 /* CompactRemainingTests.swift */; };
 		FF0000000000000000000101 /* TimeBucketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000001 /* TimeBucketTests.swift */; };
 		FF0000000000000000000102 /* InMemoryHistoryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0000000000000000000002 /* InMemoryHistoryStoreTests.swift */; };
@@ -260,16 +248,7 @@
 		BB000000000000000000020B /* SettingsWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindow.swift; sourceTree = "<group>"; };
 		BB000000000000000000020C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A90000000000000000000201 /* AppVisualStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppVisualStyle.swift; sourceTree = "<group>"; };
-		BB000000000000000000020D /* CursorUsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorUsageModels.swift; sourceTree = "<group>"; };
-		BB000000000000000000020E /* CursorUsageClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorUsageClient.swift; sourceTree = "<group>"; };
-		BB000000000000000000020F /* CursorAuthProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorAuthProvider.swift; sourceTree = "<group>"; };
-		BB0000000000000000000210 /* CursorUsageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorUsageStore.swift; sourceTree = "<group>"; };
-		BB0000000000000000000211 /* CursorUsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorUsageView.swift; sourceTree = "<group>"; };
-		BB0000000000000000000212 /* CursorUsageSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorUsageSample.swift; sourceTree = "<group>"; };
-		BB0000000000000000000213 /* CursorHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorHistory.swift; sourceTree = "<group>"; };
-		BB0000000000000000000214 /* LevelDBCursorHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelDBCursorHistoryStore.swift; sourceTree = "<group>"; };
-		BB0000000000000000000215 /* CursorHistoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorHistoryService.swift; sourceTree = "<group>"; };
-		BB0000000000000000000216 /* CursorTrendChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorTrendChartView.swift; sourceTree = "<group>"; };
+		BB000000000000000000020F /* XSubscriptionAuthProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XSubscriptionAuthProvider.swift; sourceTree = "<group>"; };
 		BB0000000000000000000230 /* CommandCodeUsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCodeUsageModels.swift; sourceTree = "<group>"; };
 		BB0000000000000000000231 /* CommandCodeUsageSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCodeUsageSample.swift; sourceTree = "<group>"; };
 		BB0000000000000000000232 /* CommandCodeUsageClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCodeUsageClient.swift; sourceTree = "<group>"; };
@@ -278,15 +257,15 @@
 		BB0000000000000000000235 /* CommandCodeHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCodeHistory.swift; sourceTree = "<group>"; };
 		BB0000000000000000000236 /* CommandCodeUsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCodeUsageView.swift; sourceTree = "<group>"; };
 		BB0000000000000000000237 /* CommandCodeTrendChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCodeTrendChartView.swift; sourceTree = "<group>"; };
-		BB0000000000000000000238 /* CursorConnectRPC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorConnectRPC.swift; sourceTree = "<group>"; };
-		BB0000000000000000000239 /* GrokBotUsageClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrokBotUsageClient.swift; sourceTree = "<group>"; };
-		BB0000000000000000000240 /* GrokBotUsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrokBotUsageModels.swift; sourceTree = "<group>"; };
-		BB0000000000000000000241 /* GrokBotUsageSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrokBotUsageSample.swift; sourceTree = "<group>"; };
-		BB0000000000000000000242 /* GrokBotUsageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrokBotUsageStore.swift; sourceTree = "<group>"; };
-		BB0000000000000000000243 /* GrokBotHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrokBotHistory.swift; sourceTree = "<group>"; };
-		BB0000000000000000000244 /* LevelDBGrokBotHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelDBGrokBotHistoryStore.swift; sourceTree = "<group>"; };
-		BB0000000000000000000245 /* GrokBotUsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrokBotUsageView.swift; sourceTree = "<group>"; };
-		BB0000000000000000000246 /* GrokBotTrendChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrokBotTrendChartView.swift; sourceTree = "<group>"; };
+		BB0000000000000000000238 /* XSubscriptionConnectRPC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XSubscriptionConnectRPC.swift; sourceTree = "<group>"; };
+		BB0000000000000000000239 /* XSubscriptionUsageClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XSubscriptionUsageClient.swift; sourceTree = "<group>"; };
+		BB0000000000000000000240 /* XSubscriptionUsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XSubscriptionUsageModels.swift; sourceTree = "<group>"; };
+		BB0000000000000000000241 /* XSubscriptionUsageSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XSubscriptionUsageSample.swift; sourceTree = "<group>"; };
+		BB0000000000000000000242 /* XSubscriptionUsageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XSubscriptionUsageStore.swift; sourceTree = "<group>"; };
+		BB0000000000000000000243 /* XSubscriptionHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XSubscriptionHistory.swift; sourceTree = "<group>"; };
+		BB0000000000000000000244 /* LevelDBXSubscriptionHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelDBXSubscriptionHistoryStore.swift; sourceTree = "<group>"; };
+		BB0000000000000000000245 /* XSubscriptionUsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XSubscriptionUsageView.swift; sourceTree = "<group>"; };
+		BB0000000000000000000246 /* XSubscriptionTrendChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XSubscriptionTrendChartView.swift; sourceTree = "<group>"; };
 		BB0000000000000000000217 /* OpenCodeUsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenCodeUsageModels.swift; sourceTree = "<group>"; };
 		BB0000000000000000000218 /* OpenCodeUsageClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenCodeUsageClient.swift; sourceTree = "<group>"; };
 		BB0000000000000000000219 /* OpenCodeUsageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenCodeUsageStore.swift; sourceTree = "<group>"; };
@@ -317,16 +296,13 @@
 		CC0000000000000000000109 /* MenuBarVendorVisibilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarVendorVisibilityTests.swift; sourceTree = "<group>"; };
 		CC000000000000000000010A /* InMemoryCodexHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InMemoryCodexHistoryStore.swift; sourceTree = "<group>"; };
 		CC000000000000000000010B /* CodexHistoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexHistoryTests.swift; sourceTree = "<group>"; };
-		CC000000000000000000010C /* InMemoryCursorHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InMemoryCursorHistoryStore.swift; sourceTree = "<group>"; };
-		CC000000000000000000010D /* CursorUsageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorUsageTests.swift; sourceTree = "<group>"; };
-		CC000000000000000000010E /* CursorHistoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorHistoryTests.swift; sourceTree = "<group>"; };
 		CC000000000000000000010F /* OpenCodeUsageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenCodeUsageTests.swift; sourceTree = "<group>"; };
 		CC0000000000000000000110 /* VPSUsageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPSUsageTests.swift; sourceTree = "<group>"; };
 		CC0000000000000000000111 /* CommandCodeUsageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCodeUsageTests.swift; sourceTree = "<group>"; };
-		CC0000000000000000000112 /* GrokBotUsageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrokBotUsageTests.swift; sourceTree = "<group>"; };
-		CC0000000000000000000113 /* GrokBotHistoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrokBotHistoryTests.swift; sourceTree = "<group>"; };
-		CC0000000000000000000114 /* GrokBotExhaustionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrokBotExhaustionTests.swift; sourceTree = "<group>"; };
-		CC0000000000000000000115 /* InMemoryGrokBotHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InMemoryGrokBotHistoryStore.swift; sourceTree = "<group>"; };
+		CC0000000000000000000112 /* XSubscriptionUsageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XSubscriptionUsageTests.swift; sourceTree = "<group>"; };
+		CC0000000000000000000113 /* XSubscriptionHistoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XSubscriptionHistoryTests.swift; sourceTree = "<group>"; };
+		CC0000000000000000000114 /* XSubscriptionExhaustionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XSubscriptionExhaustionTests.swift; sourceTree = "<group>"; };
+		CC0000000000000000000115 /* InMemoryXSubscriptionHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InMemoryXSubscriptionHistoryStore.swift; sourceTree = "<group>"; };
 		CC0000000000000000000116 /* CompactRemainingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompactRemainingTests.swift; sourceTree = "<group>"; };
 		DD0000000000000000000101 /* builder.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/builder.cc"; sourceTree = "<group>"; };
 		DD0000000000000000000102 /* c.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "db/c.cc"; sourceTree = "<group>"; };
@@ -455,7 +431,6 @@
 			children = (
 				BB0000000000000000000002 /* BalanceStore.swift */,
 				BB0000000000000000000204 /* CodexUsageStore.swift */,
-				BB0000000000000000000210 /* CursorUsageStore.swift */,
 				BB0000000000000000000219 /* OpenCodeUsageStore.swift */,
 				BB0000000000000000000223 /* VPSUsageStore.swift */,
 				EE000000000000000000000B /* RefreshCoordinator.swift */,
@@ -469,7 +444,7 @@
 				E10000000000000000000006 /* FloatingWindowPlacement.swift */,
 				E1000000000000000000000E /* ScreenObstacleScanner.swift */,
 				BB0000000000000000000234 /* CommandCodeUsageStore.swift */,
-				BB0000000000000000000242 /* GrokBotUsageStore.swift */,
+				BB0000000000000000000242 /* XSubscriptionUsageStore.swift */,
 			);
 			path = AppState;
 			sourceTree = "<group>";
@@ -479,19 +454,17 @@
 			children = (
 				BB0000000000000000000003 /* BalanceModels.swift */,
 				BB0000000000000000000201 /* CodexUsageModels.swift */,
-				BB000000000000000000020D /* CursorUsageModels.swift */,
 				BB0000000000000000000217 /* OpenCodeUsageModels.swift */,
 				BB0000000000000000000220 /* VPSUsageModels.swift */,
 				BB0000000000000000000206 /* CodexUsageSample.swift */,
-				BB0000000000000000000212 /* CursorUsageSample.swift */,
 				EE0000000000000000000001 /* BalanceSample.swift */,
 				EE0000000000000000000002 /* BalanceTrendModels.swift */,
 				E10000000000000000000002 /* TrendPeriod.swift */,
 				E10000000000000000000016 /* CodexUsageSpeedEvaluator.swift */,
 				BB0000000000000000000230 /* CommandCodeUsageModels.swift */,
 				BB0000000000000000000231 /* CommandCodeUsageSample.swift */,
-				BB0000000000000000000240 /* GrokBotUsageModels.swift */,
-				BB0000000000000000000241 /* GrokBotUsageSample.swift */,
+				BB0000000000000000000240 /* XSubscriptionUsageModels.swift */,
+				BB0000000000000000000241 /* XSubscriptionUsageSample.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -502,15 +475,14 @@
 				BB0000000000000000000004 /* DeepSeekAPIClient.swift */,
 				BB0000000000000000000005 /* APIKeyProvider.swift */,
 				BB0000000000000000000202 /* CodexUsageClient.swift */,
-				BB000000000000000000020E /* CursorUsageClient.swift */,
 				BB0000000000000000000218 /* OpenCodeUsageClient.swift */,
 				BB0000000000000000000221 /* VPSUsageClient.swift */,
 				BB0000000000000000000203 /* CodexAuthProvider.swift */,
-				BB000000000000000000020F /* CursorAuthProvider.swift */,
+				BB000000000000000000020F /* XSubscriptionAuthProvider.swift */,
 				BB0000000000000000000232 /* CommandCodeUsageClient.swift */,
 				BB0000000000000000000233 /* CommandCodeAuthProvider.swift */,
-				BB0000000000000000000238 /* CursorConnectRPC.swift */,
-				BB0000000000000000000239 /* GrokBotUsageClient.swift */,
+				BB0000000000000000000238 /* XSubscriptionConnectRPC.swift */,
+				BB0000000000000000000239 /* XSubscriptionUsageClient.swift */,
 			);
 			path = Networking;
 			sourceTree = "<group>";
@@ -532,17 +504,15 @@
 				EE0000000000000000000201 /* ResetAtCaption.swift */,
 				BB0000000000000000000008 /* BalancePopoverView.swift */,
 				BB0000000000000000000205 /* CodexUsageView.swift */,
-				BB0000000000000000000211 /* CursorUsageView.swift */,
 				BB000000000000000000021A /* OpenCodeUsageView.swift */,
 				BB000000000000000000020A /* CodexTrendChartView.swift */,
-				BB0000000000000000000216 /* CursorTrendChartView.swift */,
 				BB000000000000000000021B /* OpenCodeTrendChartView.swift */,
 				BB0000000000000000000225 /* VPSUsageView.swift */,
 				BB0000000000000000000226 /* VPSTrendChartView.swift */,
 				BB0000000000000000000236 /* CommandCodeUsageView.swift */,
 				BB0000000000000000000237 /* CommandCodeTrendChartView.swift */,
-				BB0000000000000000000245 /* GrokBotUsageView.swift */,
-				BB0000000000000000000246 /* GrokBotTrendChartView.swift */,
+				BB0000000000000000000245 /* XSubscriptionUsageView.swift */,
+				BB0000000000000000000246 /* XSubscriptionTrendChartView.swift */,
 				BB000000000000000000020C /* SettingsView.swift */,
 				EE000000000000000000000C /* BalanceTrendChartView.swift */,
 				EE000000000000000000000D /* BalanceTrendEmptyView.swift */,
@@ -572,19 +542,16 @@
 				CC0000000000000000000106 /* TrendChartModelTests.swift */,
 				CC0000000000000000000107 /* BuildScriptTests.swift */,
 				CC0000000000000000000108 /* CodexUsageTests.swift */,
-				CC000000000000000000010D /* CursorUsageTests.swift */,
 				CC0000000000000000000109 /* MenuBarVendorVisibilityTests.swift */,
 				CC000000000000000000010A /* InMemoryCodexHistoryStore.swift */,
-				CC000000000000000000010C /* InMemoryCursorHistoryStore.swift */,
 				CC000000000000000000010B /* CodexHistoryTests.swift */,
-				CC000000000000000000010E /* CursorHistoryTests.swift */,
 				CC000000000000000000010F /* OpenCodeUsageTests.swift */,
 				CC0000000000000000000110 /* VPSUsageTests.swift */,
 				CC0000000000000000000111 /* CommandCodeUsageTests.swift */,
-				CC0000000000000000000112 /* GrokBotUsageTests.swift */,
-				CC0000000000000000000113 /* GrokBotHistoryTests.swift */,
-				CC0000000000000000000114 /* GrokBotExhaustionTests.swift */,
-				CC0000000000000000000115 /* InMemoryGrokBotHistoryStore.swift */,
+				CC0000000000000000000112 /* XSubscriptionUsageTests.swift */,
+				CC0000000000000000000113 /* XSubscriptionHistoryTests.swift */,
+				CC0000000000000000000114 /* XSubscriptionExhaustionTests.swift */,
+				CC0000000000000000000115 /* InMemoryXSubscriptionHistoryStore.swift */,
 				CC0000000000000000000116 /* CompactRemainingTests.swift */,
 				E10000000000000000000008 /* TrendPeriodTests.swift */,
 				E1000000000000000000000A /* FloatingWindowClickInterpreterTests.swift */,
@@ -615,14 +582,11 @@
 				EE0000000000000000000008 /* LevelDBBalanceHistoryStore.swift */,
 				EE0000000000000000000009 /* BalanceHistoryService.swift */,
 				BB0000000000000000000207 /* CodexHistory.swift */,
-				BB0000000000000000000213 /* CursorHistory.swift */,
 				BB0000000000000000000208 /* LevelDBCodexHistoryStore.swift */,
-				BB0000000000000000000214 /* LevelDBCursorHistoryStore.swift */,
 				BB0000000000000000000209 /* CodexHistoryService.swift */,
-				BB0000000000000000000215 /* CursorHistoryService.swift */,
 				BB0000000000000000000235 /* CommandCodeHistory.swift */,
-				BB0000000000000000000243 /* GrokBotHistory.swift */,
-				BB0000000000000000000244 /* LevelDBGrokBotHistoryStore.swift */,
+				BB0000000000000000000243 /* XSubscriptionHistory.swift */,
+				BB0000000000000000000244 /* LevelDBXSubscriptionHistoryStore.swift */,
 				BB000000000000000000021C /* OpenCodeHistory.swift */,
 				BB0000000000000000000224 /* VPSHistory.swift */,
 			);
@@ -902,16 +866,7 @@
 				AA0000000000000000000408 /* LevelDBCodexHistoryStore.swift in Sources */,
 				AA0000000000000000000409 /* CodexHistoryService.swift in Sources */,
 				AA000000000000000000040A /* CodexTrendChartView.swift in Sources */,
-				AA000000000000000000040D /* CursorUsageModels.swift in Sources */,
-				AA000000000000000000040E /* CursorUsageClient.swift in Sources */,
-				AA000000000000000000040F /* CursorAuthProvider.swift in Sources */,
-				AA0000000000000000000410 /* CursorUsageStore.swift in Sources */,
-				AA0000000000000000000411 /* CursorUsageView.swift in Sources */,
-				AA0000000000000000000412 /* CursorUsageSample.swift in Sources */,
-				AA0000000000000000000413 /* CursorHistory.swift in Sources */,
-				AA0000000000000000000414 /* LevelDBCursorHistoryStore.swift in Sources */,
-				AA0000000000000000000415 /* CursorHistoryService.swift in Sources */,
-				AA0000000000000000000416 /* CursorTrendChartView.swift in Sources */,
+				AA000000000000000000040F /* XSubscriptionAuthProvider.swift in Sources */,
 				AA0000000000000000000430 /* CommandCodeUsageModels.swift in Sources */,
 				AA0000000000000000000431 /* CommandCodeUsageSample.swift in Sources */,
 				AA0000000000000000000432 /* CommandCodeUsageClient.swift in Sources */,
@@ -920,15 +875,15 @@
 				AA0000000000000000000435 /* CommandCodeHistory.swift in Sources */,
 				AA0000000000000000000436 /* CommandCodeUsageView.swift in Sources */,
 				AA0000000000000000000437 /* CommandCodeTrendChartView.swift in Sources */,
-				AA0000000000000000000438 /* CursorConnectRPC.swift in Sources */,
-				AA0000000000000000000439 /* GrokBotUsageClient.swift in Sources */,
-				AA0000000000000000000440 /* GrokBotUsageModels.swift in Sources */,
-				AA0000000000000000000441 /* GrokBotUsageSample.swift in Sources */,
-				AA0000000000000000000442 /* GrokBotUsageStore.swift in Sources */,
-				AA0000000000000000000443 /* GrokBotHistory.swift in Sources */,
-				AA0000000000000000000444 /* LevelDBGrokBotHistoryStore.swift in Sources */,
-				AA0000000000000000000445 /* GrokBotUsageView.swift in Sources */,
-				AA0000000000000000000446 /* GrokBotTrendChartView.swift in Sources */,
+				AA0000000000000000000438 /* XSubscriptionConnectRPC.swift in Sources */,
+				AA0000000000000000000439 /* XSubscriptionUsageClient.swift in Sources */,
+				AA0000000000000000000440 /* XSubscriptionUsageModels.swift in Sources */,
+				AA0000000000000000000441 /* XSubscriptionUsageSample.swift in Sources */,
+				AA0000000000000000000442 /* XSubscriptionUsageStore.swift in Sources */,
+				AA0000000000000000000443 /* XSubscriptionHistory.swift in Sources */,
+				AA0000000000000000000444 /* LevelDBXSubscriptionHistoryStore.swift in Sources */,
+				AA0000000000000000000445 /* XSubscriptionUsageView.swift in Sources */,
+				AA0000000000000000000446 /* XSubscriptionTrendChartView.swift in Sources */,
 				AA0000000000000000000417 /* OpenCodeUsageModels.swift in Sources */,
 				AA0000000000000000000418 /* OpenCodeUsageClient.swift in Sources */,
 				AA0000000000000000000419 /* OpenCodeUsageStore.swift in Sources */,
@@ -967,16 +922,13 @@
 				AA000000000000000000020E /* MenuBarVendorVisibilityTests.swift in Sources */,
 				AA000000000000000000020F /* InMemoryCodexHistoryStore.swift in Sources */,
 				AA0000000000000000000210 /* CodexHistoryTests.swift in Sources */,
-				AA0000000000000000000211 /* InMemoryCursorHistoryStore.swift in Sources */,
-				AA0000000000000000000212 /* CursorUsageTests.swift in Sources */,
-				AA0000000000000000000213 /* CursorHistoryTests.swift in Sources */,
 				AA0000000000000000000214 /* OpenCodeUsageTests.swift in Sources */,
 				AA0000000000000000000215 /* VPSUsageTests.swift in Sources */,
 				AA0000000000000000000216 /* CommandCodeUsageTests.swift in Sources */,
-				AA0000000000000000000217 /* GrokBotUsageTests.swift in Sources */,
-				AA0000000000000000000218 /* GrokBotHistoryTests.swift in Sources */,
-				AA0000000000000000000219 /* GrokBotExhaustionTests.swift in Sources */,
-				AA000000000000000000021A /* InMemoryGrokBotHistoryStore.swift in Sources */,
+				AA0000000000000000000217 /* XSubscriptionUsageTests.swift in Sources */,
+				AA0000000000000000000218 /* XSubscriptionHistoryTests.swift in Sources */,
+				AA0000000000000000000219 /* XSubscriptionExhaustionTests.swift in Sources */,
+				AA000000000000000000021A /* InMemoryXSubscriptionHistoryStore.swift in Sources */,
 				AA000000000000000000021B /* CompactRemainingTests.swift in Sources */,
 				E10000000000000000000007 /* TrendPeriodTests.swift in Sources */,
 				E10000000000000000000009 /* FloatingWindowClickInterpreterTests.swift in Sources */,

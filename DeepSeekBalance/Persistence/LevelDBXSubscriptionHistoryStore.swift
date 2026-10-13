@@ -1,10 +1,10 @@
 import Foundation
 import os
 
-/// 基于 LevelDB C API 的 GrokBot 用量历史存储。
+/// 基于 LevelDB C API 的 X Subscription 用量历史存储。
 /// actor 串行化所有访问，LevelDB 句柄在应用生命周期内只打开一次。
 /// 与余额/Codex 历史使用不同的目录，避免两个实例同时打开同一数据库。
-actor LevelDBGrokBotHistoryStore: GrokBotHistoryStoring {
+actor LevelDBXSubscriptionHistoryStore: XSubscriptionHistoryStoring {
   private let directory: URL
   private let dependencies: LevelDBDependencies
   private let options: OpaquePointer
@@ -14,7 +14,7 @@ actor LevelDBGrokBotHistoryStore: GrokBotHistoryStoring {
 
   private static let logger = Logger(
     subsystem: "com.example.DeepSeekBalance",
-    category: "grokBotHistory"
+    category: "xSubscriptionHistory"
   )
 
   /// 全部 C 资源创建完成后的非抛错初始化。
@@ -39,7 +39,7 @@ actor LevelDBGrokBotHistoryStore: GrokBotHistoryStoring {
   static func open(
     directory: URL,
     dependencies: LevelDBDependencies = .live
-  ) throws -> LevelDBGrokBotHistoryStore {
+  ) throws -> LevelDBXSubscriptionHistoryStore {
     guard let options = dependencies.createOptions() else {
       throw LevelDBError.openFailed("无法创建 LevelDB options")
     }
@@ -87,7 +87,7 @@ actor LevelDBGrokBotHistoryStore: GrokBotHistoryStoring {
       throw error
     }
 
-    return LevelDBGrokBotHistoryStore(
+    return LevelDBXSubscriptionHistoryStore(
       directory: directory,
       dependencies: dependencies,
       options: options,
@@ -106,12 +106,12 @@ actor LevelDBGrokBotHistoryStore: GrokBotHistoryStoring {
     dependencies.destroyWriteOptions(writeOptions)
   }
 
-  // MARK: - GrokBotHistoryStoring
+  // MARK: - XSubscriptionHistoryStoring
 
-  func upsert(samples: [GrokBotUsageSample], credentialID: String) async throws {
+  func upsert(samples: [XSubscriptionUsageSample], credentialID: String) async throws {
     guard let db else { throw LevelDBError.notOpen }
     guard !samples.isEmpty else { return }
-    guard GrokBotHistoryKeyCodec.validCredentialID(credentialID) else {
+    guard XSubscriptionHistoryKeyCodec.validCredentialID(credentialID) else {
       throw LevelDBError.writeFailed("凭据标识无效")
     }
 
@@ -124,13 +124,13 @@ actor LevelDBGrokBotHistoryStore: GrokBotHistoryStoring {
       guard sample.credentialID == credentialID else {
         throw LevelDBError.writeFailed("样本与凭据不一致")
       }
-      let key = GrokBotHistoryKeyCodec.key(
+      let key = XSubscriptionHistoryKeyCodec.key(
         credentialID: credentialID,
         bucketStart: sample.bucketStart
       )
       let value: Data
       do {
-        value = try GrokBotHistoryValueCodec.encode(sample: sample)
+        value = try XSubscriptionHistoryValueCodec.encode(sample: sample)
       } catch {
         throw LevelDBError.writeFailed("样本编码失败")
       }
@@ -155,22 +155,22 @@ actor LevelDBGrokBotHistoryStore: GrokBotHistoryStoring {
     }
   }
 
-  func fetch(credentialID: String, from: Date, to: Date) async throws -> [GrokBotUsageSample] {
+  func fetch(credentialID: String, from: Date, to: Date) async throws -> [XSubscriptionUsageSample] {
     guard let db else { throw LevelDBError.notOpen }
     guard let iterator = dependencies.createIterator(db, readOptions) else {
       throw LevelDBError.notOpen
     }
     defer { dependencies.iteratorDestroy(iterator) }
 
-    let prefix = GrokBotHistoryKeyCodec.credentialPrefix(credentialID: credentialID)
+    let prefix = XSubscriptionHistoryKeyCodec.credentialPrefix(credentialID: credentialID)
     let fromSeconds = Int64(from.timeIntervalSince1970)
     let toSeconds = Int64(to.timeIntervalSince1970)
-    let seekKey = prefix + GrokBotHistoryKeyCodec.padded(fromSeconds)
+    let seekKey = prefix + XSubscriptionHistoryKeyCodec.padded(fromSeconds)
     seekKey.withCString { pointer in
       dependencies.iteratorSeek(iterator, pointer, seekKey.utf8.count)
     }
 
-    var result: [GrokBotUsageSample] = []
+    var result: [XSubscriptionUsageSample] = []
     var skippedCount = 0
     while dependencies.iteratorValid(iterator) != 0 {
       var keyLength = 0
@@ -180,14 +180,14 @@ actor LevelDBGrokBotHistoryStore: GrokBotHistoryStoring {
       }
       guard key.hasPrefix(prefix) else { break }
 
-      if let parsed = GrokBotHistoryKeyCodec.parse(key: key),
+      if let parsed = XSubscriptionHistoryKeyCodec.parse(key: key),
         parsed.bucketSeconds >= fromSeconds,
         parsed.bucketSeconds <= toSeconds
       {
         var valueLength = 0
         if let valuePointer = dependencies.iteratorValue(iterator, &valueLength) {
           let value = Data(bytes: valuePointer, count: valueLength)
-          if let sample = try? GrokBotHistoryValueCodec.decode(value),
+          if let sample = try? XSubscriptionHistoryValueCodec.decode(value),
             Self.isConsistent(sample: sample, parsed: parsed, requestedCredentialID: credentialID)
           {
             result.append(sample)
@@ -210,8 +210,8 @@ actor LevelDBGrokBotHistoryStore: GrokBotHistoryStoring {
   func prune(before: Date) async throws {
     guard db != nil else { throw LevelDBError.notOpen }
     let threshold = Int64(before.timeIntervalSince1970)
-    let keys = try collectKeys(matching: GrokBotHistoryKeyCodec.schemaPrefixKey()) { key in
-      guard let parsed = GrokBotHistoryKeyCodec.parse(key: key) else { return false }
+    let keys = try collectKeys(matching: XSubscriptionHistoryKeyCodec.schemaPrefixKey()) { key in
+      guard let parsed = XSubscriptionHistoryKeyCodec.parse(key: key) else { return false }
       return parsed.bucketSeconds < threshold
     }
     try deleteKeys(keys)
@@ -220,8 +220,8 @@ actor LevelDBGrokBotHistoryStore: GrokBotHistoryStoring {
   func deleteHistory(credentialID: String?) async throws {
     guard db != nil else { throw LevelDBError.notOpen }
     let prefix =
-      credentialID.map(GrokBotHistoryKeyCodec.credentialPrefix)
-      ?? GrokBotHistoryKeyCodec.schemaPrefixKey()
+      credentialID.map(XSubscriptionHistoryKeyCodec.credentialPrefix)
+      ?? XSubscriptionHistoryKeyCodec.schemaPrefixKey()
     let keys = try collectKeys(matching: prefix)
     try deleteKeys(keys)
   }
@@ -263,7 +263,7 @@ actor LevelDBGrokBotHistoryStore: GrokBotHistoryStoring {
 
   /// 读取一致性校验：key 与 value 中的 credential、时间桶必须一致。
   private static func isConsistent(
-    sample: GrokBotUsageSample,
+    sample: XSubscriptionUsageSample,
     parsed: (credentialID: String, bucketSeconds: Int64),
     requestedCredentialID: String
   ) -> Bool {
@@ -342,5 +342,70 @@ actor LevelDBGrokBotHistoryStore: GrokBotHistoryStoring {
   private static func errorMessage(_ error: UnsafeMutablePointer<CChar>?) -> String {
     guard let error else { return "未知错误" }
     return String(cString: error)
+  }
+
+  /// 只读打开旧每周百分比历史库（例如 grokbot/v1/），把样本改写到新凭据。
+  static func loadLegacyWeeklySamples(
+    directory: URL,
+    prefix: String,
+    credentialID: String,
+    dependencies: LevelDBDependencies = .live
+  ) throws -> [XSubscriptionUsageSample] {
+    guard FileManager.default.fileExists(atPath: directory.path) else { return [] }
+    guard let options = dependencies.createOptions() else {
+      throw LevelDBError.openFailed("无法创建 LevelDB options")
+    }
+    guard let readOptions = dependencies.createReadOptions() else {
+      dependencies.destroyOptions(options)
+      throw LevelDBError.openFailed("无法创建 LevelDB read options")
+    }
+    var openError: UnsafeMutablePointer<CChar>?
+    guard let db = directory.path.withCString({ path in
+      dependencies.open(options, path, &openError)
+    }) else {
+      let message = errorMessage(openError)
+      if let openError {
+        dependencies.free(openError)
+      }
+      dependencies.destroyReadOptions(readOptions)
+      dependencies.destroyOptions(options)
+      throw LevelDBError.openFailed(message)
+    }
+    defer {
+      dependencies.close(db)
+      dependencies.destroyReadOptions(readOptions)
+      dependencies.destroyOptions(options)
+    }
+
+    guard let iterator = dependencies.createIterator(db, readOptions) else {
+      throw LevelDBError.notOpen
+    }
+    defer { dependencies.iteratorDestroy(iterator) }
+
+    prefix.withCString { pointer in
+      dependencies.iteratorSeek(iterator, pointer, prefix.utf8.count)
+    }
+
+    var result: [XSubscriptionUsageSample] = []
+    while dependencies.iteratorValid(iterator) != 0 {
+      var keyLength = 0
+      guard let keyPointer = dependencies.iteratorKey(iterator, &keyLength) else { break }
+      let key = keyPointer.withMemoryRebound(to: UInt8.self, capacity: keyLength) {
+        String(decoding: UnsafeBufferPointer(start: $0, count: keyLength), as: UTF8.self)
+      }
+      guard key.hasPrefix(prefix) else { break }
+      var valueLength = 0
+      if let valuePointer = dependencies.iteratorValue(iterator, &valueLength) {
+        let value = Data(bytes: valuePointer, count: valueLength)
+        if let sample = try? XSubscriptionHistoryValueCodec.decode(
+          value,
+          rewritingCredentialID: credentialID
+        ) {
+          result.append(sample)
+        }
+      }
+      dependencies.iteratorNext(iterator)
+    }
+    return result.sorted { $0.bucketStart < $1.bucketStart }
   }
 }

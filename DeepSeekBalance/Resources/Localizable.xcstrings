@@ -1601,38 +1601,6 @@
         }
       }
     },
-    "serviceStatus.titleCursor": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cursor Service Status"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cursor 服务状态"
-          }
-        }
-      }
-    },
-    "serviceStatus.titleGrokBot": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Grok Bot Service Status"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Grok Bot 服务状态"
-          }
-        }
-      }
-    },
     "serviceStatus.unavailable": {
       "localizations": {
         "en": {
@@ -3025,550 +2993,6 @@
         }
       }
     },
-    "tab.cursor": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cursor Usage"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cursor 用量"
-          }
-        }
-      }
-    },
-    "cursor.title": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cursor Usage"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cursor 用量"
-          }
-        }
-      }
-    },
-    "cursor.plan": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Plan"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "订阅方案"
-          }
-        }
-      }
-    },
-    "cursor.planUnknown": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unknown"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "未知"
-          }
-        }
-      }
-    },
-    "cursor.account": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Account: %@"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "账号：%@"
-          }
-        }
-      }
-    },
-    "cursor.windowTitle": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Billing cycle"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "计费周期"
-          }
-        }
-      }
-    },
-    "cursor.windowUsedRemaining": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Used %lld%% · %lld%% remaining"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已用 %lld%% · 剩余 %lld%%"
-          }
-        }
-      }
-    },
-    "cursor.windowUsedRemainingWithGap": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Used %lld%% · %lld%% remaining (%@)"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已用 %lld%% · 剩余 %lld%%（%@）"
-          }
-        }
-      }
-    },
-    "cursor.resetAt": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Resets at %@"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "重置时间：%@"
-          }
-        }
-      }
-    },
-    "cursor.expectedMarker": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Expected usage at this point in the billing cycle"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "当前计费周期的预期用量位置"
-          }
-        }
-      }
-    },
-    "cursor.limitAllowed": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Available"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "可用"
-          }
-        }
-      }
-    },
-    "cursor.limitReached": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usage limit reached"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已达到用量上限"
-          }
-        }
-      }
-    },
-    "cursor.noLimit": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No usage limit info"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "无用量限制信息"
-          }
-        }
-      }
-    },
-    "cursor.freePlan": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No usage-limit information available"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "暂无用量限制信息"
-          }
-        }
-      }
-    },
-    "cursor.apiChannel": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "API channel"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "API 通道"
-          }
-        }
-      }
-    },
-    "cursor.spendTitle": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Spend this cycle"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "本周期费用"
-          }
-        }
-      }
-    },
-    "cursor.spendTotal": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Total spent"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "总支出"
-          }
-        }
-      }
-    },
-    "cursor.spendIncluded": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Included spend"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "套餐内费用"
-          }
-        }
-      }
-    },
-    "cursor.spendBonus": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bonus spend"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "赠送额度费用"
-          }
-        }
-      }
-    },
-    "cursor.spendLimit": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Plan limit"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "方案上限"
-          }
-        }
-      }
-    },
-    "cursor.loading": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fetching Cursor usage…"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "正在获取 Cursor 用量…"
-          }
-        }
-      }
-    },
-    "cursor.empty": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No Cursor usage data yet"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "暂无 Cursor 用量数据"
-          }
-        }
-      }
-    },
-    "cursor.notConfigured": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cursor sign-in not found"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "未找到 Cursor 登录信息"
-          }
-        }
-      }
-    },
-    "cursor.notConfiguredDetail": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Run cursor agent login on this Mac to sign in"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "请先在本机运行 cursor agent login 登录"
-          }
-        }
-      }
-    },
-    "cursor.authInvalid": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cursor session expired. Sign in again with cursor agent login"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cursor 登录已失效，请重新运行 cursor agent login 登录"
-          }
-        }
-      }
-    },
-    "cursor.lastUpdated": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Last updated: %@"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "最后更新：%@"
-          }
-        }
-      }
-    },
-    "cursor.trendTitle": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usage Trend"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "用量趋势"
-          }
-        }
-      }
-    },
-    "cursor.trendSummary": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usage change over the last 14 days: %@"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "近 14 天用量变化：%@"
-          }
-        }
-      }
-    },
-    "cursor.trendInsufficient": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usage change over the last 14 days: not enough samples"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "近 14 天用量变化：样本不足"
-          }
-        }
-      }
-    },
-    "cursor.trendFirstParty": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "First-party models"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "第一方模型"
-          }
-        }
-      }
-    },
-    "cursor.trendApi": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "API"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "API"
-          }
-        }
-      }
-    },
-    "menu.showCursor": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Show Cursor"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "显示 Cursor"
-          }
-        }
-      }
-    },
-    "a11y.cursorIcon": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cursor icon"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cursor 图标"
-          }
-        }
-      }
-    },
-    "a11y.menuBarCursor": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cursor usage: %@"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cursor 用量：%@"
-          }
-        }
-      }
-    },
     "a11y.codexLegend": {
       "localizations": {
         "en": {
@@ -3581,22 +3005,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Codex 用量趋势图"
-          }
-        }
-      }
-    },
-    "a11y.cursorLegend": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cursor usage trend chart"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cursor 用量趋势图"
           }
         }
       }
@@ -3926,13 +3334,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Paste a complete Netscape Cookie file, or paste its local path (for example ~/Downloads/cookies.txt). Only the OpenCode auth cookie is stored in Keychain."
+            "value": "Go usage is read from the local OpenCode API key. Zen balance still needs a Netscape cookie that includes __Host-console_session. Paste the file or its path, for example ~/Downloads/cookies.txt."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "可粘贴完整 Netscape Cookie 文件内容，也可粘贴本机路径（例如 ~/Downloads/cookies.txt）。应用只会把 OpenCode 登录 Cookie 保存到 Keychain。"
+            "value": "Go 用量会读取本机 OpenCode API Key。Zen 余额仍需要包含 __Host-console_session 的 Netscape Cookie。可粘贴文件内容或本机路径，例如 ~/Downloads/cookies.txt。"
           }
         }
       }
@@ -5888,143 +5296,232 @@
           }
         }
       }
-    },
-    "tab.grokBot": {
+    },    "serviceStatus.titleXSubscription": {
       "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Grok Bot" } },
-        "zh-Hans": { "stringUnit": { "state": "translated", "value": "Grok Bot" } }
+        "en": { "stringUnit": { "state": "translated", "value": "X Subscription Service Status" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "X Subscription 服务状态" } }
       }
     },
-    "grokBot.title": {
+    "tab.xsubscription": {
       "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Grok Bot Usage" } },
-        "zh-Hans": { "stringUnit": { "state": "translated", "value": "Grok Bot 用量" } }
+        "en": { "stringUnit": { "state": "translated", "value": "X Subscription" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "X Subscription" } }
       }
     },
-    "grokBot.account": {
+    "xsubscription.title": {
       "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Account: %@" } },
-        "zh-Hans": { "stringUnit": { "state": "translated", "value": "账号：%@" } }
+        "en": { "stringUnit": { "state": "translated", "value": "X Subscription Usage" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "X Subscription 用量" } }
       }
     },
-    "grokBot.windowTitle": {
+    "xsubscription.merged": {
       "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Weekly included quota" } },
-        "zh-Hans": { "stringUnit": { "state": "translated", "value": "每周包含额度" } }
+        "en": { "stringUnit": { "state": "translated", "value": "Merged" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "已合并" } }
       }
     },
-    "grokBot.windowUsedRemaining": {
+    "xsubscription.legacy": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Legacy plan" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "旧版套餐" } }
+      }
+    },
+    "xsubscription.windowTitle": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Weekly shared usage" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "每周共享用量" } }
+      }
+    },
+    "xsubscription.windowUsedRemaining": {
       "localizations": {
         "en": { "stringUnit": { "state": "translated", "value": "Used %lld%% · Remaining %lld%%" } },
         "zh-Hans": { "stringUnit": { "state": "translated", "value": "已用 %lld%% · 剩余 %lld%%" } }
       }
     },
-    "grokBot.windowUsedRemainingWithGap": {
+    "xsubscription.windowUsedRemainingWithGap": {
       "localizations": {
         "en": { "stringUnit": { "state": "translated", "value": "Used %lld%% · Remaining %lld%% (%@)" } },
         "zh-Hans": { "stringUnit": { "state": "translated", "value": "已用 %lld%% · 剩余 %lld%%（%@）" } }
       }
     },
-    "grokBot.resetAt": {
+    "xsubscription.resetAt": {
       "localizations": {
         "en": { "stringUnit": { "state": "translated", "value": "Resets at %@" } },
         "zh-Hans": { "stringUnit": { "state": "translated", "value": "重置时间：%@" } }
       }
     },
-    "grokBot.expectedMarker": {
+    "xsubscription.expectedMarker": {
       "localizations": {
         "en": { "stringUnit": { "state": "translated", "value": "Expected usage marker" } },
         "zh-Hans": { "stringUnit": { "state": "translated", "value": "理想用量标记" } }
       }
     },
-    "grokBot.limitAllowed": {
+    "xsubscription.limitAllowed": {
       "localizations": {
         "en": { "stringUnit": { "state": "translated", "value": "Within limit" } },
         "zh-Hans": { "stringUnit": { "state": "translated", "value": "未达上限" } }
       }
     },
-    "grokBot.limitReached": {
+    "xsubscription.limitReached": {
       "localizations": {
         "en": { "stringUnit": { "state": "translated", "value": "Limit reached" } },
         "zh-Hans": { "stringUnit": { "state": "translated", "value": "已达上限" } }
       }
     },
-    "grokBot.noIncludedLimit": {
+    "xsubscription.noIncludedLimit": {
       "localizations": {
         "en": { "stringUnit": { "state": "translated", "value": "No included weekly limit on this account." } },
         "zh-Hans": { "stringUnit": { "state": "translated", "value": "此账号没有包含的每周额度。" } }
       }
     },
-    "grokBot.enterprisePooled": {
+    "xsubscription.enterprisePooled": {
       "localizations": {
         "en": { "stringUnit": { "state": "translated", "value": "Enterprise pooled allowance. This account has no personal weekly meter." } },
         "zh-Hans": { "stringUnit": { "state": "translated", "value": "企业共享额度，无个人每周计量。" } }
       }
     },
-    "grokBot.trial": {
+    "xsubscription.trial": {
       "localizations": {
         "en": { "stringUnit": { "state": "translated", "value": "Trial expires" } },
         "zh-Hans": { "stringUnit": { "state": "translated", "value": "试用到期" } }
       }
     },
-    "grokBot.loading": {
+    "xsubscription.breakdownTitle": {
       "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Loading Grok Bot usage…" } },
-        "zh-Hans": { "stringUnit": { "state": "translated", "value": "正在加载 Grok Bot 用量…" } }
+        "en": { "stringUnit": { "state": "translated", "value": "Breakdown" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "分项" } }
       }
     },
-    "grokBot.empty": {
+    "xsubscription.productCursor": {
       "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Grok Bot usage is not available yet." } },
-        "zh-Hans": { "stringUnit": { "state": "translated", "value": "Grok Bot 用量暂不可用。" } }
+        "en": { "stringUnit": { "state": "translated", "value": "Cursor" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "Cursor" } }
       }
     },
-    "grokBot.notConfigured": {
+    "xsubscription.productGrokBot": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Grok Bot" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "Grok Bot" } }
+      }
+    },
+    "xsubscription.productGrokChat": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Grok Chat" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "Grok Chat" } }
+      }
+    },
+    "xsubscription.productEmpty": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "No itemized usage data" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "暂无分项数据" } }
+      }
+    },
+    "xsubscription.openGrokUsage": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Open grok.com usage" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "打开 grok.com 用量页" } }
+      }
+    },
+    "xsubscription.grokChatNote": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Grok Chat (grok.com) usage is not available with this sign-in." } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "grok.com 聊天用量无法通过此登录获取。" } }
+      }
+    },
+    "xsubscription.openBilling": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Open billing" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "打开账单" } }
+      }
+    },
+    "xsubscription.extraTitle": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Extra usage credits" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "额外用量积分" } }
+      }
+    },
+    "xsubscription.spentThisMonth": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Spent this month %@" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "本月已花 %@" } }
+      }
+    },
+    "xsubscription.onDemandUnlimited": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Unlimited" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "不限" } }
+      }
+    },
+    "xsubscription.onDemandLimit": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Limit %@" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "上限 %@" } }
+      }
+    },
+    "xsubscription.extraDescription": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Pay-as-you-go credits for Cursor third-party models and API usage" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "按量付费的额外积分（Cursor 第三方模型 / API）" } }
+      }
+    },
+    "xsubscription.loading": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Loading X Subscription usage…" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "正在加载 X Subscription 用量…" } }
+      }
+    },
+    "xsubscription.empty": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "X Subscription usage is not available yet." } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "X Subscription 用量暂不可用。" } }
+      }
+    },
+    "xsubscription.notConfigured": {
       "localizations": {
         "en": { "stringUnit": { "state": "translated", "value": "Not signed in" } },
         "zh-Hans": { "stringUnit": { "state": "translated", "value": "未登录" } }
       }
     },
-    "grokBot.notConfiguredDetail": {
+    "xsubscription.notConfiguredDetail": {
       "localizations": {
         "en": { "stringUnit": { "state": "translated", "value": "Run cursor agent login on this Mac to sign in" } },
         "zh-Hans": { "stringUnit": { "state": "translated", "value": "请先在本机运行 cursor agent login 登录" } }
       }
     },
-    "grokBot.authInvalid": {
+    "xsubscription.authInvalid": {
       "localizations": {
         "en": { "stringUnit": { "state": "translated", "value": "Sign-in expired. Run cursor agent login again" } },
         "zh-Hans": { "stringUnit": { "state": "translated", "value": "登录已失效，请重新运行 cursor agent login" } }
       }
     },
-    "grokBot.lastUpdated": {
+    "xsubscription.lastUpdated": {
       "localizations": {
         "en": { "stringUnit": { "state": "translated", "value": "Last updated: %@" } },
         "zh-Hans": { "stringUnit": { "state": "translated", "value": "上次更新：%@" } }
       }
     },
-    "menu.showGrokBot": {
+    "menu.showXSubscription": {
       "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Grok Bot" } },
-        "zh-Hans": { "stringUnit": { "state": "translated", "value": "Grok Bot" } }
+        "en": { "stringUnit": { "state": "translated", "value": "X Subscription" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "X Subscription" } }
       }
     },
-    "a11y.grokBotIcon": {
+    "a11y.xsubscriptionIcon": {
       "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Grok Bot" } },
-        "zh-Hans": { "stringUnit": { "state": "translated", "value": "Grok Bot" } }
+        "en": { "stringUnit": { "state": "translated", "value": "X Subscription" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "X Subscription" } }
       }
     },
-    "a11y.menuBarGrokBot": {
+    "a11y.menuBarXSubscription": {
       "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Grok Bot usage: %@" } },
-        "zh-Hans": { "stringUnit": { "state": "translated", "value": "Grok Bot 用量：%@" } }
+        "en": { "stringUnit": { "state": "translated", "value": "X Subscription usage: %@" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "X Subscription 用量：%@" } }
       }
     },
-    "a11y.grokBotLegend": {
+    "a11y.xsubscriptionLegend": {
       "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Grok Bot weekly remaining trend chart" } },
-        "zh-Hans": { "stringUnit": { "state": "translated", "value": "Grok Bot 每周剩余趋势图" } }
+        "en": { "stringUnit": { "state": "translated", "value": "X Subscription weekly remaining trend chart" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "X Subscription 每周剩余趋势图" } }
       }
     }
   },

@@ -29,8 +29,8 @@ The menu bar shows the monochrome icon and current balance:
 - Keeps the last successful balance after request failures; authentication failure or an unreadable Keychain clears stale account data instead of showing it
 - All provider trend cards use the consistent `Usage Trend` title and `Usage change over the last 14 days:` second line; charts use Apple Swift Charts, 10-minute time buckets, and local storage
 - Trend chart supports click/drag selection with local time, each balance figure, and the delta from the previous sample
-- OpenCode Usage page: paste a complete Netscape Cookie file or a local absolute path to load Zen balance and Go subscription usage
-- Compatible with the current OpenCode page's case-variant fields and SolidStart `$R[n]=` serialized usage windows, so an active subscription does not appear to have a missing usage window
+- OpenCode Go usage uses the official `GET https://opencode.ai/zen/go/v1/usage` endpoint. The API key is read from the local `~/.local/share/opencode/auth.json`
+- OpenCode Zen balance uses the official console endpoint `GET https://opencode.ai/console/api/billing/status` and needs a cookie that includes `__Host-console_session`
 - OpenCode Go shows a red not-subscribed indicator when no subscription exists; an active subscription shows 5-hour, weekly, and monthly windows with used/remaining percentages, the signed gap from ideal usage, reset time, a red ideal-usage marker, and blue, green, or orange progress colors based on ideal-progress deviation
 - OpenCode uses a two-line menu bar layout for Go monthly remaining percentage plus its ideal-usage gap and Zen balance; the first line is `--` when Go is not subscribed or the monthly window is unavailable
 - OpenCode trends show only an independent Zen chart without a legend when Go is not subscribed; with Go active, Go windows and Zen share one dual-axis chart with a legend
@@ -61,11 +61,11 @@ If you downloaded an unsigned release, macOS may say that it cannot verify the d
 
 - All provider trend cards use the same `Usage Trend` title and `Usage change over the last 14 days:` description. DeepSeek has no public balance-history API, so the app records each successful balance fetch locally.
 - The top-right of each trend chart estimates exhaustion time from actual consumption: it prefers the last 1 hour, then falls back to the last 24 hours, 72 hours, and all history when the shorter window has no consumption. If the entire history has no balance decrease, it explicitly says that there is not enough usage data instead of fabricating a time.
-- DeepSeek estimates balance exhaustion; Codex and Cursor estimate weekly-quota exhaustion; OpenCode shows weekly Go and Zen exhaustion estimates when subscribed (no monthly estimate), and only the Zen balance estimate without a Go subscription.
+- DeepSeek estimates balance exhaustion; Codex and X Subscription estimate weekly-quota exhaustion; OpenCode shows weekly Go and Zen exhaustion estimates when subscribed (no monthly estimate), and only the Zen balance estimate without a Go subscription.
 - History is stored in **10-minute UTC buckets**: one record per currency per bucket, with newer refreshes overwriting older ones; negative Unix timestamps use strict floor.
 - Balance and provider usage queries run immediately on launch and every 30 seconds; multiple successes within 30 seconds share one 10-minute bucket.
-- History starts from the first successful sample; no data is produced while the app is not running; sleep gaps appear as broken lines (gaps over 20 minutes are not interpolated).
-- The trend chart uses `LineMark` only for continuous data and does not draw small point markers that add visual noise. Gaps over 20 minutes break the line, and the full 14-day window (up to ~2,016 ten-minute buckets) stays smooth.
+- History starts from the first successful sample; no data is produced while the app is not running; sleep gaps stay on the chart as straight lines between the nearest real samples.
+- The trend chart uses `LineMark` only for continuous data and does not draw small point markers that add visual noise. Missing samples are linearly interpolated, and the full 14-day window (up to ~2,016 ten-minute buckets) stays smooth.
 - The X axis domain is explicitly `now - 14 days ... now`, with an injectable time source.
 - History is stored locally only and kept for up to 14 days; a startup prune runs on launch (using the injected clock), followed by throttled pruning (the throttle time is recorded only after a successful prune, so a failure can be retried).
 - Database location: `<Application Support>/com.jxz.deepseekbalance/BalanceHistory.leveldb`; upgrades also read the legacy `com.example.DeepSeekBalance` directory.
@@ -77,7 +77,7 @@ If you downloaded an unsigned release, macOS may say that it cannot verify the d
 
 - Cookie input accepts either complete Netscape Cookie file content or a local absolute path (including a `~` prefix). The app keeps only the `auth` / `__Host-auth` login Cookie in the Keychain; it does not store the complete Cookie file or write Cookie data into trend history.
 - OpenCode Zen is represented by a USD balance. OpenCode Go is represented by independent 5-hour, weekly, and monthly subscription usage windows. Each window shows used/remaining percentages, the signed difference between actual and ideal usage, a red ideal-usage marker, and its server-provided reset time.
-- The parser accepts the current page's case-variant fields and SolidStart `$R[n]=` serialization; even if an empty legacy subscription field appears first, a later valid `SubscriptionID` is still recognized.
+- Go usage comes from `GET /zen/go/v1/usage`, which returns used percent and reset time for the 5-hour, weekly, and monthly windows. A 403 means there is no Go subscription and does not hide the Zen balance.
 - Go keeps separate 5-hour, weekly, and monthly windows. Progress bars are blue when ideal usage data is unavailable or the difference is within 10 percentage points, green when actual usage is more than 10 points behind ideal progress, and orange when it is more than 10 points ahead.
 - When Go is not subscribed, the Go card explicitly says so and uses one red indicator bar; the trend area hides Go entirely and keeps only an independent Zen chart without a single-series legend.
 - When Go is subscribed, the trend area combines the 5-hour, weekly, and monthly Go curves with the Zen balance curve in one chart: the left Y axis is Go remaining percentage, the right Y axis is Zen USD balance, and the bottom legend identifies each curve.

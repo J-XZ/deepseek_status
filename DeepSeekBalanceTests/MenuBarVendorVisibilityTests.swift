@@ -14,7 +14,6 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
 
   override func tearDown() {
     defaults.removePersistentDomain(forName: suiteName)
-    super.tearDown()
   }
 
   private func visibility() -> MenuBarVendorVisibility {
@@ -25,15 +24,13 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
     let visibility = visibility()
     XCTAssertTrue(visibility.showsDeepSeek)
     XCTAssertTrue(visibility.showsCodex)
-    XCTAssertTrue(visibility.showsCursor)
+    XCTAssertTrue(visibility.showsXSubscription)
     XCTAssertTrue(visibility.showsOpenCode)
     XCTAssertTrue(visibility.showsVPS)
     XCTAssertTrue(visibility.isVisible(.deepseek))
     XCTAssertTrue(visibility.isVisible(.codex))
-    XCTAssertTrue(visibility.isVisible(.cursor))
+    XCTAssertTrue(visibility.isVisible(.xSubscription))
     XCTAssertTrue(visibility.isVisible(.vps))
-    XCTAssertTrue(visibility.showsGrokBot)
-    XCTAssertTrue(visibility.isVisible(.grokBot))
   }
 
   func testToggleCodexOff() {
@@ -41,10 +38,10 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
     XCTAssertTrue(visibility.toggle(.codex))
     XCTAssertFalse(visibility.showsCodex)
     XCTAssertTrue(visibility.showsDeepSeek)
-    XCTAssertTrue(visibility.showsCursor)
+    XCTAssertTrue(visibility.showsXSubscription)
     XCTAssertTrue(visibility.isVisible(.deepseek))
     XCTAssertFalse(visibility.isVisible(.codex))
-    XCTAssertTrue(visibility.isVisible(.cursor))
+    XCTAssertTrue(visibility.isVisible(.xSubscription))
   }
 
   func testToggleDeepSeekOff() {
@@ -52,7 +49,7 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
     XCTAssertTrue(visibility.toggle(.deepseek))
     XCTAssertFalse(visibility.showsDeepSeek)
     XCTAssertTrue(visibility.showsCodex)
-    XCTAssertTrue(visibility.showsCursor)
+    XCTAssertTrue(visibility.showsXSubscription)
   }
 
   func testToggleBackOn() {
@@ -62,10 +59,10 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
     XCTAssertTrue(visibility.showsCodex)
   }
 
-  func testToggleCursorOff() {
+  func testToggleXSubscriptionOff() {
     let visibility = visibility()
-    XCTAssertTrue(visibility.toggle(.cursor))
-    XCTAssertFalse(visibility.showsCursor)
+    XCTAssertTrue(visibility.toggle(.xSubscription))
+    XCTAssertFalse(visibility.showsXSubscription)
     XCTAssertTrue(visibility.showsDeepSeek)
     XCTAssertTrue(visibility.showsCodex)
   }
@@ -84,10 +81,8 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
     XCTAssertTrue(visibility.toggle(.deepseek))
     XCTAssertTrue(visibility.toggle(.codex))
     XCTAssertTrue(visibility.toggle(.commandCode))
-    XCTAssertTrue(visibility.toggle(.grokBot))
-    // 只剩 Cursor 可见时不可再隐藏。
-    XCTAssertFalse(visibility.toggle(.cursor))
-    XCTAssertTrue(visibility.showsCursor)
+    XCTAssertFalse(visibility.toggle(.xSubscription))
+    XCTAssertTrue(visibility.showsXSubscription)
     XCTAssertFalse(visibility.showsDeepSeek)
     XCTAssertFalse(visibility.showsCodex)
   }
@@ -97,26 +92,12 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
     XCTAssertTrue(visibility.toggle(.vps))
     XCTAssertTrue(visibility.toggle(.openCode))
     XCTAssertTrue(visibility.toggle(.codex))
-    XCTAssertTrue(visibility.toggle(.cursor))
+    XCTAssertTrue(visibility.toggle(.xSubscription))
     XCTAssertTrue(visibility.toggle(.commandCode))
-    XCTAssertTrue(visibility.toggle(.grokBot))
-    // 只剩 DeepSeek 可见时不可再隐藏。
     XCTAssertFalse(visibility.toggle(.deepseek))
     XCTAssertTrue(visibility.showsDeepSeek)
     XCTAssertFalse(visibility.showsCodex)
-    XCTAssertFalse(visibility.showsCursor)
-  }
-
-  func testCannotHideLastVisibleVendorWhenOnlyGrokBotRemains() {
-    let visibility = visibility()
-    XCTAssertTrue(visibility.toggle(.vps))
-    XCTAssertTrue(visibility.toggle(.openCode))
-    XCTAssertTrue(visibility.toggle(.deepseek))
-    XCTAssertTrue(visibility.toggle(.codex))
-    XCTAssertTrue(visibility.toggle(.cursor))
-    XCTAssertTrue(visibility.toggle(.commandCode))
-    XCTAssertFalse(visibility.toggle(.grokBot))
-    XCTAssertTrue(visibility.showsGrokBot)
+    XCTAssertFalse(visibility.showsXSubscription)
   }
 
   func testPersistsAcrossInstances() {
@@ -127,7 +108,7 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
     let second = visibility()
     XCTAssertFalse(second.showsDeepSeek)
     XCTAssertTrue(second.showsCodex)
-    XCTAssertTrue(second.showsCursor)
+    XCTAssertTrue(second.showsXSubscription)
   }
 
   func testToggleRejectsRejectedState() {
@@ -137,10 +118,9 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
     XCTAssertTrue(visibility.toggle(.deepseek))
     XCTAssertTrue(visibility.toggle(.codex))
     XCTAssertTrue(visibility.toggle(.commandCode))
-    XCTAssertTrue(visibility.toggle(.grokBot))
-    XCTAssertFalse(visibility.toggle(.cursor))
-    XCTAssertFalse(visibility.toggle(.cursor))
-    XCTAssertTrue(visibility.showsCursor)
+    XCTAssertFalse(visibility.toggle(.xSubscription))
+    XCTAssertFalse(visibility.toggle(.xSubscription))
+    XCTAssertTrue(visibility.showsXSubscription)
     XCTAssertFalse(visibility.showsDeepSeek)
     XCTAssertFalse(visibility.showsCodex)
   }
@@ -149,49 +129,50 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
     let visibility = visibility()
     XCTAssertEqual(
       visibility.orderedVendors,
-      [.deepseek, .codex, .cursor, .openCode, .vps, .commandCode, .grokBot]
+      [.deepseek, .codex, .xSubscription, .openCode, .vps, .commandCode]
     )
   }
 
   func testMovePersistsVisibleOrder() {
     let vis = visibility()
-    let reordered = vis.move([.vps, .deepseek, .cursor, .openCode, .codex, .commandCode])
-    XCTAssertEqual(reordered, [.vps, .deepseek, .cursor, .openCode, .codex, .commandCode, .grokBot])
-    // 持久化：新实例读取相同顺序。
+    let reordered = vis.move([.vps, .deepseek, .xSubscription, .openCode, .codex, .commandCode])
+    XCTAssertEqual(
+      reordered,
+      [.vps, .deepseek, .xSubscription, .openCode, .codex, .commandCode]
+    )
     let second = visibility()
     XCTAssertEqual(
       second.orderedVendors,
-      [.vps, .deepseek, .cursor, .openCode, .codex, .commandCode, .grokBot]
+      [.vps, .deepseek, .xSubscription, .openCode, .codex, .commandCode]
     )
     XCTAssertEqual(
       second.orderedVisibleVendors,
-      [.vps, .deepseek, .cursor, .openCode, .codex, .commandCode, .grokBot]
+      [.vps, .deepseek, .xSubscription, .openCode, .codex, .commandCode]
     )
   }
 
   func testMoveAppendsHiddenVendorsToKeepFullSet() {
     let vis = visibility()
     XCTAssertTrue(vis.toggle(.codex))
-    let reordered = vis.move([.cursor, .deepseek, .vps, .openCode, .commandCode])
-    XCTAssertEqual(reordered, [.cursor, .deepseek, .vps, .openCode, .commandCode, .codex, .grokBot])
-    // 隐藏的 Codex 不参与可见顺序。
+    let reordered = vis.move([.xSubscription, .deepseek, .vps, .openCode, .commandCode])
+    XCTAssertEqual(reordered, [.xSubscription, .deepseek, .vps, .openCode, .commandCode, .codex])
     XCTAssertEqual(
       vis.orderedVisibleVendors,
-      [.cursor, .deepseek, .vps, .openCode, .commandCode, .grokBot]
+      [.xSubscription, .deepseek, .vps, .openCode, .commandCode]
     )
   }
 
   func testMoveSingleVendorBeforeTarget() {
     let vis = visibility()
     let reordered = vis.move(.vps, before: .deepseek)
-    XCTAssertEqual(reordered, [.vps, .deepseek, .codex, .cursor, .openCode, .commandCode, .grokBot])
+    XCTAssertEqual(reordered, [.vps, .deepseek, .codex, .xSubscription, .openCode, .commandCode])
     XCTAssertEqual(vis.orderedVendors.first, .vps)
   }
 
   func testMoveSingleVendorToEnd() {
     let vis = visibility()
     let reordered = vis.move(.deepseek, before: nil)
-    XCTAssertEqual(reordered, [.codex, .cursor, .openCode, .vps, .commandCode, .grokBot, .deepseek])
+    XCTAssertEqual(reordered, [.codex, .xSubscription, .openCode, .vps, .commandCode, .deepseek])
   }
 
   func testOrderedVisibleVendorsReflectsVisibility() {
@@ -199,12 +180,11 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
     XCTAssertTrue(vis.toggle(.openCode))
     XCTAssertEqual(
       vis.orderedVisibleVendors,
-      [.deepseek, .codex, .cursor, .vps, .commandCode, .grokBot]
+      [.deepseek, .codex, .xSubscription, .vps, .commandCode]
     )
   }
 
   func testOrderedVendorsToleratesIncompleteSavedOrder() {
-    // 旧版本可能只保存了可见供应商子集；读取时缺失项按声明顺序补尾。
     defaults.set(
       [MenuBarVendor.vps.rawValue, MenuBarVendor.deepseek.rawValue],
       forKey: MenuBarVendorVisibility.orderKey
@@ -212,33 +192,59 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
     let vis = visibility()
     XCTAssertEqual(
       vis.orderedVendors,
-      [.vps, .deepseek, .codex, .cursor, .openCode, .commandCode, .grokBot]
+      [.vps, .deepseek, .codex, .xSubscription, .openCode, .commandCode]
     )
   }
 
   func testOrderedVendorsToleratesDuplicateSavedOrder() {
     defaults.set(
-      [1, 1, 2, 0],  // codex 重复、deepseek 置后
+      [1, 1, 2, 0],
       forKey: MenuBarVendorVisibility.orderKey
     )
     let vis = visibility()
     XCTAssertEqual(
       vis.orderedVendors,
-      [.codex, .cursor, .deepseek, .openCode, .vps, .commandCode, .grokBot]
+      [.codex, .xSubscription, .deepseek, .openCode, .vps, .commandCode]
     )
+  }
+
+  func testLegacyCursorAndGrokBotRawValuesMapToXSubscription() {
+    defaults.set(
+      [0, 1, 2, 3, 4, 5, 6],
+      forKey: MenuBarVendorVisibility.orderKey
+    )
+    let vis = visibility()
+    XCTAssertEqual(
+      vis.orderedVendors,
+      [.deepseek, .codex, .xSubscription, .openCode, .vps, .commandCode]
+    )
+  }
+
+  func testLegacyVisibilityEitherCursorOrGrokBotShowsXSubscription() {
+    defaults.set(false, forKey: MenuBarVendorVisibility.legacyCursorKey)
+    defaults.set(true, forKey: MenuBarVendorVisibility.legacyGrokBotKey)
+    XCTAssertTrue(visibility().showsXSubscription)
+
+    defaults.removePersistentDomain(forName: suiteName)
+    defaults.set(true, forKey: MenuBarVendorVisibility.legacyCursorKey)
+    defaults.set(false, forKey: MenuBarVendorVisibility.legacyGrokBotKey)
+    XCTAssertTrue(visibility().showsXSubscription)
+
+    defaults.removePersistentDomain(forName: suiteName)
+    defaults.set(false, forKey: MenuBarVendorVisibility.legacyCursorKey)
+    defaults.set(false, forKey: MenuBarVendorVisibility.legacyGrokBotKey)
+    XCTAssertFalse(visibility().showsXSubscription)
   }
 
   func testMoveVendorBeforeWritesCompleteOrder() {
     let vis = visibility()
-    // 先隐藏一个供应商，再移动另一个；存储仍须包含全部供应商。
     XCTAssertTrue(vis.toggle(.openCode))
     _ = vis.move(.vps, before: .deepseek)
     let reloaded = visibility()
     XCTAssertEqual(
       reloaded.orderedVendors,
-      [.vps, .deepseek, .codex, .cursor, .commandCode, .grokBot, .openCode]
+      [.vps, .deepseek, .codex, .xSubscription, .commandCode, .openCode]
     )
-    // 新实例读取顺序与写入一致，不会回退默认。
     XCTAssertEqual(reloaded.orderedVendors.first, .vps)
   }
 
@@ -254,32 +260,6 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
     XCTAssertFalse(reloaded.showsCommandCode)
     XCTAssertTrue(reloaded.showsDeepSeek)
     XCTAssertTrue(reloaded.showsCodex)
-  }
-
-  func testCursorMenuBarTextStacksTwoChannelsVertically() {
-    XCTAssertEqual(
-      MenuBarDisplayLayout.cursorText("30% (+20%)/17% (+33%)"),
-      "30% (+20%)\n17% (+33%)"
-    )
-  }
-
-  func testCursorMenuBarTextKeepsSingleChannelOnOneLine() {
-    XCTAssertEqual(MenuBarDisplayLayout.cursorText("30% (+20%)"), "30% (+20%)")
-  }
-
-  func testCursorMenuBarUsesSmallerFont() {
-    XCTAssertLessThan(
-      MenuBarDisplayLayout.cursorFontSize,
-      MenuBarDisplayLayout.regularFontSize
-    )
-  }
-
-  func testCursorMenuBarUsesCompactLinesWithTopInset() {
-    XCTAssertLessThan(
-      MenuBarDisplayLayout.cursorLineHeight,
-      MenuBarIconLayout.cursorMaxDimension
-    )
-    XCTAssertGreaterThan(MenuBarDisplayLayout.cursorVerticalInset, 0)
   }
 
   func testMenuBarIconLayoutPreservesAspectRatio() {
@@ -299,12 +279,24 @@ final class MenuBarVendorVisibilityTests: XCTestCase {
       MenuBarIconLayout.codexMaxDimension
     )
     XCTAssertEqual(
-      MenuBarIconLayout.cursorMaxDimension,
+      MenuBarIconLayout.xSubscriptionMaxDimension,
       MenuBarIconLayout.codexMaxDimension
     )
     XCTAssertEqual(
       MenuBarIconLayout.vpsMaxDimension,
       MenuBarIconLayout.codexMaxDimension
     )
+  }
+
+  func testCompactMenuBarFontIsSmallerThanRegular() {
+    XCTAssertLessThan(
+      MenuBarDisplayLayout.compactFontSize,
+      MenuBarDisplayLayout.regularFontSize
+    )
+    XCTAssertLessThan(
+      MenuBarDisplayLayout.compactLineHeight,
+      MenuBarIconLayout.xSubscriptionMaxDimension
+    )
+    XCTAssertGreaterThan(MenuBarDisplayLayout.compactVerticalInset, 0)
   }
 }

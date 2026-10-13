@@ -592,7 +592,7 @@ final class DeepSeekStatusStoreTests: XCTestCase {
   }
 }
 
-// MARK: - Atlassian Statuspage（Codex / Cursor 服务状态）
+// MARK: - Atlassian Statuspage（Codex / X Subscription 服务状态）
 
 final class StatusPageClientTests: XCTestCase {
   override func setUp() {
@@ -845,48 +845,6 @@ final class StatusPageMapperTests: XCTestCase {
     XCTAssertEqual(mapped.overall, .critical)
   }
 
-  private func liveShapedCursorSummary() -> StatusPageSummaryResponse {
-    makeSummary(
-      indicator: "major",
-      description: "Partial service disruption",
-      components: [
-        ["id": "ide", "name": "IDE", "status": "operational"],
-        ["id": "grok", "name": "Grok Bot", "status": "major_outage"],
-      ]
-    )
-  }
-
-  func testSliceAllIncludesGrokBotAndPageIndicator() {
-    let mapped = StatusPageMapper.map(liveShapedCursorSummary(), slice: .all)
-    XCTAssertEqual(mapped.overall, .major)
-    let names = (mapped.apiComponents + mapped.webChatComponents + mapped.otherComponents)
-      .map(\.name)
-    XCTAssertTrue(names.contains("IDE"))
-    XCTAssertTrue(names.contains("Grok Bot"))
-  }
-
-  func testSliceExcludingGrokBotOmitsGrokBotAndPageIndicator() {
-    let mapped = StatusPageMapper.map(liveShapedCursorSummary(), slice: .excludingGrokBot)
-    XCTAssertEqual(mapped.overall, .none)
-    let names = (mapped.apiComponents + mapped.webChatComponents + mapped.otherComponents)
-      .map(\.name)
-    XCTAssertEqual(names, ["IDE"])
-    XCTAssertFalse(names.contains("Grok Bot"))
-  }
-
-  func testSliceGrokBotOnlyShowsGrokBotStatus() {
-    let mapped = StatusPageMapper.map(liveShapedCursorSummary(), slice: .grokBotOnly)
-    XCTAssertEqual(mapped.overall, .major)
-    let names = (mapped.apiComponents + mapped.webChatComponents + mapped.otherComponents)
-      .map(\.name)
-    XCTAssertEqual(names, ["Grok Bot"])
-  }
-
-  func testGrokBotNameMatcher() {
-    XCTAssertTrue(StatusPageMapper.isGrokBotComponentName("Grok Bot"))
-    XCTAssertTrue(StatusPageMapper.isGrokBotComponentName("grok-bot"))
-    XCTAssertFalse(StatusPageMapper.isGrokBotComponentName("Grok 4"))
-  }
 }
 
 @MainActor
@@ -901,7 +859,7 @@ final class StatusPageStatusStoreTests: XCTestCase {
   private func makeSummary() -> StatusPageSummaryResponse {
     StatusPageSummaryResponse(
       status: StatusPageStatusResponse(
-        page: StatusPageStatusResponse.Page(name: "Cursor", url: nil),
+        page: StatusPageStatusResponse.Page(name: "Status", url: nil),
         status: StatusPageStatusResponse.Status(
           indicator: "none",
           description: "All Systems Operational"

@@ -1,6 +1,6 @@
 import Foundation
 
-/// 官方服务状态加载阶段（DeepSeek / Codex / Cursor 共用）。
+/// 官方服务状态加载阶段（DeepSeek / Codex / X Subscription 等共用）。
 enum ServiceStatusLoadState: Equatable {
   case idle
   case loading
@@ -9,7 +9,7 @@ enum ServiceStatusLoadState: Equatable {
 }
 
 /// 官方服务状态 store 的统一接口，供状态卡片视图消费。
-/// 三种供应商（DeepSeek Flashcat、Codex/Cursor Atlassian Statuspage）各自实现，
+/// 三种供应商（DeepSeek Flashcat、Codex/X Subscription Atlassian Statuspage）各自实现，
 /// 视图不感知底层协议差异。
 @MainActor
 protocol ServiceStatusStoring: ObservableObject {

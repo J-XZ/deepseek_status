@@ -116,10 +116,7 @@ struct SettingsView: View {
               .font(AppTypography.caption)
               .foregroundStyle(.secondary)
             if let error = loginItemStore.lastError {
-              Text(error)
-                .font(AppTypography.caption)
-                .foregroundStyle(.red)
-                .textSelection(.enabled)
+              AppErrorText(text: error)
             }
             if loginItemStore.status == .requiresApproval {
               Button(L10n.string(.loginOpenSettings, language: language)) {
@@ -220,11 +217,10 @@ struct SettingsView: View {
     switch vendor {
     case .deepseek: return "DeepSeekIcon"
     case .codex: return "CodexIcon"
-    case .cursor: return "CursorIcon"
+    case .xSubscription: return "XSubscriptionIcon"
     case .openCode: return "OpenCodeIcon"
     case .vps: return "VultrIcon"
     case .commandCode: return "CommandCodeIcon"
-    case .grokBot: return "GrokBotIcon"
     }
   }
 

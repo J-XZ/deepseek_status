@@ -169,17 +169,16 @@ final class CodexHistoryTests: XCTestCase {
     XCTAssertEqual(segments[0].count, 3)
   }
 
-  func testSegmentsBreaksOnGap() {
+  func testSegmentsInterpolatesAcrossGap() {
     let samples = [
       sample(1_800_000, remaining: 90),
       sample(1_800_600, remaining: 89),
-      sample(1_803_000, remaining: 88),  // 间隔 40 分钟 > 20 分钟阈值
+      sample(1_803_000, remaining: 88),  // 间隔 40 分钟，仍保持同一条线
       sample(1_803_600, remaining: 87),
     ]
     let segments = CodexTrendProcessor.segments(samples)
-    XCTAssertEqual(segments.count, 2)
-    XCTAssertEqual(segments[0].count, 2)
-    XCTAssertEqual(segments[1].count, 2)
+    XCTAssertEqual(segments.count, 1)
+    XCTAssertEqual(segments[0].map(\.remainingPercent), [90, 89, 88, 87])
   }
 
   func testSegmentsDeduplicatesBucketKeepingLatest() {
@@ -214,7 +213,7 @@ final class CodexHistoryTests: XCTestCase {
     XCTAssertTrue(CodexTrendProcessor.segments([]).isEmpty)
   }
 
-  func testSegmentsDropsIsolatedSegments() {
+  func testSegmentsKeepsIsolatedPointsForInterpolation() {
     let samples = [
       sample(1_800_000, remaining: 90),
       sample(1_803_000, remaining: 89),
@@ -222,7 +221,7 @@ final class CodexHistoryTests: XCTestCase {
     ]
     let segments = CodexTrendProcessor.segments(samples)
     XCTAssertEqual(segments.count, 1)
-    XCTAssertEqual(segments[0].count, 2)
+    XCTAssertEqual(segments[0].map(\.remainingPercent), [90, 89, 88])
   }
 
   func testNearestSampleUsesLatestDuplicateAndNearestTime() {

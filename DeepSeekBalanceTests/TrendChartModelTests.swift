@@ -65,21 +65,22 @@ final class TrendChartModelTests: XCTestCase {
     XCTAssertEqual(model.segments.count, 3)
   }
 
-  func testOverTwentyMinuteGapSplits() {
+  func testOverTwentyMinuteGapStaysConnected() {
     let samples = [
-      sample(at: t0),
-      sample(at: t0.addingTimeInterval(20 * 60 + 1)),
+      sample(at: t0, total: "100.00"),
+      sample(at: t0.addingTimeInterval(20 * 60 + 1), total: "80.00"),
     ]
     let model = BalanceTrendProcessor.chartModel(
       samples: samples,
       currency: "CNY",
       now: now
     )
-    XCTAssertEqual(model.segments.count, 0)
+    XCTAssertEqual(model.segments.count, 3)
+    let total = model.segments.first { $0.metric == .total }
+    XCTAssertEqual(total?.points.map(\.value), [100, 80])
   }
 
-  func testMetricsSegmentIndependently() {
-    // chartModel 按 metric 独立分段：这里直接验证各 metric 的点流分段互不影响。
+  func testMetricsStayContinuousAcrossGaps() {
     func point(_ date: Date, _ metric: TrendPoint.Metric, _ value: Double = 100) -> TrendPoint {
       TrendPoint(
         id: "\(metric.rawValue)-\(date.timeIntervalSince1970)",
@@ -90,10 +91,10 @@ final class TrendChartModelTests: XCTestCase {
     }
 
     let totalPoints = [
-      point(t0, .total),
-      point(t0.addingTimeInterval(600), .total),
-      point(t0.addingTimeInterval(2100), .total),
-      point(t0.addingTimeInterval(2700), .total),
+      point(t0, .total, 100),
+      point(t0.addingTimeInterval(600), .total, 90),
+      point(t0.addingTimeInterval(2100), .total, 70),
+      point(t0.addingTimeInterval(2700), .total, 60),
     ]
     let toppedUpPoints = [
       point(t0, .toppedUp),
@@ -105,8 +106,10 @@ final class TrendChartModelTests: XCTestCase {
 
     let totalSegments = BalanceTrendProcessor.segments(from: totalPoints)
     let toppedUpSegments = BalanceTrendProcessor.segments(from: toppedUpPoints)
-    XCTAssertEqual(totalSegments.count, 2)
+    XCTAssertEqual(totalSegments.count, 1)
     XCTAssertEqual(toppedUpSegments.count, 1)
+    XCTAssertEqual(totalSegments[0].map(\.value), [100, 90, 70, 60])
+    XCTAssertEqual(toppedUpSegments[0].count, 5)
   }
 
   func testXDomainIsRecentFourteenDays() {

@@ -78,32 +78,28 @@ final class L10nTests: XCTestCase {
     let englishTitles = [
       L10n.string(.tabDeepSeek, language: .english),
       L10n.string(.codexTitle, language: .english),
-      L10n.string(.cursorTitle, language: .english),
+      L10n.string(.xSubscriptionTitle, language: .english),
       L10n.string(.openCodeTitle, language: .english),
       L10n.string(.vpsTitle, language: .english),
-      L10n.string(.grokBotTitle, language: .english),
     ]
     XCTAssertEqual(
       englishTitles,
       [
-        "DeepSeek Usage", "Codex Usage", "Cursor Usage", "OpenCode Usage", "Vultr Usage",
-        "Grok Bot Usage",
+        "DeepSeek Usage", "Codex Usage", "X Subscription Usage", "OpenCode Usage", "Vultr Usage",
       ]
     )
 
     let chineseTitles = [
       L10n.string(.tabDeepSeek, language: .simplifiedChinese),
       L10n.string(.codexTitle, language: .simplifiedChinese),
-      L10n.string(.cursorTitle, language: .simplifiedChinese),
+      L10n.string(.xSubscriptionTitle, language: .simplifiedChinese),
       L10n.string(.openCodeTitle, language: .simplifiedChinese),
       L10n.string(.vpsTitle, language: .simplifiedChinese),
-      L10n.string(.grokBotTitle, language: .simplifiedChinese),
     ]
     XCTAssertEqual(
       chineseTitles,
       [
-        "DeepSeek 用量", "Codex 用量", "Cursor 用量", "OpenCode 用量", "Vultr 用量",
-        "Grok Bot 用量",
+        "DeepSeek 用量", "Codex 用量", "X Subscription 用量", "OpenCode 用量", "Vultr 用量",
       ]
     )
 

@@ -5,13 +5,6 @@ struct CodexUsageView: View {
   @ObservedObject var store: CodexUsageStore
   let language: AppLanguage
 
-  @Environment(\.controlActiveState) private var controlActiveState
-
-
-  private var amountForegroundStyle: Color {
-    controlActiveState == .inactive ? .secondary : .primary
-  }
-
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
       headerCard
@@ -21,21 +14,10 @@ struct CodexUsageView: View {
         usageCard(usage)
         creditsCard(usage)
         if let error = store.lastDisplayError {
-          Text(error.text(language: language))
-            .font(AppTypography.caption)
-            .foregroundStyle(.red)
-            .textSelection(.enabled)
-            .fixedSize(horizontal: false, vertical: true)
+          AppErrorText(text: error.text(language: language))
         }
       } else if store.isRefreshing || store.status == .loading {
-        HStack(spacing: 8) {
-          ProgressView()
-            .controlSize(.small)
-          Text(L10n.string(.codexLoading, language: language))
-            .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .appInsetCard()
+        AppLoadingCard(text: L10n.string(.codexLoading, language: language))
       } else {
         emptyView
       }
@@ -107,13 +89,13 @@ struct CodexUsageView: View {
           .font(AppTypography.section)
         Spacer()
         if let rateLimit = usage.rateLimit {
-          Text(
-            rateLimit.limitReached
-              ? L10n.string(.codexLimitReached, language: language)
-              : L10n.string(.codexLimitAllowed, language: language)
+          AppLimitBadge(
+            text: L10n.string(
+              rateLimit.limitReached ? .codexLimitReached : .codexLimitAllowed,
+              language: language
+            ),
+            isReached: rateLimit.limitReached
           )
-          .font(AppTypography.badge)
-          .foregroundStyle(rateLimit.limitReached ? .red : .green)
         } else {
           Text(freePlanText(for: usage))
             .font(AppTypography.badge)
@@ -143,18 +125,13 @@ struct CodexUsageView: View {
       }
 
       if let last = store.lastUpdated {
-        Label(
-          L10n.string(
+        AppLastUpdatedLabel(
+          text: L10n.string(
             .codexLastUpdated,
             language: language,
-            last.formatted(
-              Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
-            )
-          ),
-          systemImage: "clock"
+            UsageFormatting.abbreviatedDateTime(last, locale: language.locale)
+          )
         )
-        .font(AppTypography.caption)
-        .foregroundStyle(.secondary)
       }
     }
     .appInsetCard()
@@ -178,21 +155,19 @@ struct CodexUsageView: View {
       windowRow(fiveHour)
     } else {
       VStack(alignment: .leading, spacing: 4) {
-        HStack {
-          Text(L10n.string(.codexWindowFiveHour, language: language))
-            .font(AppTypography.caption.weight(.semibold))
-            .foregroundStyle(.secondary)
-          Spacer()
-          Text(L10n.string(
+        AppUsageProgressHeader(
+          title: L10n.string(.codexWindowFiveHour, language: language),
+          progressText: L10n.string(
             .codexWindowUsedRemaining,
             language: language,
             0,
             100
-          ))
-          .font(AppTypography.caption.monospacedDigit())
-          .foregroundStyle(amountForegroundStyle)
-        }
-        usageBar(usedPercent: 0)
+          )
+        )
+        AppUsageProgressBar(
+          usedPercent: 0,
+          expectedAccessibilityLabel: L10n.string(.codexExpectedMarker, language: language)
+        )
         Text(L10n.string(.codexWindowFiveHourNone, language: language))
           .font(AppTypography.caption)
           .foregroundStyle(.secondary)
@@ -200,37 +175,6 @@ struct CodexUsageView: View {
       .padding(.bottom, 2)
     }
   }
-
-  /// 自绘进度条：轨道、填充与理想用量红线共用固定 6pt 高度坐标系，
-  /// 红线严格与轨道等长、不超出；位置按期望百分比定位并夹在轨道内。
-  private func usageBar(
-    usedPercent: Int,
-    expected: Double? = nil
-  ) -> some View {
-    AppUsageProgressBar(
-      progress: Double(min(max(usedPercent, 0), 100)) / 100,
-      color: barColor(usedPercent, idealPercent: expected),
-      expected: expected,
-      expectedAccessibilityLabel: L10n.string(.codexExpectedMarker, language: language)
-    )
-  }
-
-  private func usageBar(_ window: CodexUsageWindow) -> some View {
-    usageBar(
-      usedPercent: window.usedPercent,
-      expected: CodexUsageFormatter.expectedUsedPercent(
-        resetAt: window.resetAt,
-        limitWindowSeconds: window.limitWindowSeconds
-      )
-    )
-  }
-
-  private func barColor(_ usedPercent: Int, idealPercent: Double?) -> Color {
-    let gap = idealPercent.map { Double(usedPercent) - $0 }
-    return MenuBarUsageColor.detailProgressColor(forGap: gap).map(Color.init(nsColor:))
-      ?? AppVisualStyle.progressBlue
-  }
-
 
   /// 进度条文案：有差距（实际已用 − 理想已用）时显示“已用 X% · 剩余 Y%（±Z%）”，
   /// 与 OpenCode 详情页保持一致；无差距信息时不带括号。
@@ -247,13 +191,12 @@ struct CodexUsageView: View {
         remainingPercent
       )
     }
-    let signedGap = "\(gap >= 0 ? "+" : "")\(gap)%"
     return L10n.string(
       .codexWindowUsedRemainingWithGap,
       language: language,
       usedPercent,
       remainingPercent,
-      signedGap
+      UsageFormatting.signedPercent(gap)
     )
   }
 
@@ -265,23 +208,22 @@ struct CodexUsageView: View {
     let gap = expected.map { window.usedPercent - Int($0.rounded()) }
 
     return VStack(alignment: .leading, spacing: 4) {
-      HStack {
-        Text(title ?? CodexUsageFormatter.windowTitle(
+      AppUsageProgressHeader(
+        title: title ?? CodexUsageFormatter.windowTitle(
           limitWindowSeconds: window.limitWindowSeconds,
           language: language
-        ))
-        .font(AppTypography.caption.weight(.semibold))
-        .foregroundStyle(.secondary)
-        Spacer()
-        Text(windowProgressText(
+        ),
+        progressText: windowProgressText(
           usedPercent: window.usedPercent,
           remainingPercent: window.remainingPercent,
           gap: gap
-        ))
-        .font(AppTypography.caption.monospacedDigit())
-        .foregroundStyle(amountForegroundStyle)
-      }
-      usageBar(window)
+        )
+      )
+      AppUsageProgressBar(
+        usedPercent: window.usedPercent,
+        expected: expected,
+        expectedAccessibilityLabel: L10n.string(.codexExpectedMarker, language: language)
+      )
       if let reset = CodexUsageFormatter.resetDate(
         resetAt: window.resetAt,
         locale: language.locale
@@ -290,9 +232,7 @@ struct CodexUsageView: View {
           label: L10n.string(
             .codexResetAt,
             language: language,
-            reset.formatted(
-              Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
-            )
+            UsageFormatting.abbreviatedDateTime(reset, locale: language.locale)
           ),
           until: reset
         )
@@ -307,14 +247,10 @@ struct CodexUsageView: View {
       VStack(alignment: .leading, spacing: 6) {
         Text(L10n.string(.codexCreditsTitle, language: language))
           .font(AppTypography.section)
-        HStack {
-          Text(creditsText(credits))
-            .foregroundStyle(.secondary)
-          Spacer()
-          Text(creditsValue(credits))
-            .font(AppTypography.value)
-            .foregroundStyle(amountForegroundStyle)
-        }
+        AppAmountRow(
+          title: creditsText(credits),
+          value: creditsValue(credits)
+        )
         if credits.overageLimitReached {
           Text(L10n.string(.codexLimitReached, language: language))
             .font(AppTypography.caption)
@@ -356,11 +292,7 @@ struct CodexUsageView: View {
           .foregroundStyle(.secondary)
       }
       if let error = store.lastDisplayError {
-        Text(error.text(language: language))
-          .font(AppTypography.caption)
-          .foregroundStyle(.red)
-          .textSelection(.enabled)
-          .fixedSize(horizontal: false, vertical: true)
+        AppErrorText(text: error.text(language: language))
       }
     }
     .appInsetCard()

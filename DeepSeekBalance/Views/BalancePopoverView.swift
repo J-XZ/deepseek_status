@@ -43,6 +43,18 @@ enum UsageFormatting {
   static func formattedGB(_ value: Double) -> String {
     String(format: "%.0f GB", value)
   }
+
+  /// Signed gap used in progress captions: `+3%` / `-12%`.
+  static func signedPercent(_ gap: Int) -> String {
+    "\(gap >= 0 ? "+" : "")\(gap)%"
+  }
+
+  /// Shared date caption for reset times and last-updated rows.
+  static func abbreviatedDateTime(_ date: Date, locale: Locale) -> String {
+    date.formatted(
+      Date.FormatStyle(date: .abbreviated, time: .shortened).locale(locale)
+    )
+  }
 }
 
 enum UsageProgressEvaluator {
@@ -64,15 +76,14 @@ enum UsageProgressEvaluator {
   }
 }
 
-/// 弹出窗口顶部切换栏：DeepSeek / Codex / Cursor / OpenCode / Vultr / Command Code 用量。
+/// 弹出窗口顶部切换栏：DeepSeek / Codex / X Subscription / OpenCode / Vultr / Command Code 用量。
 enum UsageTab: String, CaseIterable, Identifiable, Hashable {
   case deepseek
   case codex
-  case cursor
+  case xSubscription
   case openCode
   case vps
   case commandCode
-  case grokBot
 
   var id: String { rawValue }
 
@@ -83,16 +94,14 @@ enum UsageTab: String, CaseIterable, Identifiable, Hashable {
       return .deepseek
     case .codex:
       return .codex
-    case .cursor:
-      return .cursor
+    case .xSubscription:
+      return .xSubscription
     case .openCode:
       return .openCode
     case .vps:
       return .vps
     case .commandCode:
       return .commandCode
-    case .grokBot:
-      return .grokBot
     }
   }
 }
@@ -114,14 +123,12 @@ struct BalancePopoverView: View {
   @ObservedObject var statusStore: DeepSeekStatusStore
   @ObservedObject var loginItemStore: LoginItemStore
   @ObservedObject var codexStore: CodexUsageStore
-  @ObservedObject var cursorStore: CursorUsageStore
+  @ObservedObject var xSubscriptionStore: XSubscriptionUsageStore
   @ObservedObject var openCodeStore: OpenCodeUsageStore
   @ObservedObject var vpsStore: VPSUsageStore
   @ObservedObject var commandCodeStore: CommandCodeUsageStore
-  @ObservedObject var grokBotStore: GrokBotUsageStore
   @ObservedObject var codexStatusStore: StatusPageStatusStore
-  @ObservedObject var cursorStatusStore: StatusPageStatusStore
-  @ObservedObject var grokBotStatusStore: StatusPageStatusStore
+  @ObservedObject var xSubscriptionStatusStore: StatusPageStatusStore
   let visibility: MenuBarVendorVisibility
   @ObservedObject var tabSelection: PopoverTabSelection
   let onPageHeightsChange: ([UsageTab: CGFloat]) -> Void
@@ -135,7 +142,6 @@ struct BalancePopoverView: View {
   @State private var vpsValidationMessage: String?
   /// 切换栏按钮悬停态，仅用于轻量底纹反馈。
   @State private var hoveredTab: UsageTab?
-  @Environment(\.controlActiveState) private var controlActiveState
 
   private var language: AppLanguage {
     store.language
@@ -260,18 +266,18 @@ struct BalancePopoverView: View {
           )
         }
         card { codexTrendSection }
-      case .cursor:
-        CursorUsageView(store: cursorStore, language: language)
+      case .xSubscription:
+        XSubscriptionUsageView(store: xSubscriptionStore, language: language)
           .frame(maxWidth: .infinity, alignment: .leading)
           .appCard(level: .elevated)
         card {
           DeepSeekServiceStatusView(
-            store: cursorStatusStore,
+            store: xSubscriptionStatusStore,
             language: language,
-            titleKey: .serviceTitleCursor
+            titleKey: .serviceTitleXSubscription
           )
         }
-        card { cursorTrendSection }
+        card { xSubscriptionTrendSection }
       case .openCode:
         OpenCodeUsageView(
           store: openCodeStore,
@@ -298,21 +304,6 @@ struct BalancePopoverView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .appCard(level: .elevated)
         card { commandCodeTrendSection }
-      case .grokBot:
-        GrokBotUsageView(
-          store: grokBotStore,
-          language: language
-        )
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .appCard(level: .elevated)
-        card {
-          DeepSeekServiceStatusView(
-            store: grokBotStatusStore,
-            language: language,
-            titleKey: .serviceTitleGrokBot
-          )
-        }
-        card { grokBotTrendSection }
       }
       card(level: .toolbar, padding: 10) { footer }
     }
@@ -327,17 +318,15 @@ struct BalancePopoverView: View {
       async let balance = store.refreshIfNeeded()
       async let deepSeekStatus = statusStore.refreshIfNeeded()
       async let codex = codexStore.refreshIfNeeded()
-      async let cursor = cursorStore.refreshIfNeeded()
+      async let xSubscription = xSubscriptionStore.refreshIfNeeded()
       async let openCode = openCodeStore.refreshIfNeeded()
       async let vps = vpsStore.refreshIfNeeded()
       async let commandCode = commandCodeStore.refreshIfNeeded()
-      async let grokBot = grokBotStore.refreshIfNeeded()
       async let codexStatus = codexStatusStore.refreshIfNeeded()
-      async let cursorStatus = cursorStatusStore.refreshIfNeeded()
-      async let grokBotStatus = grokBotStatusStore.refreshIfNeeded()
+      async let xSubscriptionStatus = xSubscriptionStatusStore.refreshIfNeeded()
       _ = await (
-        balance, deepSeekStatus, codex, cursor, openCode, vps, commandCode, grokBot, codexStatus,
-        cursorStatus, grokBotStatus
+        balance, deepSeekStatus, codex, xSubscription, openCode, vps, commandCode, codexStatus,
+        xSubscriptionStatus
       )
     }
   }
@@ -445,11 +434,10 @@ struct BalancePopoverView: View {
     switch tab {
     case .deepseek: return "DeepSeek"
     case .codex: return "Codex"
-    case .cursor: return "Cursor"
+    case .xSubscription: return "X Sub"
     case .openCode: return "OpenCode"
     case .vps: return "Vultr"
     case .commandCode: return "Command"
-    case .grokBot: return "Grok"
     }
   }
 
@@ -459,16 +447,14 @@ struct BalancePopoverView: View {
       return "DeepSeekIcon"
     case .codex:
       return "CodexIcon"
-    case .cursor:
-      return "CursorIcon"
+    case .xSubscription:
+      return "XSubscriptionIcon"
     case .openCode:
       return "OpenCodeIcon"
     case .vps:
       return "VultrIcon"
     case .commandCode:
       return "CommandCodeIcon"
-    case .grokBot:
-      return "GrokBotIcon"
     }
   }
 
@@ -478,16 +464,14 @@ struct BalancePopoverView: View {
       return .tabDeepSeek
     case .codex:
       return .tabCodex
-    case .cursor:
-      return .tabCursor
+    case .xSubscription:
+      return .tabXSubscription
     case .openCode:
       return .tabOpenCode
     case .vps:
       return .tabVPS
     case .commandCode:
       return .tabCommandCode
-    case .grokBot:
-      return .tabGrokBot
     }
   }
 
@@ -584,7 +568,7 @@ struct BalancePopoverView: View {
             Text(info.currency)
               .font(AppTypography.caption.weight(.semibold))
               .foregroundStyle(.secondary)
-            row(
+            AppAmountRow(
               title: L10n.string(.balanceTotal, language: language),
               value: BalanceFormatter.format(
                 total: info.totalBalance,
@@ -592,7 +576,7 @@ struct BalancePopoverView: View {
                 locale: language.locale
               )
             )
-            row(
+            AppAmountRow(
               title: L10n.string(.balanceToppedUp, language: language),
               value: BalanceFormatter.format(
                 total: info.toppedUpBalance,
@@ -600,7 +584,7 @@ struct BalancePopoverView: View {
                 locale: language.locale
               )
             )
-            row(
+            AppAmountRow(
               title: L10n.string(.balanceGranted, language: language),
               value: BalanceFormatter.format(
                 total: info.grantedBalance,
@@ -612,14 +596,7 @@ struct BalancePopoverView: View {
           .appInsetCard()
         }
       } else if store.isRefreshing {
-        HStack(spacing: 8) {
-          ProgressView()
-            .controlSize(.small)
-          Text(L10n.string(.balanceLoading, language: language))
-            .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .appInsetCard()
+        AppLoadingCard(text: L10n.string(.balanceLoading, language: language))
       } else {
         Text(L10n.string(.balanceEmpty, language: language))
           .foregroundStyle(.secondary)
@@ -628,38 +605,15 @@ struct BalancePopoverView: View {
       }
 
       if let last = store.lastUpdated {
-        Label(
-          L10n.string(
+        AppLastUpdatedLabel(
+          text: L10n.string(
             .balanceLastUpdated,
             language: language,
-            last.formatted(
-              Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
-            )
-          ),
-          systemImage: "clock"
+            UsageFormatting.abbreviatedDateTime(last, locale: language.locale)
+          )
         )
-        .font(AppTypography.caption)
-        .foregroundStyle(.secondary)
       }
     }
-  }
-
-  private func row(title: String, value: String, foregroundStyle: Color? = nil) -> some View {
-    HStack {
-      Text(title)
-        .foregroundStyle(.secondary)
-      Spacer()
-      Text(value)
-        .font(AppTypography.value)
-        // SwiftUI's default primary color is not reliably updated for content
-        // hosted inside an NSPopover. Follow the macOS control active state so
-        // amounts become secondary when the popover loses focus.
-        .foregroundStyle(foregroundStyle ?? amountForegroundStyle)
-    }
-  }
-
-  private var amountForegroundStyle: Color {
-    controlActiveState == .inactive ? .secondary : .primary
   }
 
   // MARK: - 趋势区
@@ -724,16 +678,10 @@ struct BalancePopoverView: View {
         BalanceTrendEmptyView(historyUnavailable: false, language: language)
       }
 
-      Text(L10n.string(.trendLocalNote, language: language))
-        .font(AppTypography.caption)
-        .foregroundStyle(.secondary)
+      trendLocalNote
 
       if let historyError = store.historyDisplayError {
-        Text(historyError.text(language: language))
-          .font(AppTypography.caption)
-          .foregroundStyle(.red)
-          .textSelection(.enabled)
-          .fixedSize(horizontal: false, vertical: true)
+        AppErrorText(text: historyError.text(language: language))
       }
     }
   }
@@ -745,191 +693,127 @@ struct BalancePopoverView: View {
     )
   }
 
-  // MARK: - Codex 趋势区
+  // MARK: - 供应商趋势区
+
+  private var defaultTrendEmpty: some View {
+    BalanceTrendEmptyView(historyUnavailable: false, language: language)
+  }
+
+  private var trendLocalNote: some View {
+    Text(L10n.string(.trendLocalNote, language: language))
+      .font(AppTypography.caption)
+      .foregroundStyle(.secondary)
+  }
+
+  @ViewBuilder
+  private func usageTrendSection<Chart: View, Empty: View>(
+    sampleCount: Int,
+    usageChangeValue: String?,
+    @ViewBuilder empty: () -> Empty,
+    @ViewBuilder chart: () -> Chart
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 8) {
+      AppSectionHeader(
+        title: L10n.string(.trendTitle, language: language),
+        systemImage: "chart.xyaxis.line"
+      )
+      usageTrendSummary(usageChangeValue)
+      if sampleCount >= 2 {
+        chart()
+      } else {
+        empty()
+      }
+      trendLocalNote
+    }
+  }
 
   private var codexTrendSection: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      AppSectionHeader(
-        title: L10n.string(.trendTitle, language: language),
-        systemImage: "chart.xyaxis.line"
-      )
-
-      let chart = CodexTrendChartView(
-        samples: codexStore.historySamples,
-        language: language,
-        now: codexStore.clock.now()
-      )
-      usageTrendSummary(chart.usageChangeValue)
-
-      if codexStore.historySamples.count >= 2 {
-        chart
-      } else {
-        BalanceTrendEmptyView(historyUnavailable: false, language: language)
-      }
-
-      Text(L10n.string(.trendLocalNote, language: language))
-        .font(AppTypography.caption)
-        .foregroundStyle(.secondary)
-    }
+    let chart = CodexTrendChartView(
+      samples: codexStore.historySamples,
+      language: language,
+      now: codexStore.clock.now()
+    )
+    return usageTrendSection(
+      sampleCount: codexStore.historySamples.count,
+      usageChangeValue: chart.usageChangeValue,
+      empty: { defaultTrendEmpty },
+      chart: { chart }
+    )
   }
 
-  // MARK: - Cursor 趋势区
-
-  private var cursorTrendSection: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      AppSectionHeader(
-        title: L10n.string(.trendTitle, language: language),
-        systemImage: "chart.xyaxis.line"
-      )
-
-      let chart = CursorTrendChartView(
-        samples: cursorStore.historySamples,
-        language: language,
-        now: cursorStore.clock.now()
-      )
-      usageTrendSummary(chart.usageChangeValue)
-
-      if cursorStore.historySamples.count >= 2 {
-        chart
-      } else {
-        BalanceTrendEmptyView(historyUnavailable: false, language: language)
-      }
-
-      Text(L10n.string(.trendLocalNote, language: language))
-        .font(AppTypography.caption)
-        .foregroundStyle(.secondary)
-    }
+  private var xSubscriptionTrendSection: some View {
+    let chart = XSubscriptionTrendChartView(
+      samples: xSubscriptionStore.historySamples,
+      language: language,
+      now: xSubscriptionStore.clock.now(),
+      resetsAt: xSubscriptionStore.usage?.meteredQuota?.resetsAt,
+      currentRemainingPercent: xSubscriptionStore.usage?.meteredQuota?.remainingPercent
+    )
+    return usageTrendSection(
+      sampleCount: xSubscriptionStore.historySamples.count,
+      usageChangeValue: chart.usageChangeValue,
+      empty: { defaultTrendEmpty },
+      chart: { chart }
+    )
   }
-
-  // MARK: - OpenCode 趋势区
 
   private var openCodeTrendSection: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      AppSectionHeader(
-        title: L10n.string(.trendTitle, language: language),
-        systemImage: "chart.xyaxis.line"
-      )
-
-      let chart = OpenCodeTrendChartView(
-        samples: openCodeStore.historySamples,
-        showGoTrend: openCodeStore.snapshot?.isGoSubscribed == true,
-        language: language,
-        now: openCodeStore.clock.now()
-      )
-      usageTrendSummary(chart.usageChangeValue)
-
-      if openCodeStore.historySamples.count >= 2 {
-        chart
-      } else {
-        BalanceTrendEmptyView(historyUnavailable: false, language: language)
-      }
-
-      Text(L10n.string(.trendLocalNote, language: language))
-        .font(AppTypography.caption)
-        .foregroundStyle(.secondary)
-    }
+    let chart = OpenCodeTrendChartView(
+      samples: openCodeStore.historySamples,
+      showGoTrend: openCodeStore.snapshot?.isGoSubscribed == true,
+      language: language,
+      now: openCodeStore.clock.now()
+    )
+    return usageTrendSection(
+      sampleCount: openCodeStore.historySamples.count,
+      usageChangeValue: chart.usageChangeValue,
+      empty: { defaultTrendEmpty },
+      chart: { chart }
+    )
   }
 
-  // MARK: - Vultr 趋势区
-
   private var vpsTrendSection: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      AppSectionHeader(
-        title: L10n.string(.trendTitle, language: language),
-        systemImage: "chart.xyaxis.line"
-      )
-
-      let chart = VPSTrendChartView(
-        samples: vpsStore.historySamples,
-        language: language,
-        now: vpsStore.clock.now(),
-        currentRemainingGB: vpsStore.snapshot?.remainingBandwidthGB,
-        cycleStart: vpsStore.snapshot?.cycleStart,
-        cycleEnd: vpsStore.snapshot?.cycleEnd
-      )
-      usageTrendSummary(chart.usageChangeValue)
-
-      if vpsStore.historySamples.count >= 2 {
-        chart
-      } else {
+    let chart = VPSTrendChartView(
+      samples: vpsStore.historySamples,
+      language: language,
+      now: vpsStore.clock.now(),
+      currentRemainingGB: vpsStore.snapshot?.remainingBandwidthGB,
+      cycleStart: vpsStore.snapshot?.cycleStart,
+      cycleEnd: vpsStore.snapshot?.cycleEnd
+    )
+    return usageTrendSection(
+      sampleCount: vpsStore.historySamples.count,
+      usageChangeValue: chart.usageChangeValue,
+      empty: {
         Text(L10n.string(.vpsTrendWaiting, language: language))
           .font(AppTypography.caption)
           .foregroundStyle(.secondary)
-      }
-
-      Text(L10n.string(.trendLocalNote, language: language))
-        .font(AppTypography.caption)
-        .foregroundStyle(.secondary)
-    }
+      },
+      chart: { chart }
+    )
   }
-
-  // MARK: - Command Code 趋势区
 
   private var commandCodeTrendSection: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      AppSectionHeader(
-        title: L10n.string(.trendTitle, language: language),
-        systemImage: "chart.xyaxis.line"
-      )
-
-      let chart = CommandCodeTrendChartView(
-        samples: commandCodeStore.historySamples,
-        language: language,
-        now: commandCodeStore.clock.now()
-      )
-      usageTrendSummary(chart.usageChangeValue)
-
-      if commandCodeStore.historySamples.count >= 2 {
-        chart
-      } else {
-        BalanceTrendEmptyView(historyUnavailable: false, language: language)
-      }
-
-      Text(L10n.string(.trendLocalNote, language: language))
-        .font(AppTypography.caption)
-        .foregroundStyle(.secondary)
-    }
+    let chart = CommandCodeTrendChartView(
+      samples: commandCodeStore.historySamples,
+      language: language,
+      now: commandCodeStore.clock.now()
+    )
+    return usageTrendSection(
+      sampleCount: commandCodeStore.historySamples.count,
+      usageChangeValue: chart.usageChangeValue,
+      empty: { defaultTrendEmpty },
+      chart: { chart }
+    )
   }
 
-  // MARK: - Grok Bot 趋势区
-
-  private var grokBotTrendSection: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      AppSectionHeader(
-        title: L10n.string(.trendTitle, language: language),
-        systemImage: "chart.xyaxis.line"
-      )
-
-      let chart = GrokBotTrendChartView(
-        samples: grokBotStore.historySamples,
-        language: language,
-        now: grokBotStore.clock.now(),
-        resetsAt: grokBotStore.usage?.meteredQuota?.resetsAt
-      )
-      usageTrendSummary(chart.usageChangeValue)
-
-      if grokBotStore.historySamples.count >= 2 {
-        chart
-      } else {
-        BalanceTrendEmptyView(historyUnavailable: false, language: language)
-      }
-
-      Text(L10n.string(.trendLocalNote, language: language))
-        .font(AppTypography.caption)
-        .foregroundStyle(.secondary)
-    }
-  }
 
   // MARK: - 错误提示
 
   @ViewBuilder
   private var errorMessageView: some View {
     if let message = store.lastDisplayError {
-      Text(message.text(language: language))
-        .font(AppTypography.caption)
-        .foregroundStyle(.red)
-        .textSelection(.enabled)
-        .fixedSize(horizontal: false, vertical: true)
+      AppErrorText(text: message.text(language: language))
     }
   }
 
@@ -947,10 +831,7 @@ struct BalancePopoverView: View {
         .onSubmit(saveAndRefresh)
 
       if let message = validationMessage {
-        Text(message)
-          .font(AppTypography.caption)
-          .foregroundStyle(.red)
-          .fixedSize(horizontal: false, vertical: true)
+        AppErrorText(text: message)
       }
 
       HStack(spacing: 8) {
@@ -1037,10 +918,7 @@ struct BalancePopoverView: View {
         .fixedSize(horizontal: false, vertical: true)
 
       if let message = openCodeCookieValidationMessage {
-        Text(message)
-          .font(AppTypography.caption)
-          .foregroundStyle(.red)
-          .fixedSize(horizontal: false, vertical: true)
+        AppErrorText(text: message)
       }
 
       HStack(spacing: 8) {
@@ -1122,10 +1000,7 @@ struct BalancePopoverView: View {
         .fixedSize(horizontal: false, vertical: true)
 
       if let message = vpsValidationMessage {
-        Text(message)
-          .font(AppTypography.caption)
-          .foregroundStyle(.red)
-          .fixedSize(horizontal: false, vertical: true)
+        AppErrorText(text: message)
       }
 
       HStack(spacing: 8) {
@@ -1184,12 +1059,10 @@ struct BalancePopoverView: View {
   private var footer: some View {
     HStack(spacing: 8) {
       if store.isRefreshing || statusStore.loadState == .loading || codexStore.isRefreshing
-        || cursorStore.isRefreshing || openCodeStore.isRefreshing || vpsStore.isRefreshing
+        || xSubscriptionStore.isRefreshing || openCodeStore.isRefreshing || vpsStore.isRefreshing
         || commandCodeStore.isRefreshing
-        || grokBotStore.isRefreshing
         || codexStatusStore.loadState == .loading
-        || cursorStatusStore.loadState == .loading
-        || grokBotStatusStore.loadState == .loading
+        || xSubscriptionStatusStore.loadState == .loading
       {
         ProgressView()
           .controlSize(.small)
@@ -1198,18 +1071,17 @@ struct BalancePopoverView: View {
         Task {
           async let balanceRefresh: Void = store.refreshAll()
           async let codexRefresh: Void = codexStore.refreshIfNeeded(maximumAge: 0)
-          async let cursorRefresh: Void = cursorStore.refreshIfNeeded(maximumAge: 0)
+          async let xSubscriptionRefresh: Void = xSubscriptionStore.refreshIfNeeded(maximumAge: 0)
           async let openCodeRefresh: Void = openCodeStore.refreshIfNeeded(maximumAge: 0)
           async let vpsRefresh: Void = vpsStore.refreshIfNeeded(maximumAge: 0)
           async let commandCodeRefresh: Void = commandCodeStore.refreshIfNeeded(maximumAge: 0)
-          async let grokBotRefresh: Void = grokBotStore.refreshIfNeeded(maximumAge: 0)
           async let codexStatusRefresh: Void = codexStatusStore.refreshIfNeeded(maximumAge: 0)
-          async let cursorStatusRefresh: Void = cursorStatusStore.refreshIfNeeded(maximumAge: 0)
-          async let grokBotStatusRefresh: Void = grokBotStatusStore.refreshIfNeeded(maximumAge: 0)
+          async let xSubscriptionStatusRefresh: Void = xSubscriptionStatusStore.refreshIfNeeded(
+            maximumAge: 0
+          )
           _ = await (
-            balanceRefresh, codexRefresh, cursorRefresh, openCodeRefresh, vpsRefresh,
-            commandCodeRefresh, grokBotRefresh, codexStatusRefresh, cursorStatusRefresh,
-            grokBotStatusRefresh
+            balanceRefresh, codexRefresh, xSubscriptionRefresh, openCodeRefresh, vpsRefresh,
+            commandCodeRefresh, codexStatusRefresh, xSubscriptionStatusRefresh
           )
         }
       } label: {
@@ -1218,12 +1090,10 @@ struct BalancePopoverView: View {
       .buttonStyle(.bordered)
       .disabled(
         store.isRefreshing || statusStore.loadState == .loading || codexStore.isRefreshing
-        || cursorStore.isRefreshing || openCodeStore.isRefreshing || vpsStore.isRefreshing
+        || xSubscriptionStore.isRefreshing || openCodeStore.isRefreshing || vpsStore.isRefreshing
         || commandCodeStore.isRefreshing
-        || grokBotStore.isRefreshing
         || codexStatusStore.loadState == .loading
-          || cursorStatusStore.loadState == .loading
-          || grokBotStatusStore.loadState == .loading
+        || xSubscriptionStatusStore.loadState == .loading
       )
       Spacer()
       Button {

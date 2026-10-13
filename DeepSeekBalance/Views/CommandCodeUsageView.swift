@@ -1,16 +1,10 @@
 import SwiftUI
 
 /// Command Code 用量标签页：订阅方案、额度使用、窗口限制与账号信息。
-/// 完全仿照 Cursor 用量页的卡片结构。
+/// 与其它订阅用量页使用相同的卡片结构。
 struct CommandCodeUsageView: View {
   @ObservedObject var store: CommandCodeUsageStore
   let language: AppLanguage
-
-  @Environment(\.controlActiveState) private var controlActiveState
-
-  private var amountForegroundStyle: Color {
-    controlActiveState == .inactive ? .secondary : .primary
-  }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
@@ -20,21 +14,10 @@ struct CommandCodeUsageView: View {
       if let usage = store.usage {
         usageCard(usage)
         if let error = store.lastDisplayError {
-          Text(error.text(language: language))
-            .font(AppTypography.caption)
-            .foregroundStyle(.red)
-            .textSelection(.enabled)
-            .fixedSize(horizontal: false, vertical: true)
+          AppErrorText(text: error.text(language: language))
         }
       } else if store.isRefreshing || store.status == .loading {
-        HStack(spacing: 8) {
-          ProgressView()
-            .controlSize(.small)
-          Text(L10n.string(.commandCodeLoading, language: language))
-            .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .appInsetCard()
+        AppLoadingCard(text: L10n.string(.commandCodeLoading, language: language))
       } else {
         emptyView
       }
@@ -105,15 +88,15 @@ struct CommandCodeUsageView: View {
         Text(L10n.string(.commandCodePlan, language: language))
           .font(AppTypography.section)
         Spacer()
-        if let remaining = usage.remainingPercent, remaining <= 0 {
-          Text(L10n.string(.commandCodeLimitReached, language: language))
-            .font(AppTypography.badge)
-            .foregroundStyle(.red)
-        } else {
-          Text(L10n.string(.commandCodeLimitAllowed, language: language))
-            .font(AppTypography.badge)
-            .foregroundStyle(.green)
-        }
+        AppLimitBadge(
+          text: L10n.string(
+            (usage.remainingPercent ?? 1) <= 0
+              ? .commandCodeLimitReached
+              : .commandCodeLimitAllowed,
+            language: language
+          ),
+          isReached: (usage.remainingPercent ?? 1) <= 0
+        )
       }
 
       if let start = usage.currentPeriodStartDate, let end = usage.currentPeriodEndDate {
@@ -144,25 +127,20 @@ struct CommandCodeUsageView: View {
       }
 
       if let last = store.lastUpdated {
-        Label(
-          L10n.string(
+        AppLastUpdatedLabel(
+          text: L10n.string(
             .commandCodeLastUpdated,
             language: language,
-            last.formatted(
-              Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
-            )
-          ),
-          systemImage: "clock"
+            UsageFormatting.abbreviatedDateTime(last, locale: language.locale)
+          )
         )
-        .font(AppTypography.caption)
-        .foregroundStyle(.secondary)
       }
     }
     .appInsetCard()
   }
 
   /// 进度条文案：有差距（实际已用 − 理想已用）时显示“已用 X% · 剩余 Y%（±Z%）”，
-  /// 与 Cursor 详情页保持一致；无差距信息时不带括号。
+  /// 与其它订阅详情页保持一致；无差距信息时不带括号。
   private func windowProgressText(
     usedPercent: Int,
     remainingPercent: Int,
@@ -176,13 +154,12 @@ struct CommandCodeUsageView: View {
         remainingPercent
       )
     }
-    let signedGap = "\(gap >= 0 ? "+" : "")\(gap)%"
     return L10n.string(
       .commandCodeWindowUsedRemainingWithGap,
       language: language,
       usedPercent,
       remainingPercent,
-      signedGap
+      UsageFormatting.signedPercent(gap)
     )
   }
 
@@ -195,31 +172,25 @@ struct CommandCodeUsageView: View {
     gap: Int?
   ) -> some View {
     VStack(alignment: .leading, spacing: 4) {
-      HStack {
-        Text(L10n.string(.commandCodeWindowTitle, language: language))
-          .font(AppTypography.caption.weight(.semibold))
-          .foregroundStyle(.secondary)
-        Spacer()
-        Text(windowProgressText(
+      AppUsageProgressHeader(
+        title: L10n.string(.commandCodeWindowTitle, language: language),
+        progressText: windowProgressText(
           usedPercent: usedPercent ?? 0,
           remainingPercent: remainingPercent ?? 0,
           gap: gap
-        ))
-        .font(AppTypography.caption.monospacedDigit())
-        .foregroundStyle(amountForegroundStyle)
-      }
-      usageBar(
+        )
+      )
+      AppUsageProgressBar(
         usedPercent: usedPercent ?? 0,
-        expected: expectedPercent(start: periodStart, end: periodEnd)
+        expected: expectedPercent(start: periodStart, end: periodEnd),
+        expectedAccessibilityLabel: L10n.string(.commandCodeExpectedMarker, language: language)
       )
       if let periodEnd {
         ResetAtCaption(
           label: L10n.string(
             .commandCodeResetAt,
             language: language,
-            periodEnd.formatted(
-              Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
-            )
+            UsageFormatting.abbreviatedDateTime(periodEnd, locale: language.locale)
           ),
           until: periodEnd
         )
@@ -251,27 +222,21 @@ struct CommandCodeUsageView: View {
 
   private func windowLimitRow(title: String, limit: CommandCodeWindowLimit) -> some View {
     VStack(alignment: .leading, spacing: 4) {
-      HStack {
-        Text(title)
-          .font(AppTypography.caption.weight(.semibold))
-          .foregroundStyle(.secondary)
-        Spacer()
-        Text(windowLimitText(limit))
-          .font(AppTypography.caption.monospacedDigit())
-          .foregroundStyle(limit.isExceeded ? .red : amountForegroundStyle)
-      }
-      usageBar(
+      AppUsageProgressHeader(
+        title: title,
+        progressText: windowLimitText(limit),
+        progressColor: limit.isExceeded ? .red : nil
+      )
+      AppUsageProgressBar(
         usedPercent: limit.usedPercent ?? 0,
-        expected: nil
+        expectedAccessibilityLabel: L10n.string(.commandCodeExpectedMarker, language: language)
       )
       if let resetAt = limit.resetAtDate {
         ResetAtCaption(
           label: L10n.string(
             .commandCodeWindowResetAt,
             language: language,
-            resetAt.formatted(
-              Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale)
-            )
+            UsageFormatting.abbreviatedDateTime(resetAt, locale: language.locale)
           ),
           until: resetAt
         )
@@ -292,25 +257,25 @@ struct CommandCodeUsageView: View {
       Text(L10n.string(.commandCodeSummaryTitle, language: language))
         .font(AppTypography.section)
       if let count = summary.totalCount {
-        summaryRow(
+        AppAmountRow(
           title: L10n.string(.commandCodeSummaryCount, language: language),
           value: "\(count)"
         )
       }
       if let cost = summary.totalCost {
-        summaryRow(
+        AppAmountRow(
           title: L10n.string(.commandCodeSummaryCost, language: language),
           value: CommandCodeUsageFormatter.formatUSD(cost, locale: language.locale) ?? "—"
         )
       }
       if let tokens = summary.totalTokens {
-        summaryRow(
+        AppAmountRow(
           title: L10n.string(.commandCodeSummaryTokens, language: language),
           value: tokens.formatted(.number.locale(language.locale))
         )
       }
       if let rate = summary.successRate {
-        summaryRow(
+        AppAmountRow(
           title: L10n.string(.commandCodeSummarySuccessRate, language: language),
           value: "\(Int(rate.rounded()))%"
         )
@@ -318,40 +283,9 @@ struct CommandCodeUsageView: View {
     }
   }
 
-  private func summaryRow(title: String, value: String) -> some View {
-    HStack {
-      Text(title)
-        .foregroundStyle(.secondary)
-      Spacer()
-      Text(value)
-        .font(AppTypography.value)
-        .foregroundStyle(amountForegroundStyle)
-    }
-  }
-
   private func expectedPercent(start: Date?, end: Date?) -> Double? {
     guard let start, let end else { return nil }
     return CommandCodeUsageFormatter.expectedUsedPercent(start: start, end: end)
-  }
-
-  /// 自绘进度条：轨道、填充与理想用量红线共用固定 6pt 高度坐标系，
-  /// 红线严格与轨道等长、不超出；位置按期望百分比定位并夹在轨道内。
-  private func usageBar(
-    usedPercent: Int,
-    expected: Double? = nil
-  ) -> some View {
-    AppUsageProgressBar(
-      progress: Double(min(max(usedPercent, 0), 100)) / 100,
-      color: barColor(usedPercent, idealPercent: expected),
-      expected: expected,
-      expectedAccessibilityLabel: L10n.string(.commandCodeExpectedMarker, language: language)
-    )
-  }
-
-  private func barColor(_ usedPercent: Int, idealPercent: Double?) -> Color {
-    let gap = idealPercent.map { Double(usedPercent) - $0 }
-    return MenuBarUsageColor.detailProgressColor(forGap: gap).map(Color.init(nsColor:))
-      ?? AppVisualStyle.progressBlue
   }
 
   @ViewBuilder
@@ -365,11 +299,7 @@ struct CommandCodeUsageView: View {
           .foregroundStyle(.secondary)
       }
       if let error = store.lastDisplayError {
-        Text(error.text(language: language))
-          .font(AppTypography.caption)
-          .foregroundStyle(.red)
-          .textSelection(.enabled)
-          .fixedSize(horizontal: false, vertical: true)
+        AppErrorText(text: error.text(language: language))
       }
     }
     .appInsetCard()

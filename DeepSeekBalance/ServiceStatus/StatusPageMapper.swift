@@ -3,8 +3,7 @@ import Foundation
 /// 把 Atlassian Statuspage 官方状态 JSON 映射为展示模型。
 enum StatusPageMapper {
   static func map(
-    _ response: StatusPageSummaryResponse,
-    slice: StatusPageComponentSlice = .all
+    _ response: StatusPageSummaryResponse
   ) -> DeepSeekServiceStatus {
     let indicatorRaw = response.status.status?.indicator
     let reportedOverall = OverallIndicator.from(raw: indicatorRaw)
@@ -17,8 +16,7 @@ enum StatusPageMapper {
     let mappedComponents: [DeepSeekServiceStatus.Component] = components.compactMap {
       component -> DeepSeekServiceStatus.Component? in
       guard let name = component.name?.trimmingCharacters(in: .whitespacesAndNewlines),
-        !name.isEmpty,
-        componentBelongsToSlice(name, slice: slice)
+        !name.isEmpty
       else {
         return nil
       }
@@ -44,8 +42,7 @@ enum StatusPageMapper {
       .compactMap { incident -> DeepSeekServiceStatus.Incident? in
         let status = IncidentStatus.from(raw: incident.status)
         guard status == .investigating || status == .identified || status == .monitoring,
-          let name = incident.name, !name.isEmpty,
-          incidentBelongsToSlice(incident, slice: slice)
+          let name = incident.name, !name.isEmpty
         else {
           return nil
         }
@@ -66,21 +63,11 @@ enum StatusPageMapper {
       .map { DeepSeekStatusMapper.severity($0.status) }
       .max() ?? 0
     let fromComponents = indicator(fromComponentSeverity: worstComponentSeverity)
-    let effectiveOverall: OverallIndicator
-    switch slice {
-    case .all:
-      effectiveOverall = mergeOverall(
-        reported: reportedOverall,
-        fromComponents: fromComponents,
-        sawIncidents: sawIncidents
-      )
-    case .excludingGrokBot, .grokBotOnly:
-      if fromComponents == .none {
-        effectiveOverall = sawIncidents ? .unknown : .none
-      } else {
-        effectiveOverall = fromComponents
-      }
-    }
+    let effectiveOverall = mergeOverall(
+      reported: reportedOverall,
+      fromComponents: fromComponents,
+      sawIncidents: sawIncidents
+    )
 
     return DeepSeekServiceStatus(
       overall: effectiveOverall,
@@ -92,63 +79,6 @@ enum StatusPageMapper {
       incidents: incidents,
       scheduledMaintenances: []
     )
-  }
-
-  static func isGrokBotComponentName(_ name: String) -> Bool {
-    normalizedComponentName(name).contains("grokbot")
-  }
-
-  static func componentBelongsToSlice(_ name: String, slice: StatusPageComponentSlice) -> Bool {
-    let isGrokBot = isGrokBotComponentName(name)
-    switch slice {
-    case .all:
-      return true
-    case .excludingGrokBot:
-      return !isGrokBot
-    case .grokBotOnly:
-      return isGrokBot
-    }
-  }
-
-  private static func normalizedComponentName(_ name: String) -> String {
-    name.lowercased()
-      .replacingOccurrences(of: " ", with: "")
-      .replacingOccurrences(of: "-", with: "")
-      .replacingOccurrences(of: "_", with: "")
-  }
-
-  private static func incidentReferencedComponentNames(_ incident: StatusPageIncident) -> [String] {
-    if let components = incident.components, !components.isEmpty {
-      return components.compactMap(\.name).filter { !$0.isEmpty }
-    }
-    if let name = incident.name, !name.isEmpty {
-      return [name]
-    }
-    return []
-  }
-
-  private static func incidentAffectsGrokBot(_ incident: StatusPageIncident) -> Bool {
-    incidentReferencedComponentNames(incident).contains { isGrokBotComponentName($0) }
-  }
-
-  private static func incidentAffectsOnlyGrokBot(_ incident: StatusPageIncident) -> Bool {
-    let names = incidentReferencedComponentNames(incident)
-    guard !names.isEmpty else { return false }
-    return names.allSatisfy { isGrokBotComponentName($0) }
-  }
-
-  private static func incidentBelongsToSlice(
-    _ incident: StatusPageIncident,
-    slice: StatusPageComponentSlice
-  ) -> Bool {
-    switch slice {
-    case .all:
-      return true
-    case .grokBotOnly:
-      return incidentAffectsGrokBot(incident)
-    case .excludingGrokBot:
-      return !incidentAffectsOnlyGrokBot(incident)
-    }
   }
 
   /// 组件严重度 → 整体指示：1/2 → minor，3 → major。

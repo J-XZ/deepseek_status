@@ -23,7 +23,7 @@ struct CommandCodeTrendPoint: Identifiable {
 
 /// Command Code 用量趋势折线图：最近 14 天剩余百分比（Apple Swift Charts）。
 /// 整体剩余额度、5 小时窗口、每周窗口各一条折线；窗口数据缺失时不画该线。
-/// 缺口超过 20 分钟会断开连线。
+/// 已有样本之间的时间缺口线性插值，折线不断开。
 struct CommandCodeTrendChartView: View {
   let samples: [CommandCodeUsageSample]
   let language: AppLanguage
@@ -79,14 +79,7 @@ struct CommandCodeTrendChartView: View {
       },
       now: now
     ) {
-      Text(exhaustionEstimateText(seconds))
-        .font(AppTypography.caption)
-        .foregroundStyle(TrendChartPalette.secondaryText)
-        .multilineTextAlignment(.trailing)
-        .lineLimit(2)
-        .minimumScaleFactor(0.75)
-        .fixedSize(horizontal: false, vertical: true)
-        .frame(maxWidth: .infinity, alignment: .trailing)
+      TrendExhaustionCaption(text: exhaustionEstimateText(seconds))
     }
   }
 
@@ -120,6 +113,7 @@ struct CommandCodeTrendChartView: View {
           series: .value(L10n.string(.chartChannel, language: language), point.seriesID)
         )
         .foregroundStyle(by: .value(L10n.string(.chartChannel, language: language), point.seriesName))
+        .interpolationMethod(.linear)
         .lineStyle(StrokeStyle(lineWidth: 2))
       }
 
@@ -135,31 +129,8 @@ struct CommandCodeTrendChartView: View {
       .chartXScale(domain: xDomain)
       .chartYScale(domain: 0...100)
     return chartWithAxes
-      .chartXAxis {
-        AxisMarks(values: .automatic(desiredCount: 4)) { value in
-          AxisGridLine().foregroundStyle(TrendChartPalette.grid)
-          AxisValueLabel {
-            if let date = value.as(Date.self) {
-              Text(axisLabel(for: date))
-                .font(AppTypography.caption)
-                .foregroundStyle(TrendChartPalette.axisText)
-                .lineLimit(1)
-            }
-          }
-        }
-      }
-      .chartYAxis {
-        AxisMarks(position: .leading) { value in
-          AxisGridLine().foregroundStyle(TrendChartPalette.grid)
-          AxisValueLabel {
-            if let percent = value.as(Double.self) {
-              Text("\(Int(percent))%")
-                .font(AppTypography.caption)
-                .foregroundStyle(TrendChartPalette.axisText)
-            }
-          }
-        }
-      }
+      .chartXAxis { TrendChartAxis.dateMarks(language: language) }
+      .chartYAxis { TrendChartAxis.percentMarks() }
       .chartForegroundStyleScale(domain: [
         L10n.string(.chartRemaining, language: language),
         L10n.string(.commandCodeTrendFiveHour, language: language),
@@ -213,23 +184,14 @@ struct CommandCodeTrendChartView: View {
     )
   }
 
-  private func axisLabel(for date: Date) -> String {
-    let formatter = DateFormatter()
-    formatter.locale = language.locale
-    formatter.calendar = Calendar(identifier: .gregorian)
-    formatter.dateFormat = language == .simplifiedChinese ? "M/d HH:mm" : "MMM d HH:mm"
-    return formatter.string(from: date)
-  }
 }
 
 /// 图表数据转换（纯函数，便于测试）。
 enum CommandCodeTrendProcessor {
-  /// 相邻样本间隔超过 20 分钟视为数据缺口。
-  static let gapThreshold: TimeInterval = 20 * 60
   static let chartWindowHours: TimeInterval = TimeInterval(UsageHistoryWindow.hours)
 
-  /// 把历史样本转为图数据点：每条线按时间升序、同桶保留最新 observedAt、
-  /// 间隔超阈值断开分段。窗口字段缺失的样本不进入对应线。
+  /// 把历史样本转为图数据点：每条线按时间升序、同桶保留最新 observedAt。
+  /// 时间缺口留在同一条线里线性插值。窗口字段缺失的样本不进入对应线。
   static func points(
     _ samples: [CommandCodeUsageSample],
     language: AppLanguage
@@ -275,43 +237,26 @@ enum CommandCodeTrendProcessor {
     }
 
     let sorted = newestByBucket.values.sorted { $0.0 < $1.0 }
-    var result: [CommandCodeTrendPoint] = []
-    var segmentIndex = 0
-    var currentSegment: [(Date, Int)] = []
-
-    func flush(segment: Int) {
-      let seriesName: String
-      switch kind {
-      case .overall:
-        seriesName = L10n.string(.chartRemaining, language: language)
-      case .fiveHour:
-        seriesName = L10n.string(.commandCodeTrendFiveHour, language: language)
-      case .weekly:
-        seriesName = L10n.string(.commandCodeTrendWeekly, language: language)
-      }
-      result.append(contentsOf: currentSegment.map {
-        CommandCodeTrendPoint(
-          id: "\(Int64($0.0.timeIntervalSince1970))/\(kind)/\(segment)",
-          bucketStart: $0.0,
-          percent: $0.1,
-          kind: kind,
-          segment: segment,
-          seriesName: seriesName,
-          seriesID: "\(seriesName)/\(segment)"
-        )
-      })
-      currentSegment = []
+    let seriesName: String
+    switch kind {
+    case .overall:
+      seriesName = L10n.string(.chartRemaining, language: language)
+    case .fiveHour:
+      seriesName = L10n.string(.commandCodeTrendFiveHour, language: language)
+    case .weekly:
+      seriesName = L10n.string(.commandCodeTrendWeekly, language: language)
     }
-
-    for entry in sorted {
-      if let last = currentSegment.last, entry.0.timeIntervalSince(last.0) > gapThreshold {
-        flush(segment: segmentIndex)
-        segmentIndex += 1
-      }
-      currentSegment.append((entry.0, entry.2))
+    return sorted.map { entry in
+      CommandCodeTrendPoint(
+        id: "\(Int64(entry.0.timeIntervalSince1970))/\(kind)/0",
+        bucketStart: entry.0,
+        percent: entry.2,
+        kind: kind,
+        segment: 0,
+        seriesName: seriesName,
+        seriesID: "\(seriesName)/0"
+      )
     }
-    flush(segment: segmentIndex)
-    return result
   }
 
   /// 选择距离给定时间最近的、与图表相同去重规则处理后的样本。

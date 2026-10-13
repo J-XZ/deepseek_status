@@ -15,12 +15,10 @@ enum AppDisplayError: Equatable, Sendable {
   case serviceStatusUnavailable
   case codexNotConfigured
   case codexAuthInvalid
-  case cursorNotConfigured
-  case cursorAuthInvalid
   case commandCodeNotConfigured
   case commandCodeAuthInvalid
-  case grokBotNotConfigured
-  case grokBotAuthInvalid
+  case xSubscriptionNotConfigured
+  case xSubscriptionAuthInvalid
   case unknown
 
   func text(language: AppLanguage) -> String {
@@ -55,18 +53,14 @@ enum AppDisplayError: Equatable, Sendable {
       return L10n.string(.codexNotConfigured, language: language)
     case .codexAuthInvalid:
       return L10n.string(.codexAuthInvalid, language: language)
-    case .cursorNotConfigured:
-      return L10n.string(.cursorNotConfigured, language: language)
-    case .cursorAuthInvalid:
-      return L10n.string(.cursorAuthInvalid, language: language)
     case .commandCodeNotConfigured:
       return L10n.string(.commandCodeNotConfigured, language: language)
     case .commandCodeAuthInvalid:
       return L10n.string(.commandCodeAuthInvalid, language: language)
-    case .grokBotNotConfigured:
-      return L10n.string(.grokBotNotConfigured, language: language)
-    case .grokBotAuthInvalid:
-      return L10n.string(.grokBotAuthInvalid, language: language)
+    case .xSubscriptionNotConfigured:
+      return L10n.string(.xSubscriptionNotConfigured, language: language)
+    case .xSubscriptionAuthInvalid:
+      return L10n.string(.xSubscriptionAuthInvalid, language: language)
     case .unknown:
       return L10n.string(.errorUnknown, language: language)
     }

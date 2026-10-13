@@ -1,7 +1,7 @@
 import AppKit
 import Foundation
 
-/// Atlassian Statuspage 官方服务状态状态机（Codex / Cursor 共用）。
+/// Atlassian Statuspage 官方服务状态状态机（Codex / X Subscription 共用）。
 /// 语义与 DeepSeekStatusStore 一致：保留旧值、失败标记 stale、首次失败显示 unavailable。
 @MainActor
 final class StatusPageStatusStore: ServiceStatusStoring {
@@ -15,7 +15,6 @@ final class StatusPageStatusStore: ServiceStatusStoring {
   let clock: any DateProviding
   let refreshInterval: TimeInterval
   let officialStatusPageURL: URL
-  let componentSlice: StatusPageComponentSlice
 
   private var refreshTask: Task<Void, Never>?
   private var autoRefreshTask: Task<Void, Never>?
@@ -24,14 +23,12 @@ final class StatusPageStatusStore: ServiceStatusStoring {
   init(
     client: any StatusPageFetching,
     officialStatusPageURL: URL,
-    componentSlice: StatusPageComponentSlice = .all,
     clock: any DateProviding = SystemClock(),
     refreshInterval: TimeInterval = DataRefreshPolicy.autoRefreshInterval,
     startupRefresh: Bool = true
   ) {
     self.client = client
     self.officialStatusPageURL = officialStatusPageURL
-    self.componentSlice = componentSlice
     self.clock = clock
     self.refreshInterval = refreshInterval
     startAutoRefreshIfNeeded()
@@ -108,7 +105,7 @@ final class StatusPageStatusStore: ServiceStatusStoring {
 
     do {
       let summary = try await client.fetchSummary()
-      status = StatusPageMapper.map(summary, slice: componentSlice)
+      status = StatusPageMapper.map(summary)
       lastSuccessfulUpdate = clock.now()
       isStale = false
       error = nil

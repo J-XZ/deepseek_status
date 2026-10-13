@@ -192,7 +192,7 @@ struct TrendSummary: Equatable, Sendable {
 
 /// 图表数据转换与趋势计算（纯函数，便于测试）。
 enum BalanceTrendProcessor {
-  /// 图表数据模型：只保留至少包含两个样本的连续折线段。
+  /// 图表数据模型：每个指标一条折线，至少两个样本才绘制。
   struct ChartModel: Equatable, Sendable {
     struct Segment: Identifiable, Equatable, Sendable {
       let id: String
@@ -204,8 +204,6 @@ enum BalanceTrendProcessor {
     let xDomain: ClosedRange<Date>
   }
 
-  /// 相邻样本间隔超过 20 分钟视为数据缺口。
-  static let gapThreshold: TimeInterval = 20 * 60
   static let chartWindowHours: TimeInterval = TimeInterval(UsageHistoryWindow.hours)
 
   /// 图表模型缓存：样本集不变时切回该页面可以立即渲染，避免每次
@@ -292,23 +290,10 @@ enum BalanceTrendProcessor {
       }
   }
 
-  /// 把图表点按数据缺口拆分为多个连续分段。
+  /// 同一指标的点保持为一条折线。时间缺口不拆段，由图表在相邻真实样本之间线性插值。
   static func segments(from points: [TrendPoint]) -> [[TrendPoint]] {
-    guard let first = points.first else { return [] }
-    var result: [[TrendPoint]] = []
-    var current = [first]
-    for point in points.dropFirst() {
-      guard let lastDate = current.last?.date else { return [] }
-      let gap = point.date.timeIntervalSince(lastDate)
-      if gap > gapThreshold {
-        result.append(current)
-        current = [point]
-      } else {
-        current.append(point)
-      }
-    }
-    result.append(current)
-    return result
+    guard !points.isEmpty else { return [] }
+    return [points]
   }
 
   /// 明确 X 轴 domain：`now - 14 天 ... now`。
@@ -340,7 +325,7 @@ enum BalanceTrendProcessor {
     return nice * base
   }
 
-  /// 按 metric 独立分段；只有连续段（>=2 点）进入折线。
+  /// 每个 metric 单独成线；至少两个样本才绘制，中间缺口线性连接。
   static func chartModel(
     samples: [BalanceSample],
     currency: String,

@@ -1,6 +1,6 @@
 import Foundation
 
-struct GrokBotUsageSample: Codable, Equatable, Identifiable, Sendable {
+struct XSubscriptionUsageSample: Codable, Equatable, Identifiable, Sendable {
   let credentialID: String
   let bucketStart: Date
   let observedAt: Date

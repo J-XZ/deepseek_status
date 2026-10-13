@@ -2,7 +2,7 @@ import Charts
 import SwiftUI
 
 /// Codex 用量趋势折线图：最近 14 天剩余百分比（Apple Swift Charts）。
-/// 缺口超过 20 分钟会断开连线。
+/// 样本缺口在相邻点之间线性插值，折线不断开。
 struct CodexTrendChartView: View {
   let samples: [CodexUsageSample]
   let language: AppLanguage
@@ -46,8 +46,7 @@ struct CodexTrendChartView: View {
   /// 1 小时 / 3 小时周期展示最近用量速度对比；数据或周窗口不足时返回 nil。
   private var speedResult: CodexUsageSpeedEvaluator.Result? {
     guard period == .threeHours || period == .oneHour else { return nil }
-    // 绿线对齐蓝线实际可见分段的首末点：segments 会丢弃孤立点，
-    // 若直接取窗口内全局首末样本，可能落在蓝线未绘制的点上。
+    // 绿线对齐蓝线实际绘制范围的首末点。样本不足两个时没有折线。
     guard let visibleFirst = segments.first?.first?.bucketStart,
       let visibleLast = segments.last?.last?.bucketStart
     else { return nil }
@@ -79,14 +78,7 @@ struct CodexTrendChartView: View {
       },
       now: now
     ) {
-      Text(exhaustionEstimateText(seconds))
-        .font(AppTypography.caption)
-        .foregroundStyle(TrendChartPalette.secondaryText)
-        .multilineTextAlignment(.trailing)
-        .lineLimit(2)
-        .minimumScaleFactor(0.75)
-        .fixedSize(horizontal: false, vertical: true)
-        .frame(maxWidth: .infinity, alignment: .trailing)
+      TrendExhaustionCaption(text: exhaustionEstimateText(seconds))
     }
   }
 
@@ -107,8 +99,11 @@ struct CodexTrendChartView: View {
       chartView
       if let speedResult {
         HStack(spacing: 12) {
-          legendLine(label: speedConclusionText(speedResult.comparison), color: .blue, dash: [])
-          legendLine(
+          TrendChartLegendItem(
+            label: speedConclusionText(speedResult.comparison),
+            color: .blue
+          )
+          TrendChartLegendItem(
             label: L10n.string(.codexIdealSpeedLegend, language: language),
             color: Color.green.opacity(0.9),
             dash: [6, 4]
@@ -134,6 +129,7 @@ struct CodexTrendChartView: View {
             series: .value(L10n.string(.chartSegment, language: language), "\(remainingTitle)/\(index)")
           )
           .foregroundStyle(by: .value(L10n.string(.chartSegment, language: language), remainingTitle))
+          .interpolationMethod(.linear)
           .lineStyle(StrokeStyle(lineWidth: 2))
         }
       }
@@ -172,31 +168,8 @@ struct CodexTrendChartView: View {
     }
     .chartXScale(domain: xDomain)
     .chartYScale(domain: 0...100)
-    .chartXAxis {
-      AxisMarks(values: .automatic(desiredCount: 4)) { value in
-        AxisGridLine().foregroundStyle(TrendChartPalette.grid)
-        AxisValueLabel {
-          if let date = value.as(Date.self) {
-            Text(axisLabel(for: date))
-              .font(AppTypography.caption)
-              .foregroundStyle(TrendChartPalette.axisText)
-              .lineLimit(1)
-          }
-        }
-      }
-    }
-    .chartYAxis {
-      AxisMarks(position: .leading) { value in
-        AxisGridLine().foregroundStyle(TrendChartPalette.grid)
-        AxisValueLabel {
-          if let percent = value.as(Double.self) {
-            Text("\(Int(percent))%")
-              .font(AppTypography.caption)
-              .foregroundStyle(TrendChartPalette.axisText)
-          }
-        }
-      }
-    }
+    .chartXAxis { TrendChartAxis.dateMarks(language: language) }
+    .chartYAxis { TrendChartAxis.percentMarks() }
     .chartForegroundStyleScale(
       domain: [remainingTitle],
       range: [.blue]
@@ -238,52 +211,18 @@ struct CodexTrendChartView: View {
     }
   }
 
-  private func legendLine(label: String, color: Color, dash: [CGFloat]) -> some View {
-    HStack(spacing: 4) {
-      Path { path in
-        path.move(to: CGPoint(x: 0, y: 3))
-        path.addLine(to: CGPoint(x: 20, y: 3))
-      }
-      .stroke(color, style: StrokeStyle(lineWidth: 2, dash: dash))
-      .frame(width: 20, height: 6)
-      Text(label)
-        .foregroundStyle(TrendChartPalette.secondaryText)
-    }
-  }
-
-  private func axisLabel(for date: Date) -> String {
-    let formatter = DateFormatter()
-    formatter.locale = language.locale
-    formatter.calendar = Calendar(identifier: .gregorian)
-    formatter.dateFormat = language == .simplifiedChinese ? "M/d HH:mm" : "MMM d HH:mm"
-    return formatter.string(from: date)
-  }
 }
 
 /// 图表数据转换（纯函数，便于测试）。
 enum CodexTrendProcessor {
-  /// 相邻样本间隔超过 20 分钟视为数据缺口。
-  static let gapThreshold: TimeInterval = 20 * 60
   static let chartWindowHours: TimeInterval = TimeInterval(UsageHistoryWindow.hours)
 
-  /// 把历史样本转为连续折线段：按时间升序、同桶保留最新 observedAt、
-  /// 相邻间隔超过 gapThreshold 时断开。
+  /// 把历史样本转为一条折线：按时间升序、同桶保留最新 observedAt。
+  /// 时间缺口保留在同一条线里，由图表做线性插值；不足两个样本时不绘制。
   static func segments(_ samples: [CodexUsageSample]) -> [[CodexUsageSample]] {
     let sorted = newestSamples(samples)
     guard sorted.count >= 2 else { return [] }
-
-    var result: [[CodexUsageSample]] = []
-    var current: [CodexUsageSample] = [sorted[0]]
-    for sample in sorted.dropFirst() {
-      let gap = sample.bucketStart.timeIntervalSince(current.last!.bucketStart)
-      if gap > gapThreshold {
-        result.append(current)
-        current = []
-      }
-      current.append(sample)
-    }
-    result.append(current)
-    return result.filter { $0.count >= 2 }
+    return [sorted]
   }
 
   /// 选择距离给定时间最近的、与图表相同去重规则处理后的样本。

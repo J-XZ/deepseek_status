@@ -95,7 +95,7 @@ final class BalanceTrendTests: XCTestCase {
     XCTAssertEqual(Set(points.map(\.metric)), Set(TrendPoint.Metric.allCases))
   }
 
-  func testGapSplitsSegments() {
+  func testGapKeepsSingleSegment() {
     let samples = [
       sample(at: t0),
       sample(at: t0.addingTimeInterval(600)),
@@ -103,7 +103,8 @@ final class BalanceTrendTests: XCTestCase {
     ]
     let points = BalanceTrendProcessor.points(for: samples, currency: "CNY")
     let segments = BalanceTrendProcessor.segments(from: points)
-    XCTAssertEqual(segments.count, 2)
+    XCTAssertEqual(segments.count, 1)
+    XCTAssertEqual(segments[0].count, points.count)
   }
 
   func testNoGapKeepsSingleSegment() {
